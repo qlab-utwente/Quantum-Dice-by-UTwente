@@ -137,6 +137,19 @@ void displaySensorOffsets(const adafruit_bno055_offsets_t& calibData) {
 /**************************************************************************/
 void performCalibration() {
   Serial.println("\n=== Starting Calibration Process ===");
+  
+  // Reset the sensor to clear existing calibration
+  Serial.println("Resetting sensor to clear calibration...");
+  if (!bno.begin()) {
+    Serial.println("ERROR: Failed to reinitialize sensor!");
+    return;
+  }
+  
+  // Reconfigure the crystal setting
+  bno.setExtCrystalUse(true);
+  delay(1000);
+  
+  Serial.println("Sensor reset complete. Starting calibration...");
   Serial.println("Please Calibrate Sensor:");
   Serial.println("- Move the sensor around in a figure-8 pattern for magnetometer");
   Serial.println("- Rotate the sensor slowly around all axes for gyroscope");
