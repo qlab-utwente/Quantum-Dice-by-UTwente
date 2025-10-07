@@ -31,7 +31,7 @@ private:
   bool poll(T* message);
 
   void onDataRecv(const esp_now_recv_info_t *mac, const unsigned char*incomingData, int len);
-  void onDataSend(const uint8_t *mac_addr, esp_now_send_status_t status);
+  void onDataSend(const wifi_tx_info_t *tx_info, esp_now_send_status_t status);  // CHANGED
   void promiscuousRxCb(void *buf, wifi_promiscuous_pkt_type_t type);
 
 private:
@@ -41,10 +41,10 @@ private:
     instance->onDataRecv(mac, incomingData, len);
   }
 
-  static void OnDataSend(const uint8_t *mac_addr, esp_now_send_status_t status)
+  static void OnDataSend(const wifi_tx_info_t *tx_info, esp_now_send_status_t status)  // CHANGED
   {
     assert(instance);
-    instance->onDataSend(mac_addr, status);
+    instance->onDataSend(tx_info, status);  // CHANGED
   }
 
   static void PromiscuousRxCb(void *buf, wifi_promiscuous_pkt_type_t type)
@@ -231,7 +231,7 @@ void EspNowSensor<T>::onDataRecv(const esp_now_recv_info_t *mac, const unsigned 
 }
 
 template<typename T>
-void EspNowSensor<T>::onDataSend(const uint8_t *mac_addr, esp_now_send_status_t status)
+void EspNowSensor<T>::onDataSend(const wifi_tx_info_t *tx_info, esp_now_send_status_t status)  // CHANGED
 {
   static bool prevStatus = false;
   if (status != prevStatus) {
@@ -239,6 +239,11 @@ void EspNowSensor<T>::onDataSend(const uint8_t *mac_addr, esp_now_send_status_t 
     debugln(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
     prevStatus = status;
   }
+  
+  // Optional: You can now access additional information if needed:
+  // tx_info->des_addr - destination MAC address
+  // tx_info->src_addr - source MAC address  
+  // tx_info->tx_status - transmission status (alternative to 'status' parameter)
 }
 
 template<typename T>
