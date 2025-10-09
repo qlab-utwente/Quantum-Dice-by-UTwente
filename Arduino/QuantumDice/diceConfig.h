@@ -9,7 +9,7 @@ macAddresses via Tools-Get Board Info or run getMacAddress.ino sketch
 #define DICE_SET_S099 99  //TEST99 Aernout
 
 //select one of the above
-#define SELECTED_DICE_SET DICE_SET_S021
+#define SELECTED_DICE_SET DICE_SET_S099
 
 // Configuration for each dice set
 
