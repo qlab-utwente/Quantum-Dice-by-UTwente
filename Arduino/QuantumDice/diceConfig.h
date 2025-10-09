@@ -41,7 +41,7 @@ inline uint8_t deviceB2_mac[6] = { 0xDC, 0xDA, 0xC, 0x21, 0x2, 0x44 };  // DUMMY
 //Black set of Bart (nano)
 #elif SELECTED_DICE_SET == DICE_SET_S001
 #define DICE_ID "BART1"
-#define HDR
+#define SMD
 #define NANO //default DEVKIT
 
 inline uint8_t deviceA_mac[6] = { 0xDC, 0xDA, 0x0C, 0x21, 0x06, 0xD8 };  // MAC address of device A
