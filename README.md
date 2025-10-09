@@ -11,7 +11,7 @@ Paper of Bart called [Visualising Quantum Entanglement Using Interactive Electro
 - [Arduino Code](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/tree/main/Arduino)
 - [3D printfiles](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/tree/main/3D%20print%20files)
 - [Construction manual](<3D print files/ConstructionManual.md>)
-- [Bill of Material and parts sourcing calculator]([<3D print files/parts list quantum dice.xlsx](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/blob/main/3D%20print%20files/Bill%20of%20Material%20quantum%20dice.xlsx)>)
+- [Bill of Material and parts sourcing calculator](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/blob/main/3D%20print%20files/Bill%20of%20Material%20quantum%20dice.xlsx)
 
 ## Contribution
 
