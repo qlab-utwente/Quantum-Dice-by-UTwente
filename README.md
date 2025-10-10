@@ -8,10 +8,10 @@ For further information see [Quantum Dice by University of Twente](ut.onl/quantu
 
 Paper of Bart called [Visualising Quantum Entanglement Using Interactive Electronic Quantum Dice](https://arxiv.org/abs/2510.04931) on ArXiv
 
-- [Arduino Code](https://gitlab.utwente.nl/m7695371/quantumdice-by-utwente/-/tree/main/Arduino?ref_type=heads)
-- [3D printfiles](https://gitlab.utwente.nl/m7695371/quantumdice-by-utwente/-/tree/main/3D%20print%20files?ref_type=heads)
+- [Arduino Code](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/tree/main/Arduino)
+- [3D printfiles](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/tree/main/3D%20print%20files)
 - [Construction manual](<3D print files/ConstructionManual.md>)
-- [Bill of Material and parts sourcing calculator](<3D print files/parts list quantum dice.xlsx>)
+- [Bill of Material and parts sourcing calculator](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/blob/main/3D%20print%20files/Bill%20of%20Material%20quantum%20dice.xlsx)
 
 ## Contribution
 
