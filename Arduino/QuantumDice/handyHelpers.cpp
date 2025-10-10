@@ -124,6 +124,7 @@ uint8_t generateDiceRollRejection() {
 
 bool checkMinimumVoltage() {
   float voltage = analogReadMilliVolts(ADCpin) / 1000.0 * 2.0;  //A0 measures 50% of batery voltage bij 50/50 voltage devider
+  //debugln(voltage);
   if (voltage < MINBATERYVOLTAGE && voltage > 0.5) //while on USB the voltage is 0
     return true;
   else

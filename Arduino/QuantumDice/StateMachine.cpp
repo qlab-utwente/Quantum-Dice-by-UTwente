@@ -304,8 +304,8 @@ void StateMachine::update() {
         break;
 
       case MESSAGE_TYPE_ENTANGLE_REQUEST:  //device B1 and/or B2 receives entangle request from A
-        debug("entanglement request received from: ");
-        printRole(data.senderRole);
+        //debug("entanglement request received from: ");
+        //printRole(data.senderRole);
         entangleRequestRcvA = true;
         break;
 
@@ -592,7 +592,7 @@ void StateMachine::whileWAITFORTHROW() {
         != DiceStates::ENTANGLED_AB1) {  //SINGLE or ENTANGLED_AB2
       // Broadcast pairing request periodically
       if (millis() - lastBroadcastTimeB1 > 500) {
-        debugln("Role A requests entanglement on B1");
+        //debugln("Role A requests entanglement on B1");
         sendEntangleRequest(roleB1);
         lastBroadcastTimeB1 = millis();
       }
@@ -606,7 +606,7 @@ void StateMachine::whileWAITFORTHROW() {
         != DiceStates::ENTANGLED_AB2) {  //SINGLE or ENTANGLED_AB1
       // Broadcast pairing request periodically
       if (millis() - lastBroadcastTimeB2 > 500) {
-        debugln("Role A requests entanglement on B2");
+        //debugln("Role A requests entanglement on B2");
         sendEntangleRequest(roleB2);
         lastBroadcastTimeB2 = millis();
       }

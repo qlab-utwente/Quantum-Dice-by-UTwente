@@ -40,8 +40,8 @@ inline uint8_t deviceB2_mac[6] = { 0xDC, 0xDA, 0xC, 0x21, 0x2, 0x44 };  // DUMMY
 #define SMD
 #define DEVKIT //default DEVKIT
 
-inline uint8_t deviceA_mac[6] = { 0xDC, 0xDA, 0x0C, 0x21, 0x06, 0xD8 };  // MAC address of device A
-inline uint8_t deviceB1_mac[6] = { 0x74, 0x4D, 0xBD, 0xA0, 0x3D, 0xE0 };  // MAC address of device B
+inline uint8_t deviceA_mac[6] = { 0x30, 0xED, 0xA0, 0x36, 0xBC, 0x48 };
+inline uint8_t deviceB1_mac[6] = { 0x30, 0xED, 0xA0, 0x37, 0xD1, 0x98 };
 inline uint8_t deviceB2_mac[6] = { 0xDC, 0xDA, 0xC, 0x21, 0x2, 0x44 };  // DUMMY. Replace with actual mac adress
 //background color of display
 // use one of the following colors, 0x  BLACK, BLUE, RED, GREEN, CYAN, MAGNETA, YELLOW, WHITE, ORANGE, GREY, BORDEAUX, DINOGREEN, WHITE
@@ -52,7 +52,7 @@ inline uint8_t deviceB2_mac[6] = { 0xDC, 0xDA, 0xC, 0x21, 0x2, 0x44 };  // DUMMY
 #define ENTANG_AB1_COLOR GC9A01A_YELLOW
 #define ENTANG_AB2_COLOR GC9A01A_GREEN
 
-#define RSSILIMIT -35       //RSSI value to detect close by for entanglement. Less negative is less sensitive
+#define RSSILIMIT -20       //RSSI value to detect close by for entanglement. Less negative is less sensitive
 
 //**********************************************//
 
