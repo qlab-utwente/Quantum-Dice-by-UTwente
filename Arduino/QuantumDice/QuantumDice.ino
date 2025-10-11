@@ -1,7 +1,7 @@
 
 //version control see Version.h
 #warning "Compile with Pin Numbering By GPIO (legacy)"
-#warning "ESP version 3.2.1 ,board esp32/Arduino Nano ESP32 or esp32/ESP32S3 Dev Module
+#warning "ESP version 3.3.2 ,board esp32/Arduino Nano ESP32 or esp32/ESP32S3 Dev Module
 
 #include "Version.h"
 #include "diceConfig.h"
