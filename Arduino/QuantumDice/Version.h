@@ -13,6 +13,7 @@
 //#define VERSION "061" //repair LowVoltage screen
 //#define VERSION "062" //speed up setup and new randomgenerator functions
 //#define VERSION "065" //merging NANO and DEVKIT
-#define VERSION "070" //implementation new espnow class from M
+//#define VERSION "070" //implementation new espnow class from M with esp32 core 3.2.1
+#define VERSION "071" //bugfixing implementation new espnow class from M with esp32 core 3.3.0
 
 #endif // VERSION_H
