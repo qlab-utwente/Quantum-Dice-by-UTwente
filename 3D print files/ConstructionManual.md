@@ -6,7 +6,7 @@
 
 This construction manual contains all information to build your own set of Quantum Dices. It includes the sourcing of components, 3D printing and the Assembly instructions.
 
-The Quantum Dice is developed by the University of Twente. All designs are freely available under the xxx licence.
+The Quantum Dice is developed by the University of Twente. All designs are freely available under the MIT licence.
 
 For further information goto [Quantum Dice by University of Twente](ut.onl/quantumdice)
 
@@ -50,6 +50,10 @@ For the later version, only 1 color of TPU is needed (black) to print the frame.
 
 It's also possible to print the AllTPU version in PLA or PETG. To reduce impact on the dice construction while rolling, you need to use a foam mattress (e.g. yoga mattress). The electronics and the software code are identical.
 
+For a set you need an A and a B type. The dices are identical (including the firmware), except for the top of the dice where an A or B is indicated.
+
+To demonstrate Quantum Teleportation a third dice is needed of type B.
+
 ### Sourcing electronic parts
 
 #### PowerPCB and ProcessorPCB
@@ -79,22 +83,15 @@ Specification:
 
 ### Sourcing 3D printed parts
 
-### Quantum Dice versions
+All 3D print files are in the STL format. The filename contains the color and material and a version number.
 
-Currently 2 versions of the quantum dice are available:
+#### Selecting parts
 
-- AllTPU: dice frame and display cups of TPU material (plaatje)
-- TPUFrameOnly: dice frame from TPU with a bumper with the display cups of PLA (plaatje)
+With the provided Excel you can fill in the number of dices you need (A and B). The Excel calculates the needed 3D print files and the required electronics.
 
-For the later version, only 1 color of TPU is needed (black) to print the frame. For the other components regular (and cheaper) PLA or PETG can be used. For the AllTPU version 4 different colors of TPU are used.
+For convenience the plates with all required parts are created in 3MF file format. These files are generated using PrusaSlicer, but they can also be used in BambuStudio. Rearrangement of parts is needed.
 
-It's also possible to print the AllTPU version in PLA or PETG. To reduce impact on the dice construction while rolling, you need to use a foam mattress (e.g. yoga mattress).
-
-For a set you need an A and a B type. The dices are identical (including the firmware), except for the top of the dice where an A or B is indicated.
-
-To demonstrate Quantum Teleportation a third dice is needed of type B.
-
-### 3D printing TPU
+#### 3D printing TPU
 
 Printing TPU requires special attention. First the roll of material must be dryed before use to avoid stringing. Second the printing speed must be reduced to slow (add printing time), specifically with fast printing 3D printers like the Pruse Core One or the Bambulab. TPU cannot be used in the Bambu Lab's Automatic Material System (AMS) or Prusa MMU3 system because they push the material to the printing head. Because of the elasticity of TPU the material must be pulled into the printer head.
 
@@ -110,10 +107,6 @@ Additional information on how to print can be found here:
 
 It can be beneficial to outsource the printing job. Several companies can do this, also for TPU material. The price is largely determined by the printing method. Fused Deposition Modeling (FDM) is cheaper than Selective Laser Sintering (SLS). I have good experience with [JLC3D](https://jlc3dp.com/3d-printing/fused-deposition-modeling) with FDM. Quality is OK and not to expensive.
 
-### 3D print parts
-
-All 3D print files are in the STL format. The filename contains the color and material and a version number. The dice is build from the following components:
-
 #### Display cups to hold the TFT displays
 
 Cups to hold the TFT displays in 3 colors for the X, Y and Z-axis. The cups also needs a back plane that will be glued on the display cups. The back planes for the yellow cups (front and rear) are different from the others. They are designed to mount the Power and ESP32 Printed Circuit Boards (PCB). To mount the battery an additional back plane is required. No support is needed for the printing
@@ -122,25 +115,28 @@ Cups to hold the TFT displays in 3 colors for the X, Y and Z-axis. The cups also
 
 The frames parts are printed with the flat side onto the print plate. Support is needed.
 
-#### Selecting parts
 
-With the provided Excel you can fill in the number of dices you need (A and B). The Excel calculates the needed 3D print files and the required electronics.
-
-For convenience the plates with all required parts are created in 3MF file format. These files are generated using PrusaSlicer, but they can also be used in BambuStudio. Rearrangement of parts is needed.
-
-## printing and assembly 3D printed parts
+## Printing and assembly 3D printed parts
 
 ### Introduction
 
 ### Required tooling
+![alt text](<../images/required tooling.jpg>)
 
 ### 3D printing parts
+![alt text](../images/Dice_components_1.png)
 
-### mount charger cable
+### Mount charger cable
 
-### glue up backplanes
+*Coming soon*
 
-### melt the inserts
+### Glue up backplanes
+
+*Coming soon*
+
+### Melt the inserts
+
+*Coming soon*
 
 ## Prepare electronic parts and displays
 
