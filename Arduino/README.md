@@ -2,14 +2,30 @@
 
 <img src=../images/under_construction.jpg alt="construct" width="500"/>
 
-## Technical description
+## Table of Contents
 
-The Quantum Dice is build around an [ESP32-S3 N16R8 module](https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf). The six round TFT-displays interfaces via SPI. The displays are controlled via het CS-pin, connected to a digital port. A [BNO055 IMU sensor](https://nl.mouser.com/datasheet/3/1046/1/bst-bno055-ds000.pdf) is used to measure rotations and positions of the dice. A [Microchip ATECC508A cryptographic chip](https://cdn.sparkfun.com/assets/learn_tutorials/1/0/0/3/Microchip_ATECC508A_Datasheet.pdf) is used as a random generator. Both devices are using I2C as interface. Further more a push button is used and the battery voltage is monitored.
-ESPNOW protocol is used as a peer-to-peer communication to exchange data between the 2 dices.
+- [Technical Description](#technical-description)
+- [Configuration Arduino IDE](#configuration-arduino-ide)
+  - [Install Libraries](#install-libraries)
+  - [Install the ESP32 Board in Arduino IDE](#install-the-esp32-board-in-arduino-ide)
+- [Load the QuantumDice.ino Sketch](#load-the-quantumdiceino-sketch)
+  - [Fill in the Config File](#fill-in-the-config-file)
+  - [Prepare for Upload](#prepare-for-upload)
+    - [Select Board and Board Settings](#select-board-and-board-settings)
+    - [Set Serial Port and Upload the Sketch](#set-serial-port-and-upload-the-sketch)
+- [Configuration of ProcessorBoard](#configuration-of-processorboard)
+  - [Get macAddress](#get-macaddress)
+  - [Lock the ATECC508A Chip](#lock-the-atecc508a-chip)
+  - [Calibration of BNO055 IMU Sensor](#calibration-of-bno055-imu-sensor)
+
+## Technical Description
+
+The Quantum Dice is built around an [ESP32-S3 N16R8 module](https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf). The six round TFT displays interface via SPI. The displays are controlled via the CS-pin, connected to a digital port. A [BNO055 IMU sensor](https://nl.mouser.com/datasheet/3/1046/1/bst-bno055-ds000.pdf) is used to measure rotations and positions of the dice. A [Microchip ATECC508A cryptographic chip](https://cdn.sparkfun.com/assets/learn_tutorials/1/0/0/3/Microchip_ATECC508A_Datasheet.pdf) is used as a random number generator. Both devices use I2C as their interface. Furthermore, a push button is used and the battery voltage is monitored.
+The ESPNOW protocol is used for peer-to-peer communication to exchange data between the two dice.
 
 ## Configuration Arduino IDE
 
-Download and install the latest version of the [Arduino IDE 2.x](https://docs.arduino.cc/software/ide/#ide-v2)
+Download and install the latest version of the [Arduino IDE 2.x](https://docs.arduino.cc/software/ide/#ide-v2).
 
 ### Install Libraries
 
@@ -24,20 +40,21 @@ Install the following libraries via the library manager:
 
 ### Install the ESP32 Board in Arduino IDE
 
-Follow this instruction [Installing the ESP32 Board in Arduino IDE](https://randomnerdtutorials.com/installing-esp32-arduino-ide-2-0/)
+Follow this instruction: [Installing the ESP32 Board in Arduino IDE](https://randomnerdtutorials.com/installing-esp32-arduino-ide-2-0/)
 
 > **Important**: Board manager: ESP32 version 3.3.2.
 
-## Load the QuantumDice.ino sketch
-If your board comes unconfigured follow [this](#configuration-of-processorboard) instruction first 
+## Load the QuantumDice.ino Sketch
 
-Download the QuantumDice Arduino sketch from this Gitlab. Store it in your default Arduino folder. Open the sketch in your Arduino IDE.
+If your board comes unconfigured, follow [this](#configuration-of-processorboard) instruction first.
 
-### Fill in the config file
+Download the QuantumDice Arduino sketch from this GitLab. Store it in your default Arduino folder. Open the sketch in your Arduino IDE.
 
-Under tab ```diceConfig.h``` the configuration of the Quantum Dice is set. In the near future this will be replaced by a config file upload to the ESP32 using SPIFFS.
+### Fill in the Config File
 
-The top part contains a list of all (your) sets, identified with a serial number
+Under the tab `diceConfig.h`, the configuration of the Quantum Dice is set. In the near future, this will be replaced by a config file upload to the ESP32 using SPIFFS.
+
+The top part contains a list of all (your) sets, identified with a serial number:
 
 ```text
 // List of all dice sets
@@ -52,7 +69,7 @@ The top part contains a list of all (your) sets, identified with a serial number
 #define SELECTED_DICE_SET DICE_SET_S000
 ```
 
-The config data per Serial number:
+The config data per serial number:
 
 ```text
 //**********************************************//
@@ -65,8 +82,8 @@ The config data per Serial number:
 // definitions of macAddresses per role:
 inline uint8_t deviceA_mac[6] = { 0xD0, 0xCF, 0x13, 0x36, 0x40, 0x88 }; // MAC address of device A
 inline uint8_t deviceB1_mac[6] = {0xD0, 0xCF, 0x13, 0x33, 0x58, 0x5C };  // MAC address of device B
-inline uint8_t deviceB2_mac[6] = { 0xDC, 0xDA, 0xC, 0x21, 0x2, 0x44 };  // DUMMY. Replace with actual mac adress. Use this with the teleportation experiment
-//background color of display. Select  BLACK, BLUE, RED, GREEN, CYAN, MAGNETA, YELLOW, WHITE, ORNAG, GREY, BORDEAUX, DINOGREEN, WHITE
+inline uint8_t deviceB2_mac[6] = { 0xDC, 0xDA, 0xC, 0x21, 0x2, 0x44 };  // DUMMY. Replace with actual MAC address. Use this with the teleportation experiment
+//background color of display. Select  BLACK, BLUE, RED, GREEN, CYAN, MAGENTA, YELLOW, WHITE, ORANGE, GREY, BORDEAUX, DINOGREEN, WHITE
 #define X_BACKGROUND GC9A01A_BLACK
 #define Y_BACKGROUND GC9A01A_BLACK
 #define Z_BACKGROUND GC9A01A_BLACK
@@ -80,24 +97,24 @@ inline uint8_t deviceB2_mac[6] = { 0xDC, 0xDA, 0xC, 0x21, 0x2, 0x44 };  // DUMMY
 //**********************************************//
 ```
 
-### IMPORTANT: disconnect 4-wire Power cable before connecting USB cable
+> **⚠️ IMPORTANT: Disconnect 4-wire Power Cable Before Connecting USB Cable**
 
-### Prepare for upload
+### Prepare for Upload
 
-Remove top and bottom (blue) cups and disconnect the 4-wire Power cable. For convenience disconnect the display FPC cables.
+Remove the top and bottom (blue) cups and disconnect the 4-wire power cable. For convenience, disconnect the display FPC cables.
 
-Connect USB-C cable on the down side of the ProcessorPCB.
+Connect the USB-C cable on the lower side of the ProcessorPCB.
 
-#### Select Board and board settings
+#### Select Board and Board Settings
 
-Select from the Arduino Tools menu the ESP32S3 DevModule and change the board setting according below figure. The red arrows indicate the deviations from the default setting
+Select the ESP32S3 DevModule from the Arduino Tools menu and change the board settings according to the figure below. The red arrows indicate the deviations from the default settings.
 ![alt text](<../images/ESP32-S3 n16r8 arduino settings.png>)
 
-#### Set Serial port and uploading the sketch
+#### Set Serial Port and Upload the Sketch
 
 Connect the ProcessorPCB board with a USB-C cable and select the communication port from the Tools menu. Click upload to start compiling and uploading.
 
-In the Serial Monitor the debugging information shows up (use baudrate 115200).
+In the Serial Monitor, the debugging information shows up (use baudrate 115200).
 
 A typical output from the startup sequence:
 
@@ -139,26 +156,29 @@ etcetera
 
 If your ProcessorBoard is not configured, you need to do the following:
 
-- get the macAddress of the board
-- lock the Microchip ATECC508A cryptographic chip (this chip must be locked before it can be used)
-- calibration of the BNO055 IMU sensor and store calibration settings in EEPROM.
+- Get the macAddress of the board
+- Lock the Microchip ATECC508A cryptographic chip (this chip must be locked before it can be used)
+- Calibrate the BNO055 IMU sensor and store calibration settings in EEPROM
 
-To upload the sketches follow [this](#prepare-for-upload) instruction.
+To upload the sketches, follow [this](#prepare-for-upload) instruction.
 
-In the near future a single configuration sketch will be available for all three configurations.
+In the near future, a single configuration sketch will be available for all three configurations.
 
-### get macAddress
-Download and run ```getMacAddress.ino```. The macAdress will be printed in the Serial monitor. Copy paste the address in the ```diceConfig.h``` tab of the QuantumDice sketch
+### Get macAddress
 
-### lock the ATECC508A chip
-Download and run ```lock_ECCX08.ino```. Open Serial Monitor and follow the instructions. Your can store the key if you like, but it is not needed for the QuantumDice. Rerun this sketch will provide the key again.
+Download and run `getMacAddress.ino`. The macAddress will be printed in the Serial Monitor. Copy and paste the address in the `diceConfig.h` tab of the QuantumDice sketch.
 
-### calibration of BNO055 IMU sensor
-Before use in the Quantum Dice the BNO055 sensor must be calibrated. Calibration data is stored in EEPROM.
+### Lock the ATECC508A Chip
 
-Download and run ```BNO055_Cali_EEPROM.ino``` sketch. Open Serial monitor and follow the instructions
+Download and run `lock_ECCX08.ino`. Open the Serial Monitor and follow the instructions. You can store the key if you like, but it is not needed for the QuantumDice. Rerunning this sketch will provide the key again.
+
+### Calibration of BNO055 IMU Sensor
+
+Before use in the Quantum Dice, the BNO055 sensor must be calibrated. Calibration data is stored in EEPROM.
+
+Download and run the `BNO055_Cali_EEPROM.ino` sketch. Open the Serial Monitor and follow the instructions.
 
 Follow this instruction:
 [Adafruit BNO055 Absolute Orientation Sensor - Device Calibration](https://learn.adafruit.com/adafruit-bno055-absolute-orientation-sensor/device-calibration)
 
-The calibration of the accelerometer is the most difficult one and can take more time. Put the dice on all 6 sides but also between 2 sides at 45 degrees
+The calibration of the accelerometer is the most difficult and can take more time. Put the dice on all 6 sides but also between 2 sides at 45 degrees.
