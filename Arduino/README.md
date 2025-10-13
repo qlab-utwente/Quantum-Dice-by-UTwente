@@ -47,7 +47,7 @@ Install the following libraries via the Library Manager:
 
 Follow these instructions: [Installing the ESP32 Board in Arduino IDE](https://randomnerdtutorials.com/installing-esp32-arduino-ide-2-0/)
 
-> **Important**: Use ESP32 version 3.3.2 in the Board Manager.
+> **⚠️ IMPORTANT:** Use ESP32 version 3.3.2 in the Board Manager.
 
 ---
 
