@@ -11,7 +11,7 @@ ESPNOW protocol is used as a peer-to-peer communication to exchange data between
 
 Download and install the latest version of the [Arduino IDE 2.x](https://docs.arduino.cc/software/ide/#ide-v2)
 
-### Libraries used
+### Install Libraries
 
 Install the following libraries via the library manager:
 
@@ -20,14 +20,16 @@ Install the following libraries via the library manager:
 - Adafruit GFX
 - Adafruit GC9A01A
 - SparkFun ATECCX08A
+- Button2
 
-### Installing the ESP32 Board in Arduino IDE
+### Install the ESP32 Board in Arduino IDE
 
 Follow this instruction [Installing the ESP32 Board in Arduino IDE](https://randomnerdtutorials.com/installing-esp32-arduino-ide-2-0/)
 
-> **Important**: Board manager: ESP32 version 3.2.1 instead of 3.3.1.
+> **Important**: Board manager: ESP32 version 3.3.2.
 
-### Load the QuantumDice.ino sketch
+## Load the QuantumDice.ino sketch
+If your board comes unconfigured follow [this](#configuration-of-processorboard) instruction first 
 
 Download the QuantumDice Arduino sketch from this Gitlab. Store it in your default Arduino folder. Open the sketch in your Arduino IDE.
 
@@ -80,20 +82,22 @@ inline uint8_t deviceB2_mac[6] = { 0xDC, 0xDA, 0xC, 0x21, 0x2, 0x44 };  // DUMMY
 
 ### IMPORTANT: disconnect 4-wire Power cable before connecting USB cable
 
+### Prepare for upload
+
 Remove top and bottom (blue) cups and disconnect the 4-wire Power cable. For convenience disconnect the display FPC cables.
 
 Connect USB-C cable on the down side of the ProcessorPCB.
 
-### Select Board and board settings
+#### Select Board and board settings
 
 Select from the Arduino Tools menu the ESP32S3 DevModule and change the board setting according below figure. The red arrows indicate the deviations from the default setting
 ![alt text](<../images/ESP32-S3 n16r8 arduino settings.png>)
 
-### Set Serial port and uploading the sketch
+#### Set Serial port and uploading the sketch
 
 Connect the ProcessorPCB board with a USB-C cable and select the communication port from the Tools menu. Click upload to start compiling and uploading.
 
-In the Serial Monitor the debugging information shows up.
+In the Serial Monitor the debugging information shows up (use baudrate 115200).
 
 A typical output from the startup sequence:
 
@@ -130,3 +134,31 @@ WELCOME function called
 etcetera
 
 ```
+
+## Configuration of ProcessorBoard
+
+If your ProcessorBoard is not configured, you need to do the following:
+
+- get the macAddress of the board
+- lock the Microchip ATECC508A cryptographic chip (this chip must be locked before it can be used)
+- calibration of the BNO055 IMU sensor and store calibration settings in EEPROM.
+
+To upload the sketches follow [this](#prepare-for-upload) instruction.
+
+In the near future a single configuration sketch will be available for all three configurations.
+
+### get macAddress
+Download and run ```getMacAddress.ino```. The macAdress will be printed in the Serial monitor. Copy paste the address in the ```diceConfig.h``` tab of the QuantumDice sketch
+
+### lock the ATECC508A chip
+Download and run ```lock_ECCX08.ino```. Open Serial Monitor and follow the instructions. Your can store the key if you like, but it is not needed for the QuantumDice. Rerun this sketch will provide the key again.
+
+### calibration of BNO055 IMU sensor
+Before use in the Quantum Dice the BNO055 sensor must be calibrated. Calibration data is stored in EEPROM.
+
+Download and run ```BNO055_Cali_EEPROM.ino``` sketch. Open Serial monitor and follow the instructions
+
+Follow this instruction:
+[Adafruit BNO055 Absolute Orientation Sensor - Device Calibration](https://learn.adafruit.com/adafruit-bno055-absolute-orientation-sensor/device-calibration)
+
+The calibration of the accelerometer is the most difficult one and can take more time. Put the dice on all 6 sides but also between 2 sides at 45 degrees
