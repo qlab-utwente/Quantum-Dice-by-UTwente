@@ -1,0 +1,47 @@
+Altium Designer Pick and Place Locations
+C:\Users\Public\Documents\Altium\Quantum Dice Power Board\Project Outputs for Quantum Dice Power Board\Pick Place for PCB3.csv
+
+========================================================================================================================
+File Design Information:
+
+Date:       15/07/25
+Time:       22:03
+Revision:   5df35c0bf8cf9b40c1d397837cc74f9ced882f35
+Variant:    No variations
+Units used: mm
+
+"Designator","Comment","Layer","Footprint","Center-X(mm)","Center-Y(mm)","Rotation","Description"
+"R8","100K","TopLayer","RESC1608X55N","137.1720","105.7910","180","Resistor
+C14675"
+"C1","10uF","TopLayer","CAPC2012X145N","128.2318","82.8040","90","Capacitor 25v"
+"S1","KEY-TH_4P-L6.0-W6.0-P4.50-LS6.5","BottomLayer","New_footprint_1","153.3411","104.1039","180",""
+"R9","100K","TopLayer","RESC1608X55N","145.1610","101.8540","0","Resistor
+C14675"
+"R11","510R","TopLayer","ERJUP6","143.2560","96.0120","270","Resistor"
+"R10","1K","TopLayer","RESC1608X55N","150.4950","98.4250","90","Resistor
+C14676"
+"Q1","2N2222AU","TopLayer","New_footprint_1","154.1638","97.6416","180","2N2222AU"
+"Q2","DMG3415U-7","TopLayer","SOT96P240X110-3N","128.3970","103.2510","90","Mosfet"
+"IC3","MC14093BDR2G","TopLayer","SOIC127P600X175-14N","135.8900","101.2190","0","Integrated Circuit"
+"D2","SZYY0805W","TopLayer","New_footprint_1","146.3307","96.0742","90","SZYY0805W  C434433 Blue LED 5mA"
+"C7","100nF","TopLayer","CAPC2012X95N","147.9550","101.0920","90","Capacitor"
+"IC2","TPS61200DRCT","TopLayer","TPS61200DRCT","123.3170","82.1690","270","Integrated Circuit"
+"R5","200K","TopLayer","0603_Resistor-Footprint-1","126.1136","78.9791","270","C25811"
+"R6","2.2M","TopLayer","0603_Resistor-Footprint-1","120.3811","78.3564","180","C325655"
+"R3","1.8M","TopLayer","0603_Resistor-Footprint-1","128.1456","78.9791","270","C3151701"
+"R7","200K","TopLayer","0603_Resistor-Footprint-1","123.5859","78.3616","0","C25811"
+"R1","2.2K","TopLayer","RESC1608X55N","125.2220","93.0910","0","C4190, 0603WAF2201T5E"
+"R2","510R","TopLayer","ERJUP6","136.9060","95.1230","0","Resistor"
+"R4","0.5R","TopLayer","RL1206FR-7W0R5L-Footprint-1","122.0470","90.5510","0","Fixed Resistor, Metal Glaze/thick Film, 0.5W, 0.5ohm, 1% +/-Tol, 300ppm/Cel, Surface Mount, 1206"
+"L1","2.2uH","TopLayer","FTC252012S2R2MBCA-Footprint-1","122.1230","86.0630","0","3A 2.2uH Integrated molded inductor  20% 3.8A 1008 Power Inductors ROHS FTC252012S2R2MBCA C5832372"
+"J2","Battery header #1","TopLayer","connector_jst_flat,_2_pin_xh-Footprint-1","141.3030","78.3111","0","C668620"
+"D1","SZYY0805W","TopLayer","New_footprint_1","137.0952","93.0643","0","SZYY0805W  C434434 Yellow LED 5mA"
+"C5","10uF","TopLayer","CAPC2012X145N","135.2550","89.5350","90","Capacitor 25v"
+"C2","22uF","TopLayer","RVT1H220M0605-Footprint-1","132.7379","80.7970","270","22uF 50V 43mA@120Hz  20% SMD, D6.3xL5.4mm Aluminum Electrolytic Capacitors - SMD ROHS C27783 RVT1H220M0605"
+"C6","10uF","TopLayer","CAPC2012X145N","120.1420","82.8040","90","Capacitor 25v"
+"C4","10uF","TopLayer","CAPC2012X145N","125.6030","89.5350","90","Capacitor 25v"
+"C3","100nF","TopLayer","CAPC2012X95N","126.4825","82.8040","270","Capacitor"
+"J4","USBC- Board connector","TopLayer","connector_jst_flat,_2_pin_xh-Footprint-1","119.5860","68.7801","0",""
+"J1","Battery header #2","TopLayer","Dupont_SMD_laying_2_pin-Footprint-1","133.8271","69.8500","90","X6511WRS-02H-C60D48"
+"J3","StandingXH2.54JST","TopLayer","New_footprint_1","151.0110","85.2161","270","Added 6-3-25"
+"IC1","TP4056X","TopLayer","SOIC127P600X175-9N","130.6380","92.4560","0","Integrated Circuit"
