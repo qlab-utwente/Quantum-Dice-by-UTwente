@@ -195,7 +195,7 @@ In addition to the Quantum Dice components themselves, you will need the followi
 - Screwdrivers hex key (2 mm and 2,5 mm)  
 - Cutting pliers  
 - CA-glue e.g. LOCTITE 406 for plastics
-- Tape
+- Double sided foam tape
 
 ![alt text](<../images/utensils.png>)
 
