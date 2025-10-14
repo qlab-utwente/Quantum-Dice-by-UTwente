@@ -41,6 +41,7 @@ void getMacAddress();
 void configureATECC508a();
 void calibrateBNO055();
 void testBNO055();
+void clearEEPROM();
 void parseMacAddress(String macStr, uint8_t* macList);
 
 // ATECC508a functions
@@ -109,6 +110,10 @@ void loop() {
         testBNO055();
         break;
         
+      case '5':
+        clearEEPROM();
+        break;
+        
       case 'M':
         displayMainMenu();
         break;
@@ -132,9 +137,12 @@ void displayMainMenu() {
   Serial.println("2. Configure ATECC508a (PERMANENT)");
   Serial.println("3. Calibrate BNO055 Sensor");
   Serial.println("4. Test BNO055 Sensor (Live Data)");
+  Serial.println("----------------------------------------");
+  Serial.println("5. Clear EEPROM (Erase calibration)");
+  Serial.println("========================================");
   Serial.println("M. Show this menu");
   Serial.println("========================================");
-  Serial.println("Enter your choice (1-4 or M):");
+  Serial.println("Enter your choice (1-5 or M):");
 }
 
 // ==================== MAC ADDRESS ====================
@@ -395,16 +403,92 @@ void performCalibration() {
   Serial.println("• Rotating slowly around all axes (gyroscope)");
   Serial.println("• Placing in different orientations (accelerometer)");
   Serial.println();
+  Serial.println("Goal: Minimize linear acceleration offset (should be near 0.0 m/s²)");
+  Serial.println(">>> Type 'Q' at any time to quit calibration <<<");
+  Serial.println("------------------------------------------------------------");
+  
+  bool calibrationAborted = false;
   
   while (!bno.isFullyCalibrated()) {
+    // Check for user interrupt
+    if (Serial.available() > 0) {
+      char input = Serial.read();
+      // Clear buffer
+      while (Serial.available() > 0) Serial.read();
+      
+      // Convert to uppercase
+      if (input >= 'a' && input <= 'z') {
+        input = input - 32;
+      }
+      
+      if (input == 'Q') {
+        Serial.println("\n\n*** Calibration aborted by user ***");
+        calibrationAborted = true;
+        break;
+      }
+    }
+    
     bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
-    printEvent(&linearAccelData);
+    
+    // Calculate magnitude
+    double x = linearAccelData.acceleration.x;
+    double y = linearAccelData.acceleration.y;
+    double z = linearAccelData.acceleration.z;
+    double mag = sqrt(x * x + y * y + z * z);
+    
+    // Display calibration status first
     displayCalStatus();
+    
+    // Display linear acceleration with clear offset warning
+    Serial.print(" | Linear: ");
+    Serial.print(mag, 3);
+    Serial.print(" m/s² ");
+    
+    // Color-coded threshold indicators
+    if (mag > 0.5) {
+      Serial.print("[⚠⚠ HIGH OFFSET - Keep calibrating! ]");
+    } else if (mag > 0.3) {
+      Serial.print("[⚠ Moderate offset - Almost there  ]");
+    } else if (mag > 0.15) {
+      Serial.print("[✓ Good - Continue for best results]");
+    } else {
+      Serial.print("[✓✓ Excellent offset!              ]");
+    }
+    
     Serial.println();
     delay(BNO055_SAMPLERATE_DELAY_MS);
   }
   
+  // If calibration was aborted, exit without saving
+  if (calibrationAborted) {
+    Serial.println("Calibration data NOT saved.");
+    Serial.println("Previous calibration (if any) remains in EEPROM.");
+    return;
+  }
+  
   Serial.println("\n✓ Fully calibrated!");
+  
+  // Verify final offset
+  Serial.println("\nVerifying calibration quality...");
+  delay(500);
+  bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
+  double x = linearAccelData.acceleration.x;
+  double y = linearAccelData.acceleration.y;
+  double z = linearAccelData.acceleration.z;
+  double finalMag = sqrt(x * x + y * y + z * z);
+  
+  Serial.print("Final linear acceleration offset: ");
+  Serial.print(finalMag, 4);
+  Serial.print(" m/s² ");
+  
+  if (finalMag < 0.15) {
+    Serial.println("- Excellent! ✓✓");
+  } else if (finalMag < 0.3) {
+    Serial.println("- Good ✓");
+  } else {
+    Serial.println("- Consider recalibrating for better accuracy ⚠");
+  }
+  
   Serial.println("================================");
   
   // Get and display calibration data
@@ -464,7 +548,9 @@ void testBNO055() {
   delay(500);
   
   Serial.println("\n>>> Live Sensor Data <<<");
+  Serial.println("Monitoring linear acceleration offset - should be < 0.15 m/s² when stationary");
   Serial.println("Press any key to return to menu\n");
+  Serial.println("--------------------------------------------------------------------");
   
   // Display live data until user presses a key
   while (Serial.available() == 0) {
@@ -472,10 +558,39 @@ void testBNO055() {
     bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
     bno.getEvent(&gravityData, Adafruit_BNO055::VECTOR_GRAVITY);
     
-    printEvent(&angVelocityData);
-    printEvent(&linearAccelData);
-    printEvent(&gravityData);
+    // Calculate linear acceleration magnitude
+    double x = linearAccelData.acceleration.x;
+    double y = linearAccelData.acceleration.y;
+    double z = linearAccelData.acceleration.z;
+    double mag = sqrt(x * x + y * y + z * z);
+    
+    // Display calibration status
     displayCalStatus();
+    Serial.print(" | ");
+    
+    // Display linear acceleration with alert
+    Serial.print("Linear: ");
+    Serial.print(mag, 3);
+    Serial.print(" m/s²");
+    
+    // Alert if magnitude exceeds threshold
+    if (mag > 0.4) {
+      Serial.print(" [⚠⚠ HIGH - Recalibrate!]");
+    } else if (mag > 0.2) {
+      Serial.print(" [⚠ Elevated          ]");
+    } else if (mag > 0.15) {
+      Serial.print(" [✓ Acceptable        ]");
+    } else {
+      Serial.print(" [✓✓ Excellent        ]");
+    }
+    
+    Serial.print(" | X:");
+    Serial.print(x, 3);
+    Serial.print(" Y:");
+    Serial.print(y, 3);
+    Serial.print(" Z:");
+    Serial.print(z, 3);
+    
     Serial.println();
     
     delay(BNO055_SAMPLERATE_DELAY_MS);
@@ -527,6 +642,45 @@ void displayCalStatus() {
   Serial.print(accel, DEC);
   Serial.print(" M:");
   Serial.print(mag, DEC);
+}
+
+// ==================== CLEAR EEPROM ====================
+void clearEEPROM() {
+  Serial.println("\n--- Clear EEPROM ---");
+  Serial.println();
+  Serial.println("*** WARNING ***");
+  Serial.println("This will erase ALL calibration data stored in EEPROM!");
+  Serial.println("After clearing, you will need to recalibrate the BNO055 sensor.");
+  Serial.println();
+  Serial.println("Are you sure you want to clear EEPROM?");
+  Serial.println("Type 'Y' to confirm or any other key to cancel:");
+  
+  // Wait for user input
+  while (Serial.available() == 0) {
+    delay(10);
+  }
+  
+  char response = Serial.read();
+  while (Serial.available() > 0) Serial.read(); // Clear buffer
+  
+  if (response == 'Y' || response == 'y') {
+    Serial.println("\nClearing EEPROM...");
+    
+    // Write zeros to entire EEPROM space
+    for (int i = 0; i < 512; i++) {
+      EEPROM.write(i, 0);
+    }
+    EEPROM.commit();
+    
+    Serial.println("✓ EEPROM cleared successfully!");
+    Serial.println();
+    Serial.println("All calibration data has been erased.");
+    Serial.println("Use option 3 to recalibrate the BNO055 sensor.");
+  } else {
+    Serial.println("\nOperation cancelled. EEPROM data preserved.");
+  }
+  
+  Serial.println("\nPress M for menu");
 }
 
 void displaySensorOffsets(const adafruit_bno055_offsets_t& calibData) {
