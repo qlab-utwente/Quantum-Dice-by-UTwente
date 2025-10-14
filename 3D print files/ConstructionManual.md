@@ -118,6 +118,21 @@ If a listed supplier is unavailable, equivalent alternatives can be used.
 
 ---
 
+#### Flat cable and wire set
+
+The following cables are required, as illustrated in the figure below:
+![alt text](../images/cablingSet.png)
+
+From left to right:
+
+- FFC flat cable (various lengths available) for connecting the displays to the ProcessorBoard
+- 4-wire power cable for connecting the PowerBoard to the ProcessorBoard
+- USB-C charging cable for connecting to the PowerBoard
+
+Detailed specifications and sourcing information are available in the BOM. UTwente can supply a complete cable set with the ProcessorBoard and PowerBoard
+
+---
+
 ## 4. Sourcing 3D-Printed Parts
 
 ### 4.1 Printing with TPU
