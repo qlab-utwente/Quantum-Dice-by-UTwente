@@ -10,6 +10,8 @@
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 
+sensors_event_t orientationData, angVelocityData, linearAccelData, magnetometerData, accelerometerData, gravityData;
+
 /**************************************************************************/
 /*
     Displays some basic information on this sensor from the unified
@@ -77,7 +79,7 @@ void displayCalStatus(void) {
   bno.getCalibration(&system, &gyro, &accel, &mag);
 
   /* The data should be ignored until the system calibration is > 0 */
-  Serial.print("\t");
+  //Serial.print("\t");
   if (!system) {
     Serial.print("! ");
   }
@@ -90,7 +92,7 @@ void displayCalStatus(void) {
   Serial.print(" A:");
   Serial.print(accel, DEC);
   Serial.print(" M:");
-  Serial.print(mag, DEC);
+  Serial.println(mag, DEC);
 }
 
 /**************************************************************************/
@@ -138,16 +140,16 @@ void displaySensorOffsets(const adafruit_bno055_offsets_t& calibData) {
 void performCalibration() {
   Serial.println("\n=== Starting Calibration Process ===");
 
-  // // Reset the sensor to clear existing calibration
-  // Serial.println("Resetting sensor to clear calibration...");
-  // if (!bno.begin()) {
-  //   Serial.println("ERROR: Failed to reinitialize sensor!");
-  //   return;
-  // }
+  // Reset the sensor to clear existing calibration
+  Serial.println("Resetting sensor to clear calibration...");
+  if (!bno.begin()) {
+    Serial.println("ERROR: Failed to reinitialize sensor!");
+    return;
+  }
 
-  // // Reconfigure the crystal setting
-  // bno.setExtCrystalUse(true);
-  // delay(1000);
+  // Reconfigure the crystal setting
+  bno.setExtCrystalUse(true);
+  delay(1000);
 
   // Serial.println("Sensor reset complete. Starting calibration...");
   Serial.println("Please Calibrate Sensor:");
@@ -160,14 +162,15 @@ void performCalibration() {
   sensor_t sensor;
 
   while (!bno.isFullyCalibrated()) {
-    bno.getEvent(&event);
-
-    Serial.print("X: ");
-    Serial.print(event.orientation.x, 4);
-    Serial.print("\tY: ");
-    Serial.print(event.orientation.y, 4);
-    Serial.print("\tZ: ");
-    Serial.print(event.orientation.z, 4);
+    bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
+    //bno.getEvent(&event);
+    printEvent(&linearAccelData);
+    // Serial.print("X: ");
+    // Serial.print(event.orientation.x, 4);
+    // Serial.print("\tY: ");
+    // Serial.print(event.orientation.y, 4);
+    // Serial.print("\tZ: ");
+    // Serial.print(event.orientation.z, 4);
 
     /* Display calibration status */
     displayCalStatus();
@@ -331,7 +334,7 @@ void loop() {
   }
 
   // Get sensor events
-  sensors_event_t orientationData, angVelocityData, linearAccelData, magnetometerData, accelerometerData, gravityData;
+  //sensors_event_t orientationData, angVelocityData, linearAccelData, magnetometerData, accelerometerData, gravityData;
   bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
   bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
   bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
@@ -339,11 +342,11 @@ void loop() {
   bno.getEvent(&accelerometerData, Adafruit_BNO055::VECTOR_ACCELEROMETER);
   bno.getEvent(&gravityData, Adafruit_BNO055::VECTOR_GRAVITY);
 
-  printEvent(&orientationData);
+  //printEvent(&orientationData);
   printEvent(&angVelocityData);
   printEvent(&linearAccelData);
-  printEvent(&magnetometerData);
-  printEvent(&accelerometerData);
+  //printEvent(&magnetometerData);
+  //printEvent(&accelerometerData);
   printEvent(&gravityData);
 
   /* Optional: Display calibration status */
