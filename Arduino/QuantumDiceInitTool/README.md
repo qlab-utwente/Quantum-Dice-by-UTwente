@@ -32,7 +32,7 @@ Select the following settings from the **Tools** menu:
 - **USB Mode**: USB-OTG (TinyUSB) or Hardware CDC and JTAG
 - **Flash Size**: 16MB (128Mb)
 - **PSRAM**: OPI PSRAM
-- **Partition Scheme**: Default (or choose based on your needs)
+- **Partition Scheme**: 16M Flash (3MB....)
 - **Upload Speed**: 921600 (or lower if you experience issues)
 
 ## First Upload - Blink Example
