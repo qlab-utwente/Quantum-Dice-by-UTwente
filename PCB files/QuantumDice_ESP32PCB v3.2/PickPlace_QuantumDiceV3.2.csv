@@ -1,0 +1,63 @@
+Altium Designer Pick and Place Locations
+C:\Users\Public\Documents\Altium\Quantum Dice\Project Outputs for Quantum Dice\Pick Place for PCB2.csv
+
+========================================================================================================================
+File Design Information:
+
+Date:       28/05/25
+Time:       09:26
+Revision:   d3d4beb86045d144f1106228454ae16ded83847a
+Variant:    No variations
+Units used: mm
+
+"Designator","Comment","Layer","Footprint","Center-X(mm)","Center-Y(mm)","Rotation","Description"
+"R10","10k","TopLayer","RESC2013X65N","21.9710","15.4940","180","Resistor"
+"U1","BNO055","TopLayer","FP-BNO055-MFG","39.5805","4.1967","270","IMU ACCEL/GYRO/MAG I2C 28LGA"
+"Y1","Q13MC1462000200","TopLayer","Q13MC1462000200-Footprint-1","31.9440","7.2965","180","Parallel - Fundamental Quartz Crystal, 0.032768MHz Nom"
+"R15","10k","TopLayer","RESC2013X65N","43.8150","5.7150","270","Resistor"
+"C14","100nF","TopLayer","CAPC2012X95N","43.8381","2.3895","90","Capacitor"
+"C13","100nF","TopLayer","CAPC2012X95N","30.8697","5.2136","180","Capacitor"
+"C12","CL10C220JB8NNNC","TopLayer","CAPC1608X90X30LL10T20","34.4552","9.2169","0","Chip Capacitor, 22 pF, +/- 5%, 50 V, -55 to 125 degC, 0603 (1608 Metric), RoHS, Tape and Reel"
+"R14","RC0603FR-07100RL","TopLayer","RESC1608X55N","46.2280","15.4940","90","Resistor"
+"LD1","NCD0603G1","TopLayer","NCD0603G1","47.7520","15.4940","270","LED"
+"R13","0R","TopLayer","RESC2013X65N","34.0360","39.6240","180","Resistor"
+"R1","0R","TopLayer","RESC2013X65N","1.5240","36.1950","270","Resistor"
+"C1","10uF","TopLayer","CAPC2012X145N","1.7780","43.8150","270","Capacitor 25v"
+"C2","100nF","TopLayer","CAPC2012X95N","1.7780","40.0050","270","Capacitor"
+"R11","10k","TopLayer","RESC2013X65N","35.1790","11.5570","0","Resistor"
+"R12","10k","TopLayer","RESC2013X65N","24.6380","33.0200","90","Resistor"
+"C11","100nF","TopLayer","CAPC2012X95N","48.1330","10.9220","270","Capacitor"
+"C10","CL10C220JB8NNNC","TopLayer","CAPC1608X90X30LL10T20","34.4170","5.7473","0","Chip Capacitor, 22 pF, +/- 5%, 50 V, -55 to 125 degC, 0603 (1608 Metric), RoHS, Tape and Reel"
+"R3","10k","TopLayer","RESC2013X65N","30.4519","1.5022","0","Resistor"
+"R4","10k","TopLayer","RESC2013X65N","30.4800","3.2672","0","Resistor"
+"S1","KEY-TH_4P-L6.0-W6.0-P4.50-LS6.5","BottomLayer","New_footprint_1","45.0101","44.9941","180",""
+"R2","10k","TopLayer","RESC2013X65N","44.9580","49.6570","0","Resistor"
+"J3","X+","TopLayer","AFC11S08ICC00","34.7300","25.5390","270","Connector"
+"J5","Y+","TopLayer","AFC11S08ICC00","40.2590","25.5270","270","Connector"
+"J2","Y-","TopLayer","AFC11S08ICC00","29.2780","25.5150","270","Connector"
+"J1","Z-","TopLayer","AFC11S08ICC00","37.4610","16.9590","0","Z-"
+"J7","Z+","TopLayer","AFC11S08ICC00","37.4650","34.1630","0","Connector"
+"J6","X-","TopLayer","AFC11S08ICC00","45.7790","25.5390","270","Connector"
+"IC3","ATECC608A-SSHDA-B","TopLayer","SOIC127P600X175-8N","43.4340","10.6680","270","Integrated Circuit"
+"J8","StandingXH2.54JST","TopLayer","New_footprint_1","32.2589","46.0211","0","Added 6-3-25"
+"R9","5.1K","TopLayer","RESC2013X65N","7.4930","9.7790","180","Resistor"
+"R8","5.1K","TopLayer","RESC2013X65N","18.6690","11.6840","0","Resistor"
+"D2","ESD5451N","TopLayer","ESD5451N","12.6233","12.0650","0","TVS Diode (Bi-directional)"
+"D4","ESD5451N","TopLayer","ESD5451N","15.5130","10.9220","0","TVS Diode (Bi-directional)"
+"D1","B5819WS","TopLayer","SOD2613X100N","15.8750","9.5250","180","Diode"
+"D3","ESD5451N","TopLayer","ESD5451N","9.5690","12.0650","180","TVS Diode (Bi-directional)"
+"C9","10uF","TopLayer","CAPC2012X145N","18.9230","8.5090","90","Capacitor 25v"
+"S3","TS-1101-C-W","TopLayer","TS1101CW","28.4480","35.8140","270","Switch"
+"S2","TS-1101-C-W","TopLayer","TS1101CW","45.8470","37.0840","90","Switch"
+"R7","10k","TopLayer","RESC2013X65N","33.0810","37.8679","0","Resistor"
+"R5","10k","TopLayer","RESC2013X65N","36.5760","37.7936","0","Resistor"
+"C5","100nF","TopLayer","CAPC2012X95N","24.6380","29.8450","270","Capacitor"
+"J4","USBC_RVE","TopLayer","New_footprint_1","11.0440","5.5457","0","Part made from JLCPCB library"
+"R6","10k","TopLayer","RESC2013X65N","40.1320","38.6080","90","Resistor"
+"IC1","ESP32-S3-WROOM-1-N8","TopLayer","ESP32S3WROOM1N8R2","13.1840","28.6880","0","Integrated Circuit"
+"IC4","AP2210K-3.3TRG1","TopLayer","SOT95P282X145-5N","22.8600","5.9690","90","Integrated Circuit"
+"C3","100nF","TopLayer","CAPC2012X95N","49.6570","40.0050","270","Capacitor"
+"C6","100pF","TopLayer","CAPC2012X75N","21.0820","2.9210","180","Capacitor"
+"C4","1uF","TopLayer","CAPC2012X135N","42.0370","38.6080","90","Capacitor 16V"
+"C7","1uF","TopLayer","CAPC2012X135N","24.6380","9.0170","180","Capacitor 16V"
+"C8","2.2uF","TopLayer","CAPC2012X135N","24.6380","2.9210","180","Capacitor"
