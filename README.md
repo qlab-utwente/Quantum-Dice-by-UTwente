@@ -2,7 +2,7 @@
 
 <img src="images/Quantum_Dice_Flyer.png" alt="flyer" width="600"/>
 
-This repo contains all files to build and assemble a Quantum Dice yourself including sourcing of parts
+In this repo you can find all relevant files, including assembly instructions, 3D printing files, and the parts list. Based on this information, you can build the Quantum Dice yourself.
 
 For further information see [Quantum Dice by University of Twente](ut.onl/quantumdice)
 
