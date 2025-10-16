@@ -3,7 +3,6 @@
 
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
-#include <EEPROM.h>
 
 #define LOWERBOUND 9.0  //g-values boundaries for axis detection
 #define UPPERBOUND 10.50

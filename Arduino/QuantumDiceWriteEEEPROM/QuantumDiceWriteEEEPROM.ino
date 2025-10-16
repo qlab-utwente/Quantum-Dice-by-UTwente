@@ -36,7 +36,6 @@ struct DiceConfig {
   uint8_t randomSwitchPoint;
   float tumbleConstant;
   uint32_t deepSleepTimeout;
-  uint8_t checksum;
 };
 
 // Default configuration from diceConfig.h DICE_SET_S000
@@ -56,12 +55,10 @@ const DiceConfig defaultConfig = {
   .alwaysSeven = false,
   .randomSwitchPoint = 50,
   .tumbleConstant = 0.2,
-  .deepSleepTimeout = 5 * 60 * 1000,  // 5 minutes
-  .checksum = 0  // Will be calculated
+  .deepSleepTimeout = 5 * 60 * 1000  // 5 minutes
 };
 
 // Function prototypes
-uint8_t calculateChecksum(const DiceConfig& config);
 bool validateConfig(const DiceConfig& config);
 void printConfig(const DiceConfig& config, const char* title);
 void writeDefaultConfig();
@@ -127,21 +124,6 @@ void loop() {
 }
 
 /**
- * Calculate checksum for configuration
- */
-uint8_t calculateChecksum(const DiceConfig& config) {
-  uint8_t checksum = 0;
-  const uint8_t* data = (const uint8_t*)&config;
-  size_t dataSize = sizeof(DiceConfig) - sizeof(config.checksum);
-  
-  for (size_t i = 0; i < dataSize; i++) {
-    checksum ^= data[i];
-  }
-  
-  return checksum;
-}
-
-/**
  * Validate configuration
  */
 bool validateConfig(const DiceConfig& config) {
@@ -160,14 +142,6 @@ bool validateConfig(const DiceConfig& config) {
   
   if (!validId) {
     Serial.println("  ✗ Invalid diceId format");
-    return false;
-  }
-  
-  // Validate checksum
-  uint8_t calculatedChecksum = calculateChecksum(config);
-  if (calculatedChecksum != config.checksum) {
-    Serial.printf("  ✗ Checksum mismatch (expected 0x%02X, got 0x%02X)\n", 
-                  config.checksum, calculatedChecksum);
     return false;
   }
   
@@ -250,7 +224,6 @@ void printConfig(const DiceConfig& config, const char* title) {
                 config.deepSleepTimeout, 
                 config.deepSleepTimeout / 60000.0);
   
-  Serial.printf("\nChecksum: 0x%02X\n", config.checksum);
   Serial.println("========================================\n");
 }
 
@@ -260,15 +233,25 @@ void printConfig(const DiceConfig& config, const char* title) {
 void writeDefaultConfig() {
   DiceConfig config = defaultConfig;
   
-  // Calculate and set checksum
-  config.checksum = calculateChecksum(config);
-  
   Serial.println("Writing configuration to EEPROM...");
   printConfig(config, "Configuration to Write");
   
-  // Write to EEPROM
-  EEPROM.put(EEPROM_CONFIG_ADDRESS, config);
-  EEPROM.commit();
+  // Write to EEPROM byte-by-byte for reliability
+  const uint8_t* data = (const uint8_t*)&config;
+  for (size_t i = 0; i < sizeof(DiceConfig); i++) {
+    EEPROM.write(EEPROM_CONFIG_ADDRESS + i, data[i]);
+  }
+  
+  // Commit to flash
+  if (EEPROM.commit()) {
+    Serial.println("✓ EEPROM commit successful");
+  } else {
+    Serial.println("✗ EEPROM commit failed!");
+    return;
+  }
+  
+  // Small delay to ensure write completes
+  delay(100);
   
   Serial.println("✓ Configuration written to EEPROM");
 }
