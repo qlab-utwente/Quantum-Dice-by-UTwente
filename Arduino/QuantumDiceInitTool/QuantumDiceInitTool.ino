@@ -353,7 +353,12 @@ void calibrateBNO055() {
   
   sensor_t sensor;
   bno.getSensor(&sensor);
-  
+
+  Serial.print("Current sensor ID: ");
+  Serial.println(sensor.sensor_id);
+  Serial.print("EEPROM stored ID: ");
+  Serial.println(bnoID);
+
   if (bnoID == sensor.sensor_id) {
     Serial.println("\n✓ Existing calibration data found in EEPROM!");
     

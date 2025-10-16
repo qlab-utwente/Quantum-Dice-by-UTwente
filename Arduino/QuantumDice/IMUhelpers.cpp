@@ -163,7 +163,7 @@ void BNO055IMUSensor::init() {
   Wire.begin();
   // Note: EEPROM is already initialized by initEEPROM() in handyHelpers
   // Don't call EEPROM.begin() here again
-  
+
   while (!_accGyro.begin()) {
     debugln("BNO device not detected at default I2C address");
     delay(100);
@@ -227,7 +227,25 @@ void BNO055IMUSensor::restoreCalibrationData() {
 
   // Get current sensor info
   sensor_t sensor;
-  _accGyro.getSensor(&sensor);
+  AccGyro.getSensor(&sensor);
+
+  Serial.println("------------------------------------");
+  Serial.print("Sensor:       ");
+  Serial.println(sensor.name);
+  Serial.print("Driver Ver:   ");
+  Serial.println(sensor.version);
+  Serial.print("Unique ID:    ");
+  Serial.println(sensor.sensor_id);
+  Serial.print("Max Value:    ");
+  Serial.print(sensor.max_value);
+  Serial.println(" xxx");
+  Serial.print("Min Value:    ");
+  Serial.print(sensor.min_value);
+  Serial.println(" xxx");
+  Serial.print("Resolution:   ");
+  Serial.print(sensor.resolution);
+  Serial.println(" xxx");
+  Serial.println("------------------------------------");
 
   debug("Current sensor ID: ");
   debugln(sensor.sensor_id);
@@ -250,7 +268,7 @@ void BNO055IMUSensor::restoreCalibrationData() {
     displaySensorOffsets(calibrationData);
 
     // Apply calibration data to sensor
-    _accGyro.setSensorOffsets(calibrationData);
+    AccGyro.setSensorOffsets(calibrationData);
 
     debugln("Calibration data restored successfully");
     foundCalib = true;

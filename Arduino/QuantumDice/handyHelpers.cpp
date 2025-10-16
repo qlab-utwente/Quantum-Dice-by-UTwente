@@ -169,21 +169,21 @@ void printEEPROMMemoryMap() {
   Serial.println("========================\n");
 }
 
-/**
- * Calculate simple checksum for configuration validation
- */
-uint8_t calculateChecksum(const DiceConfig& config) {
-  uint8_t checksum = 0;
-  const uint8_t* data = (const uint8_t*)&config;
-  // Calculate checksum over all bytes except the checksum field itself
-  size_t dataSize = sizeof(DiceConfig) - sizeof(config.checksum);
+// /**
+//  * Calculate simple checksum for configuration validation
+//  */
+// uint8_t calculateChecksum(const DiceConfig& config) {
+//   uint8_t checksum = 0;
+//   const uint8_t* data = (const uint8_t*)&config;
+//   // Calculate checksum over all bytes except the checksum field itself
+//   size_t dataSize = sizeof(DiceConfig) - sizeof(config.checksum);
   
-  for (size_t i = 0; i < dataSize; i++) {
-    checksum ^= data[i];
-  }
+//   for (size_t i = 0; i < dataSize; i++) {
+//     checksum ^= data[i];
+//   }
   
-  return checksum;
-}
+//   return checksum;
+// }
 
 /**
  * Validate configuration data
@@ -207,13 +207,13 @@ bool validateConfig(const DiceConfig& config) {
     return false;
   }
   
-  // Validate checksum
-  uint8_t calculatedChecksum = calculateChecksum(config);
-  if (calculatedChecksum != config.checksum) {
-    Serial.printf("ERROR: Checksum mismatch (expected 0x%02X, got 0x%02X)\n", 
-                  config.checksum, calculatedChecksum);
-    return false;
-  }
+  // // Validate checksum
+  // uint8_t calculatedChecksum = calculateChecksum(config);
+  // if (calculatedChecksum != config.checksum) {
+  //   Serial.printf("ERROR: Checksum mismatch (expected 0x%02X, got 0x%02X)\n", 
+  //                 config.checksum, calculatedChecksum);
+  //   return false;
+  // }
   
   // Validate RSSI limit is in reasonable range
   if (config.rssiLimit > 0 || config.rssiLimit < -100) {

@@ -60,7 +60,7 @@ extern HardwarePins hwPins;
 // EEPROM functions
 void initEEPROM();
 bool loadConfigFromEEPROM();
-uint8_t calculateChecksum(const DiceConfig& config);
+//uint8_t calculateChecksum(const DiceConfig& config);
 bool validateConfig(const DiceConfig& config);
 void printConfig(const DiceConfig& config);
 void printEEPROMMemoryMap();
