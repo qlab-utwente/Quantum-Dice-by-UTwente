@@ -283,7 +283,7 @@
         <h1>🎲 QuantumDice Software Flasher</h1>
         <p class="subtitle">Flash firmware to your ESP32 directly from your browser</p>
 
-        <div class="warning">
+        <div class="warning" id="browserWarning" style="display: none;">
             <strong>⚠️ Browser Compatibility:</strong> This tool requires Chrome, Edge, or Opera browser with WebSerial API support. Baudrate: 115200
         </div>
 
@@ -315,10 +315,13 @@
 
             <div id="releaseTab" class="tab-content">
                 <div class="warning" style="margin-bottom: 15px; font-size: 14px;">
-                    <strong>📋 Requirements:</strong><br>
-                    • Repository must be <strong>public</strong><br>
-                    • Must have at least one <strong>Release</strong> with .bin files<br>
-                    • Format: <code>username/repository</code> (e.g., ator1811/Quantum-Dice-by-UTwente)
+                    <strong>📋 How to use GitHub Releases:</strong><br>
+                    1. Enter your repository name below<br>
+                    2. Click "Fetch Releases" to see available versions<br>
+                    3. Select a release and .bin file<br>
+                    4. If download fails due to browser security, use the provided link to download manually<br>
+                    5. Then switch to "Local File" tab to upload<br><br>
+                    <strong>Note:</strong> Repository must be <strong>public</strong> with at least one Release containing .bin files
                 </div>
 
                 <div style="margin-bottom: 15px;">
@@ -406,6 +409,7 @@
 
         // Check WebSerial support
         if (!('serial' in navigator)) {
+            document.getElementById('browserWarning').style.display = 'block';
             alert('WebSerial API is not supported in this browser. Please use Chrome, Edge, or Opera.');
         }
 
@@ -543,14 +547,11 @@
                 logToTerminal(`\nDownloading: ${fileName}\n`);
                 logToTerminal(`URL: ${downloadUrl}\n`);
                 
-                // Fetch with proper headers for GitHub
+                // Use a more robust fetch approach for GitHub assets
                 const response = await fetch(downloadUrl, {
                     method: 'GET',
-                    headers: {
-                        'Accept': 'application/octet-stream'
-                    },
-                    mode: 'cors',
-                    cache: 'no-cache'
+                    redirect: 'follow',
+                    mode: 'cors'
                 });
                 
                 if (!response.ok) {
@@ -562,6 +563,7 @@
                 selectedFileName = fileName;
 
                 fileInfo.style.display = 'block';
+                fileInfo.style.background = '#f8f9fa';
                 fileInfo.innerHTML = `
                     <strong>✅ Downloaded from GitHub:</strong> ${fileName}<br>
                     <strong>Size:</strong> ${(arrayBuffer.byteLength / 1024).toFixed(2)} KB<br>
@@ -573,20 +575,21 @@
                 logToTerminal('Download complete!\n');
                 
             } catch (error) {
-                updateStatus(`Download failed: ${error.message}`, 'error');
-                logToTerminal(`ERROR: ${error.message}\n`);
+                updateStatus(`Download blocked by browser security`, 'error');
+                logToTerminal(`CORS Error: ${error.message}\n`);
                 console.error('Download error:', error);
                 
-                // Show helpful message
+                // Show helpful workaround
                 fileInfo.style.display = 'block';
                 fileInfo.style.background = '#fff3cd';
                 fileInfo.innerHTML = `
-                    <strong>⚠️ Download Failed</strong><br>
-                    <strong>Error:</strong> ${error.message}<br><br>
-                    <strong>Possible solutions:</strong><br>
-                    • Make sure the repository is <strong>public</strong><br>
-                    • Try using the <strong>Local File</strong> tab instead<br>
-                    • Download the file manually from: <a href="${downloadUrl}" target="_blank" style="color: #667eea; word-break: break-all;">GitHub Release</a>
+                    <strong>⚠️ Browser Security Restriction</strong><br>
+                    GitHub download was blocked by CORS policy.<br><br>
+                    <strong>Quick Fix:</strong><br>
+                    1. Click here to download: <a href="${downloadUrl}" download="${fileName}" target="_blank" style="color: #667eea; font-weight: bold;">${fileName}</a><br>
+                    2. Switch to <strong>"Local File"</strong> tab<br>
+                    3. Upload the downloaded file<br><br>
+                    <small style="color: #666;">This is a browser security limitation, not a bug in the tool.</small>
                 `;
                 
                 selectedFile = null;
