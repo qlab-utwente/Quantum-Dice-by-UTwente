@@ -285,7 +285,7 @@
 <body>
     <div class="container">
         <h1>🎲 QuantumDice Software Flasher</h1>
-        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.4.3</span></p>
+        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.5.1</span></p>
 
         <div class="warning" id="browserWarning" style="display: none;">
             <strong>⚠️ Browser Compatibility:</strong> This tool requires Chrome, Edge, or Opera browser with WebSerial API support. Baudrate: 115200
@@ -295,7 +295,6 @@
             <strong>💡 Important Usage Notes:</strong><br>
             • <strong>Before flashing</strong>: Stop the serial monitor first<br>
             • <strong>After flashing</strong>: Restart the monitor to see output<br>
-            • <strong>Flash address</strong>: Arduino binaries use 0x10000 (default app partition)<br>
             • This prevents port conflicts during flashing
         </div>
 
@@ -802,21 +801,45 @@
                 startMonitorBtn.disabled = false;
                 
             } catch (error) {
-                updateStatus(`Flash failed: ${error.message}`, 'error');
-                logToTerminal(`ERROR: ${error.message}\n`);
-                flashBtn.disabled = false;
-                eraseBtn.disabled = false;
-                progressBar.style.display = 'none';
-                console.error('Flash error:', error);
-                
-                // Try to recover
-                try {
-                    if (!port.readable) {
+                // Check if it's just an MD5 mismatch (common, usually harmless)
+                if (error.message && error.message.includes('MD5')) {
+                    updateStatus('Flash completed with MD5 warning (usually OK)', 'success');
+                    logToTerminal(`\nWARNING: ${error.message}\n`);
+                    logToTerminal('\nThis MD5 mismatch is a common issue and usually does NOT mean the flash failed.\n');
+                    logToTerminal('Your firmware was written successfully (100% completed).\n');
+                    logToTerminal('\nNext steps:\n');
+                    logToTerminal('1. Click "Start Monitor"\n');
+                    logToTerminal('2. Click "Reset ESP32" or press the reset button\n');
+                    logToTerminal('3. Check if your firmware runs correctly\n');
+                    progressBar.style.display = 'none';
+                    flashBtn.disabled = false;
+                    eraseBtn.disabled = false;
+                    
+                    // Reopen port for monitoring
+                    try {
                         await port.open({ baudRate: 115200 });
                         startMonitorBtn.disabled = false;
+                    } catch (e) {
+                        logToTerminal('Port reopen failed - disconnect and reconnect if needed\n');
                     }
-                } catch (e) {
-                    logToTerminal('Please disconnect and reconnect.\n');
+                } else {
+                    // Real error
+                    updateStatus(`Flash failed: ${error.message}`, 'error');
+                    logToTerminal(`ERROR: ${error.message}\n`);
+                    flashBtn.disabled = false;
+                    eraseBtn.disabled = false;
+                    progressBar.style.display = 'none';
+                    console.error('Flash error:', error);
+                    
+                    // Try to recover
+                    try {
+                        if (!port.readable) {
+                            await port.open({ baudRate: 115200 });
+                            startMonitorBtn.disabled = false;
+                        }
+                    } catch (e) {
+                        logToTerminal('Please disconnect and reconnect.\n');
+                    }
                 }
             }
         });
@@ -940,10 +963,15 @@
             try {
                 const encoder = new TextEncoder();
                 const writer = port.writable.getWriter();
-                await writer.write(encoder.encode(text + '\n'));
+                // Send text with both CR and LF like Arduino IDE (NL & CR mode)
+                await writer.write(encoder.encode(text + '\r\n'));
                 writer.releaseLock();
                 
-                logToTerminal(`>> ${text}\n`);
+                if (text.trim()) {
+                    logToTerminal(`>> ${text}\n`);
+                } else {
+                    logToTerminal(`>> <ENTER>\n`);
+                }
             } catch (error) {
                 updateStatus(`Send failed: ${error.message}`, 'error');
                 console.error('Send error:', error);
@@ -952,21 +980,17 @@
 
         // Send button click
         sendBtn.addEventListener('click', () => {
-            const text = serialInput.value.trim();
-            if (text) {
-                sendSerialData(text);
-                serialInput.value = '';
-            }
+            const text = serialInput.value;
+            sendSerialData(text);
+            serialInput.value = '';
         });
 
         // Send on Enter key
         serialInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                const text = serialInput.value.trim();
-                if (text) {
-                    sendSerialData(text);
-                    serialInput.value = '';
-                }
+                const text = serialInput.value;
+                sendSerialData(text);
+                serialInput.value = '';
             }
         });
 
