@@ -26,6 +26,11 @@
 #include <Adafruit_GC9A01A.h>  // For color constants
 #include <utility/imumaths.h>
 
+// ==================== LINACC STABLE VALUE LIMITS ====================
+#define UPPERLIMIT 0.5
+#define MEDIUMLIMIT 0.3
+#define LOWERLIMIT 0.15
+
 // ==================== EEPROM MEMORY LAYOUT ====================
 #define EEPROM_SIZE 512
 #define EEPROM_BNO_SENSOR_ID_ADDR 0
@@ -54,9 +59,9 @@ struct DiceConfig {
 
 // Default configuration
 const DiceConfig defaultConfig = {
-  .diceId = "TEST1",
-  .deviceA_mac = { 0xD0, 0xCF, 0x13, 0x36, 0x40, 0x88 },
-  .deviceB1_mac = { 0xD0, 0xCF, 0x13, 0x33, 0x58, 0x5C },
+  .diceId = "XXYYZ",
+  .deviceA_mac = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
+  .deviceB1_mac = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
   .deviceB2_mac = { 0xDC, 0xDA, 0x0C, 0x21, 0x02, 0x44 },
   .x_background = GC9A01A_BLACK,
   .y_background = GC9A01A_BLACK,
@@ -196,7 +201,7 @@ void displayMainMenu() {
   Serial.println("           MAIN MENU");
   Serial.println("========================================");
   Serial.println("1. Get MAC Address");
-  Serial.println("2. Configure ATECC508a (PERMANENT)");
+  Serial.println("2. Lock ATECC508a (PERMANENT)");
   Serial.println("3. Calibrate BNO055 Sensor");
   Serial.println("4. Test BNO055 Sensor (Live Data)");
   Serial.println("5. Clear EEPROM (Erase calibration)");
@@ -235,8 +240,7 @@ void getMacAddress() {
   }
   Serial.println(" };");
   Serial.println();
-  Serial.println("Copy the line above into diceConfig.h");
-  Serial.println("Replace X with A or B as needed");
+  Serial.println("Copy/past macAddress for further use.");
   
   // Turn off WiFi to save power
   WiFi.mode(WIFI_OFF);
@@ -511,11 +515,11 @@ void performCalibration() {
     Serial.print(" m/s² ");
     
     // Color-coded threshold indicators
-    if (mag > 0.5) {
+    if (mag > UPPERLIMIT) {
       Serial.print("[⚠⚠ HIGH OFFSET - Keep calibrating! ]");
-    } else if (mag > 0.3) {
+    } else if (mag > MEDIUMLIMIT) {
       Serial.print("[⚠ Moderate offset - Almost there  ]");
-    } else if (mag > 0.15) {
+    } else if (mag > LOWERLIMIT) {
       Serial.print("[✓ Good - Continue for best results]");
     } else {
       Serial.print("[✓✓ Excellent offset!              ]");
