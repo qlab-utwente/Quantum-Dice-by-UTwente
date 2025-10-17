@@ -55,8 +55,8 @@ struct DiceConfig {
 // Default configuration
 const DiceConfig defaultConfig = {
   .diceId = "TEST1",
-  .deviceA_mac = { 0xD0, 0xCF, 0x13, 0x36, 0x40, 0x88 },
-  .deviceB1_mac = { 0xD0, 0xCF, 0x13, 0x33, 0x58, 0x5C },
+  .deviceA_mac = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
+  .deviceB1_mac = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
   .deviceB2_mac = { 0xDC, 0xDA, 0x0C, 0x21, 0x02, 0x44 },
   .x_background = GC9A01A_BLACK,
   .y_background = GC9A01A_BLACK,
@@ -235,8 +235,6 @@ void getMacAddress() {
   }
   Serial.println(" };");
   Serial.println();
-  Serial.println("Copy the line above into diceConfig.h");
-  Serial.println("Replace X with A or B as needed");
   
   // Turn off WiFi to save power
   WiFi.mode(WIFI_OFF);
@@ -887,7 +885,7 @@ void configureEEPROMSettings() {
   
   // Dice ID
   Serial.println("----------------------------------------");
-  Serial.printf("Dice ID [%s]: ", displayDefaults.diceId);
+  Serial.printf("Dice ID (max 5 letters) [%s]: ", displayDefaults.diceId);
   String input = readSerialLine();
   if (input.length() > 0) {
     strncpy(newConfig.diceId, input.c_str(), 15);
