@@ -285,7 +285,7 @@
 <body>
     <div class="container">
         <h1>🎲 QuantumDice Software Flasher</h1>
-        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.2.1</span></p>
+        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.2.2</span></p>
 
         <div class="warning" id="browserWarning" style="display: none;">
             <strong>⚠️ Browser Compatibility:</strong> This tool requires Chrome, Edge, or Opera browser with WebSerial API support. Baudrate: 115200
@@ -387,6 +387,7 @@
         let selectedFileName = '';
         let esploader;
         let releases = [];
+        let currentReader = null; // Track the current reader
 
         const connectBtn = document.getElementById('connectBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
@@ -633,6 +634,20 @@
             try {
                 isReading = false;
                 
+                // Cancel and release the reader
+                if (currentReader) {
+                    try {
+                        await currentReader.cancel();
+                        currentReader.releaseLock();
+                        currentReader = null;
+                    } catch (e) {
+                        console.log('Reader already released');
+                    }
+                }
+                
+                // Wait a bit for cleanup
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
                 if (port) {
                     await port.close();
                 }
@@ -681,15 +696,26 @@
                 flashBtn.disabled = true;
                 progressBar.style.display = 'block';
 
-                // Stop reading and close the port first
-                logToTerminal('Closing serial monitor...\n');
+                // Stop reading first
+                logToTerminal('Stopping serial monitor...\n');
                 isReading = false;
                 
-                // Give time for reader to finish
-                await new Promise(resolve => setTimeout(resolve, 100));
+                // Cancel and release the reader if it exists
+                if (currentReader) {
+                    try {
+                        await currentReader.cancel();
+                        currentReader.releaseLock();
+                        currentReader = null;
+                    } catch (e) {
+                        console.log('Reader already released');
+                    }
+                }
+                
+                // Wait for reader to fully release
+                await new Promise(resolve => setTimeout(resolve, 200));
                 
                 // Close the current port connection
-                if (port) {
+                if (port.readable) {
                     await port.close();
                 }
                 
@@ -765,6 +791,7 @@
                 
                 // Restart serial monitoring
                 logToTerminal('Restarting serial monitor...\n');
+                await new Promise(resolve => setTimeout(resolve, 500));
                 startReading();
                 
             } catch (error) {
@@ -798,12 +825,24 @@
                 logToTerminal('\n=== Erasing Flash ===\n');
                 eraseBtn.disabled = true;
 
-                // Stop reading and close the port first
-                logToTerminal('Closing serial monitor...\n');
+                // Stop reading first
+                logToTerminal('Stopping serial monitor...\n');
                 isReading = false;
-                await new Promise(resolve => setTimeout(resolve, 100));
                 
-                if (port) {
+                // Cancel and release the reader
+                if (currentReader) {
+                    try {
+                        await currentReader.cancel();
+                        currentReader.releaseLock();
+                        currentReader = null;
+                    } catch (e) {
+                        console.log('Reader already released');
+                    }
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                if (port.readable) {
                     await port.close();
                 }
                 
@@ -832,6 +871,7 @@
                 eraseBtn.disabled = false;
                 
                 // Restart serial monitoring
+                await new Promise(resolve => setTimeout(resolve, 500));
                 startReading();
                 
             } catch (error) {
@@ -917,12 +957,12 @@
             isReading = true;
             try {
                 while (isReading && port.readable) {
-                    const reader = port.readable.getReader();
+                    currentReader = port.readable.getReader();
                     const decoder = new TextDecoder();
                     
                     try {
                         while (isReading) {
-                            const { value, done } = await reader.read();
+                            const { value, done } = await currentReader.read();
                             if (done) break;
                             
                             if (value) {
@@ -930,8 +970,17 @@
                                 logToTerminal(text);
                             }
                         }
+                    } catch (error) {
+                        if (error.name !== 'NetworkError' && isReading) {
+                            console.error('Read error:', error);
+                        }
                     } finally {
-                        reader.releaseLock();
+                        try {
+                            currentReader.releaseLock();
+                            currentReader = null;
+                        } catch (e) {
+                            // Already released
+                        }
                     }
                     
                     // If we exit the inner loop but still reading, wait a bit before retry
