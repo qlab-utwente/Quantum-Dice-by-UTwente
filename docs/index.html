@@ -314,9 +314,16 @@
             </div>
 
             <div id="releaseTab" class="tab-content">
+                <div class="warning" style="margin-bottom: 15px; font-size: 14px;">
+                    <strong>📋 Requirements:</strong><br>
+                    • Repository must be <strong>public</strong><br>
+                    • Must have at least one <strong>Release</strong> with .bin files<br>
+                    • Format: <code>username/repository</code> (e.g., ator1811/Quantum-Dice-by-UTwente)
+                </div>
+
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">GitHub Repository:</label>
-                    <input type="text" id="repoInput" placeholder="username/repository" 
+                    <input type="text" id="repoInput" placeholder="username/repository" value="ator1811/Quantum-Dice-by-UTwente"
                            style="width: 100%; padding: 10px; border: 2px solid #667eea; border-radius: 8px; font-size: 14px;">
                     <button id="fetchReleasesBtn" style="margin-top: 10px;">Fetch Releases</button>
                 </div>
@@ -434,16 +441,24 @@
             try {
                 fetchReleasesBtn.disabled = true;
                 fetchReleasesBtn.textContent = 'Fetching...';
+                logToTerminal(`\nFetching releases from: ${repo}\n`);
                 
                 const response = await fetch(`https://api.github.com/repos/${repo}/releases`);
+                
+                if (response.status === 404) {
+                    throw new Error('Repository not found. Make sure the repository is public and the name is correct.');
+                }
+                
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch releases: ${response.statusText}`);
+                    throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
                 }
                 
                 releases = await response.json();
                 
                 if (releases.length === 0) {
-                    alert('No releases found for this repository');
+                    updateStatus('No releases found. Create a release with .bin files first.', 'error');
+                    logToTerminal('No releases found in repository.\n');
+                    alert('No releases found.\n\nTo create a release:\n1. Go to your GitHub repo\n2. Click "Releases" → "Create a new release"\n3. Upload your .bin files\n4. Publish the release');
                     return;
                 }
 
@@ -452,16 +467,24 @@
                 releases.forEach((release, index) => {
                     const option = document.createElement('option');
                     option.value = index;
-                    option.textContent = `${release.tag_name} - ${release.name || 'Unnamed'}`;
+                    const releaseName = release.name || release.tag_name;
+                    option.textContent = `${release.tag_name}${release.name ? ' - ' + release.name : ''}`;
                     releaseSelect.appendChild(option);
                 });
 
                 releaseSelector.style.display = 'block';
-                updateStatus(`Found ${releases.length} releases`, 'success');
+                updateStatus(`Found ${releases.length} release(s)`, 'success');
+                logToTerminal(`Found ${releases.length} release(s)\n`);
                 
             } catch (error) {
-                updateStatus(`Error fetching releases: ${error.message}`, 'error');
+                updateStatus(`Error: ${error.message}`, 'error');
+                logToTerminal(`ERROR: ${error.message}\n`);
                 console.error('Fetch error:', error);
+                
+                // Show more helpful error info
+                if (error.message.includes('not found')) {
+                    alert('Repository not found!\n\nMake sure:\n• The repository name is correct\n• The repository is PUBLIC\n• Format: username/repository');
+                }
             } finally {
                 fetchReleasesBtn.disabled = false;
                 fetchReleasesBtn.textContent = 'Fetch Releases';
@@ -517,10 +540,21 @@
 
             try {
                 updateStatus('Downloading binary from GitHub...', 'info');
+                logToTerminal(`\nDownloading: ${fileName}\n`);
+                logToTerminal(`URL: ${downloadUrl}\n`);
                 
-                const response = await fetch(downloadUrl);
+                // Fetch with proper headers for GitHub
+                const response = await fetch(downloadUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/octet-stream'
+                    },
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                
                 if (!response.ok) {
-                    throw new Error(`Download failed: ${response.statusText}`);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
                 const arrayBuffer = await response.arrayBuffer();
@@ -529,19 +563,35 @@
 
                 fileInfo.style.display = 'block';
                 fileInfo.innerHTML = `
-                    <strong>Selected from GitHub:</strong> ${fileName}<br>
-                    <strong>Size:</strong> ${(fileSize / 1024).toFixed(2)} KB<br>
-                    <strong>Source:</strong> ${releaseSelect.options[releaseSelect.selectedIndex].textContent}
+                    <strong>✅ Downloaded from GitHub:</strong> ${fileName}<br>
+                    <strong>Size:</strong> ${(arrayBuffer.byteLength / 1024).toFixed(2)} KB<br>
+                    <strong>Release:</strong> ${releaseSelect.options[releaseSelect.selectedIndex].textContent}
                 `;
 
                 flashBtn.disabled = !port;
                 updateStatus('Binary downloaded successfully!', 'success');
+                logToTerminal('Download complete!\n');
                 
             } catch (error) {
                 updateStatus(`Download failed: ${error.message}`, 'error');
+                logToTerminal(`ERROR: ${error.message}\n`);
                 console.error('Download error:', error);
+                
+                // Show helpful message
+                fileInfo.style.display = 'block';
+                fileInfo.style.background = '#fff3cd';
+                fileInfo.innerHTML = `
+                    <strong>⚠️ Download Failed</strong><br>
+                    <strong>Error:</strong> ${error.message}<br><br>
+                    <strong>Possible solutions:</strong><br>
+                    • Make sure the repository is <strong>public</strong><br>
+                    • Try using the <strong>Local File</strong> tab instead<br>
+                    • Download the file manually from: <a href="${downloadUrl}" target="_blank" style="color: #667eea; word-break: break-all;">GitHub Release</a>
+                `;
+                
                 selectedFile = null;
                 selectedFileName = '';
+                flashBtn.disabled = true;
             }
         });
 
