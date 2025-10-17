@@ -285,7 +285,7 @@
 <body>
     <div class="container">
         <h1>🎲 QuantumDice Software Flasher</h1>
-        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.4.1</span></p>
+        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.4.2</span></p>
 
         <div class="warning" id="browserWarning" style="display: none;">
             <strong>⚠️ Browser Compatibility:</strong> This tool requires Chrome, Edge, or Opera browser with WebSerial API support. Baudrate: 115200
@@ -295,6 +295,7 @@
             <strong>💡 Important Usage Notes:</strong><br>
             • <strong>Before flashing</strong>: Stop the serial monitor first<br>
             • <strong>After flashing</strong>: Restart the monitor to see output<br>
+            • <strong>Flash address</strong>: Arduino binaries use 0x10000 (default app partition)<br>
             • This prevents port conflicts during flashing
         </div>
 
@@ -754,9 +755,12 @@
                     fileArray = new Uint8Array(arrayBuffer);
                 }
 
-                // Flash
+                // Flash - fileArray should be array of objects with data and address
                 const flashOptions = {
-                    fileArray: fileArray,
+                    fileArray: [{
+                        data: fileArray,
+                        address: 0x10000  // Standard Arduino app partition address
+                    }],
                     flashSize: 'keep',
                     flashMode: 'keep',
                     flashFreq: 'keep',
@@ -770,7 +774,7 @@
                 };
 
                 updateStatus('Flashing firmware...', 'info');
-                logToTerminal('Writing firmware to flash...\n');
+                logToTerminal('Writing firmware to flash at address 0x10000...\n');
                 
                 await esploader.writeFlash({
                     ...flashOptions,
