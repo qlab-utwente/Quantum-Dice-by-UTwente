@@ -285,7 +285,7 @@
 <body>
     <div class="container">
         <h1>🎲 QuantumDice Software Flasher</h1>
-        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.2.0</span></p>
+        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.2.1</span></p>
 
         <div class="warning" id="browserWarning" style="display: none;">
             <strong>⚠️ Browser Compatibility:</strong> This tool requires Chrome, Edge, or Opera browser with WebSerial API support. Baudrate: 115200
@@ -672,7 +672,7 @@
 
         // Flash firmware using esptool-js
         flashBtn.addEventListener('click', async () => {
-            if (!selectedFile || !transport) return;
+            if (!selectedFile || !port) return;
 
             try {
                 updateStatus('Preparing to flash...', 'info');
@@ -680,6 +680,25 @@
                 logToTerminal(`File: ${selectedFileName}\n`);
                 flashBtn.disabled = true;
                 progressBar.style.display = 'block';
+
+                // Stop reading and close the port first
+                logToTerminal('Closing serial monitor...\n');
+                isReading = false;
+                
+                // Give time for reader to finish
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Close the current port connection
+                if (port) {
+                    await port.close();
+                }
+                
+                // Reopen port for flashing
+                logToTerminal('Reopening port for flashing...\n');
+                await port.open({ baudRate: 115200 });
+                
+                // Create new transport for esptool
+                transport = new Transport(port, true);
 
                 // Import ESPLoader
                 const { ESPLoader } = await import('https://unpkg.com/esptool-js@0.4.3/bundle.js');
@@ -739,10 +758,14 @@
                     calculateMD5Hash: (image) => CryptoJS.MD5(CryptoJS.lib.WordArray.create(image)).toString()
                 });
 
-                updateStatus('Flash complete! You may need to reset your ESP32.', 'success');
+                updateStatus('Flash complete! Reconnecting serial monitor...', 'success');
                 logToTerminal('\n=== Flash Complete ===\n');
                 progressBar.style.display = 'none';
                 flashBtn.disabled = false;
+                
+                // Restart serial monitoring
+                logToTerminal('Restarting serial monitor...\n');
+                startReading();
                 
             } catch (error) {
                 updateStatus(`Flash failed: ${error.message}`, 'error');
@@ -750,6 +773,17 @@
                 flashBtn.disabled = false;
                 progressBar.style.display = 'none';
                 console.error('Flash error:', error);
+                
+                // Try to restart serial monitoring even after error
+                try {
+                    if (port && !port.readable) {
+                        await port.open({ baudRate: 115200 });
+                        transport = new Transport(port, true);
+                        startReading();
+                    }
+                } catch (reopenError) {
+                    logToTerminal('Could not reopen serial monitor. Please disconnect and reconnect.\n');
+                }
             }
         });
 
@@ -763,6 +797,20 @@
                 updateStatus('Erasing flash...', 'info');
                 logToTerminal('\n=== Erasing Flash ===\n');
                 eraseBtn.disabled = true;
+
+                // Stop reading and close the port first
+                logToTerminal('Closing serial monitor...\n');
+                isReading = false;
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                if (port) {
+                    await port.close();
+                }
+                
+                // Reopen port for erasing
+                logToTerminal('Reopening port for erase operation...\n');
+                await port.open({ baudRate: 115200 });
+                transport = new Transport(port, true);
 
                 if (!esploader) {
                     const { ESPLoader } = await import('https://unpkg.com/esptool-js@0.4.3/bundle.js');
@@ -779,14 +827,28 @@
                 }
 
                 await esploader.eraseFlash();
-                updateStatus('Flash erased successfully', 'success');
+                updateStatus('Flash erased successfully. Reconnecting serial monitor...', 'success');
                 logToTerminal('=== Erase Complete ===\n');
                 eraseBtn.disabled = false;
+                
+                // Restart serial monitoring
+                startReading();
                 
             } catch (error) {
                 updateStatus(`Erase failed: ${error.message}`, 'error');
                 logToTerminal(`ERROR: ${error.message}\n`);
                 eraseBtn.disabled = false;
+                
+                // Try to restart serial monitoring
+                try {
+                    if (port && !port.readable) {
+                        await port.open({ baudRate: 115200 });
+                        transport = new Transport(port, true);
+                        startReading();
+                    }
+                } catch (reopenError) {
+                    logToTerminal('Could not reopen serial monitor. Please disconnect and reconnect.\n');
+                }
             }
         });
 
@@ -850,24 +912,37 @@
 
         // Read serial data
         async function startReading() {
+            if (isReading) return; // Already reading
+            
             isReading = true;
             try {
-                const reader = port.readable.getReader();
-                const decoder = new TextDecoder();
-                
                 while (isReading && port.readable) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
+                    const reader = port.readable.getReader();
+                    const decoder = new TextDecoder();
                     
-                    if (value) {
-                        const text = decoder.decode(value);
-                        logToTerminal(text);
+                    try {
+                        while (isReading) {
+                            const { value, done } = await reader.read();
+                            if (done) break;
+                            
+                            if (value) {
+                                const text = decoder.decode(value);
+                                logToTerminal(text);
+                            }
+                        }
+                    } finally {
+                        reader.releaseLock();
+                    }
+                    
+                    // If we exit the inner loop but still reading, wait a bit before retry
+                    if (isReading) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
                     }
                 }
-                reader.releaseLock();
             } catch (error) {
                 if (error.name !== 'NetworkError' && isReading) {
                     console.error('Read error:', error);
+                    logToTerminal(`\nSerial read error: ${error.message}\n`);
                 }
             }
         }
