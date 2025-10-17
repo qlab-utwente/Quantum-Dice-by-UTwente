@@ -285,7 +285,7 @@
 <body>
     <div class="container">
         <h1>🎲 QuantumDice Software Flasher</h1>
-        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.4.2</span></p>
+        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.4.3</span></p>
 
         <div class="warning" id="browserWarning" style="display: none;">
             <strong>⚠️ Browser Compatibility:</strong> This tool requires Chrome, Edge, or Opera browser with WebSerial API support. Baudrate: 115200
@@ -746,19 +746,25 @@
                 const chip = await esploader.main();
                 logToTerminal(`Connected to ${chip}\n`);
 
-                // Read file
-                let fileArray;
+                // Read file and convert to proper format
+                let fileData;
                 if (selectedFile instanceof Uint8Array) {
-                    fileArray = selectedFile;
+                    fileData = selectedFile;
                 } else {
                     const arrayBuffer = await selectedFile.arrayBuffer();
-                    fileArray = new Uint8Array(arrayBuffer);
+                    fileData = new Uint8Array(arrayBuffer);
+                }
+
+                // Convert Uint8Array to string for esptool-js
+                let binaryString = '';
+                for (let i = 0; i < fileData.length; i++) {
+                    binaryString += String.fromCharCode(fileData[i]);
                 }
 
                 // Flash - fileArray should be array of objects with data and address
                 const flashOptions = {
                     fileArray: [{
-                        data: fileArray,
+                        data: binaryString,
                         address: 0x10000  // Standard Arduino app partition address
                     }],
                     flashSize: 'keep',
