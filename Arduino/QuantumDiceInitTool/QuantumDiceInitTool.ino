@@ -26,11 +26,6 @@
 #include <Adafruit_GC9A01A.h>  // For color constants
 #include <utility/imumaths.h>
 
-// ==================== LINACC STABLE VALUE LIMITS ====================
-#define UPPERLIMIT 0.5
-#define MEDIUMLIMIT 0.3
-#define LOWERLIMIT 0.15
-
 // ==================== EEPROM MEMORY LAYOUT ====================
 #define EEPROM_SIZE 512
 #define EEPROM_BNO_SENSOR_ID_ADDR 0
@@ -59,9 +54,9 @@ struct DiceConfig {
 
 // Default configuration
 const DiceConfig defaultConfig = {
-  .diceId = "XXYYZ",
-  .deviceA_mac = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
-  .deviceB1_mac = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
+  .diceId = "TEST1",
+  .deviceA_mac = { 0xD0, 0xCF, 0x13, 0x36, 0x40, 0x88 },
+  .deviceB1_mac = { 0xD0, 0xCF, 0x13, 0x33, 0x58, 0x5C },
   .deviceB2_mac = { 0xDC, 0xDA, 0x0C, 0x21, 0x02, 0x44 },
   .x_background = GC9A01A_BLACK,
   .y_background = GC9A01A_BLACK,
@@ -201,7 +196,7 @@ void displayMainMenu() {
   Serial.println("           MAIN MENU");
   Serial.println("========================================");
   Serial.println("1. Get MAC Address");
-  Serial.println("2. Lock ATECC508a (PERMANENT)");
+  Serial.println("2. Configure ATECC508a (PERMANENT)");
   Serial.println("3. Calibrate BNO055 Sensor");
   Serial.println("4. Test BNO055 Sensor (Live Data)");
   Serial.println("5. Clear EEPROM (Erase calibration)");
@@ -240,7 +235,8 @@ void getMacAddress() {
   }
   Serial.println(" };");
   Serial.println();
-  Serial.println("Copy/past macAddress for further use.");
+  Serial.println("Copy the line above into diceConfig.h");
+  Serial.println("Replace X with A or B as needed");
   
   // Turn off WiFi to save power
   WiFi.mode(WIFI_OFF);
@@ -515,11 +511,11 @@ void performCalibration() {
     Serial.print(" m/s² ");
     
     // Color-coded threshold indicators
-    if (mag > UPPERLIMIT) {
+    if (mag > 0.5) {
       Serial.print("[⚠⚠ HIGH OFFSET - Keep calibrating! ]");
-    } else if (mag > MEDIUMLIMIT) {
+    } else if (mag > 0.3) {
       Serial.print("[⚠ Moderate offset - Almost there  ]");
-    } else if (mag > LOWERLIMIT) {
+    } else if (mag > 0.15) {
       Serial.print("[✓ Good - Continue for best results]");
     } else {
       Serial.print("[✓✓ Excellent offset!              ]");
@@ -844,7 +840,18 @@ void configureEEPROMSettings() {
     
     while (Serial.available() == 0) delay(10);
     char response = Serial.read();
-    while (Serial.available() > 0) Serial.read();
+    
+    // Consume any trailing newlines
+    delay(50);
+    while (Serial.available() > 0) {
+      char c = Serial.peek();
+      if (c == '\n' || c == '\r') {
+        Serial.read();
+      } else {
+        break;
+      }
+    }
+    
     Serial.println(response);
     
     if (response != 'Y' && response != 'y') {
@@ -857,8 +864,21 @@ void configureEEPROMSettings() {
     Serial.println("Let's configure your device!\n");
   }
   
-  // Create new configuration starting with defaults
-  DiceConfig newConfig = defaultConfig;
+  // Create new configuration starting with appropriate defaults
+  DiceConfig newConfig;
+  DiceConfig displayDefaults;
+  
+  if (hasExisting) {
+    // Use existing config as the base
+    newConfig = existingConfig;
+    displayDefaults = existingConfig;
+    Serial.println("\nEditing existing configuration...");
+  } else {
+    // Use hardcoded defaults
+    newConfig = defaultConfig;
+    displayDefaults = defaultConfig;
+    Serial.println("\nCreating new configuration...");
+  }
   
   Serial.println("\n========================================");
   Serial.println("  Interactive Configuration");
@@ -867,7 +887,7 @@ void configureEEPROMSettings() {
   
   // Dice ID
   Serial.println("----------------------------------------");
-  Serial.printf("Dice ID [%s]: ", defaultConfig.diceId);
+  Serial.printf("Dice ID [%s]: ", displayDefaults.diceId);
   String input = readSerialLine();
   if (input.length() > 0) {
     strncpy(newConfig.diceId, input.c_str(), 15);
@@ -878,79 +898,73 @@ void configureEEPROMSettings() {
   Serial.println("\n----------------------------------------");
   Serial.print("Device A MAC [");
   for (int i = 0; i < 6; i++) {
-    Serial.printf("%02X", defaultConfig.deviceA_mac[i]);
+    Serial.printf("%02X", displayDefaults.deviceA_mac[i]);
     if (i < 5) Serial.print(":");
   }
   Serial.println("]");
   Serial.println("Enter MAC (format: AA:BB:CC:DD:EE:FF) or press ENTER:");
-  if (readMacFromSerial(newConfig.deviceA_mac)) {
-    // MAC was entered and validated
-  } else {
-    // Keep default
-    memcpy(newConfig.deviceA_mac, defaultConfig.deviceA_mac, 6);
+  if (!readMacFromSerial(newConfig.deviceA_mac)) {
+    // Keep current/default
+    memcpy(newConfig.deviceA_mac, displayDefaults.deviceA_mac, 6);
   }
   
   // Device B1 MAC
   Serial.println("\n----------------------------------------");
   Serial.print("Device B1 MAC [");
   for (int i = 0; i < 6; i++) {
-    Serial.printf("%02X", defaultConfig.deviceB1_mac[i]);
+    Serial.printf("%02X", displayDefaults.deviceB1_mac[i]);
     if (i < 5) Serial.print(":");
   }
   Serial.println("]");
   Serial.println("Enter MAC (format: AA:BB:CC:DD:EE:FF) or press ENTER:");
-  if (readMacFromSerial(newConfig.deviceB1_mac)) {
-    // MAC was entered
-  } else {
-    memcpy(newConfig.deviceB1_mac, defaultConfig.deviceB1_mac, 6);
+  if (!readMacFromSerial(newConfig.deviceB1_mac)) {
+    memcpy(newConfig.deviceB1_mac, displayDefaults.deviceB1_mac, 6);
   }
   
   // Device B2 MAC
   Serial.println("\n----------------------------------------");
   Serial.print("Device B2 MAC [");
   for (int i = 0; i < 6; i++) {
-    Serial.printf("%02X", defaultConfig.deviceB2_mac[i]);
+    Serial.printf("%02X", displayDefaults.deviceB2_mac[i]);
     if (i < 5) Serial.print(":");
   }
   Serial.println("]");
   Serial.println("Enter MAC (format: AA:BB:CC:DD:EE:FF) or press ENTER:");
-  if (readMacFromSerial(newConfig.deviceB2_mac)) {
-    // MAC was entered
-  } else {
-    memcpy(newConfig.deviceB2_mac, defaultConfig.deviceB2_mac, 6);
+  if (!readMacFromSerial(newConfig.deviceB2_mac)) {
+    memcpy(newConfig.deviceB2_mac, displayDefaults.deviceB2_mac, 6);
   }
   
   // X Background Color
   Serial.println("\n----------------------------------------");
-  Serial.printf("X Background Color [0x%04X]: ", defaultConfig.x_background);
+  Serial.printf("X Background Color [0x%04X]: ", displayDefaults.x_background);
   input = readSerialLine();
   if (input.length() > 0) {
     newConfig.x_background = strtoul(input.c_str(), NULL, 16);
   }
   
   // Y Background Color
-  Serial.printf("Y Background Color [0x%04X]: ", defaultConfig.y_background);
+  Serial.printf("Y Background Color [0x%04X]: ", displayDefaults.y_background);
   input = readSerialLine();
   if (input.length() > 0) {
     newConfig.y_background = strtoul(input.c_str(), NULL, 16);
   }
   
   // Z Background Color
-  Serial.printf("Z Background Color [0x%04X]: ", defaultConfig.z_background);
+  Serial.printf("Z Background Color [0x%04X]: ", displayDefaults.z_background);
   input = readSerialLine();
   if (input.length() > 0) {
     newConfig.z_background = strtoul(input.c_str(), NULL, 16);
   }
   
   // Entanglement AB1 Color
-  Serial.printf("Entanglement AB1 Color [0x%04X]: ", defaultConfig.entang_ab1_color);
+  Serial.printf("Entanglement AB1 Color [0x%04X]: ", displayDefaults.entang_ab1_color);
   input = readSerialLine();
   if (input.length() > 0) {
     newConfig.entang_ab1_color = strtoul(input.c_str(), NULL, 16);
   }
   
   // Entanglement AB2 Color
-  Serial.printf("Entanglement AB2 Color [0x%04X]: ", defaultConfig.entang_ab2_color);
+  Serial.printf("Entanglement AB2 Color [0x%04X]: ", displayDefaults.entang_ab2_color);
   input = readSerialLine();
   if (input.length() > 0) {
     newConfig.entang_ab2_color = strtoul(input.c_str(), NULL, 16);
@@ -958,7 +972,7 @@ void configureEEPROMSettings() {
   
   // RSSI Limit
   Serial.println("\n----------------------------------------");
-  Serial.printf("RSSI Limit in dBm [%d]: ", defaultConfig.rssiLimit);
+  Serial.printf("RSSI Limit in dBm [%d]: ", displayDefaults.rssiLimit);
   input = readSerialLine();
   if (input.length() > 0) {
     newConfig.rssiLimit = input.toInt();
@@ -966,14 +980,14 @@ void configureEEPROMSettings() {
   
   // Board Type
   Serial.println("\n----------------------------------------");
-  Serial.printf("Is NANO board? (Y/N) [%s]: ", defaultConfig.isNano ? "Y" : "N");
+  Serial.printf("Is NANO board? (Y/N) [%s]: ", displayDefaults.isNano ? "Y" : "N");
   input = readSerialLine();
   if (input.length() > 0) {
     newConfig.isNano = (input[0] == 'Y' || input[0] == 'y');
   }
   
   // Screen Type
-  Serial.printf("Is SMD screen? (Y/N) [%s]: ", defaultConfig.isSMD ? "Y" : "N");
+  Serial.printf("Is SMD screen? (Y/N) [%s]: ", displayDefaults.isSMD ? "Y" : "N");
   input = readSerialLine();
   if (input.length() > 0) {
     newConfig.isSMD = (input[0] == 'Y' || input[0] == 'y');
@@ -981,21 +995,21 @@ void configureEEPROMSettings() {
   
   // Always Seven
   Serial.println("\n----------------------------------------");
-  Serial.printf("Always Seven mode? (Y/N) [%s]: ", defaultConfig.alwaysSeven ? "Y" : "N");
+  Serial.printf("Always Seven mode? (Y/N) [%s]: ", displayDefaults.alwaysSeven ? "Y" : "N");
   input = readSerialLine();
   if (input.length() > 0) {
     newConfig.alwaysSeven = (input[0] == 'Y' || input[0] == 'y');
   }
   
   // Random Switch Point
-  Serial.printf("Random Switch Point (0-100) [%d]: ", defaultConfig.randomSwitchPoint);
+  Serial.printf("Random Switch Point (0-100) [%d]: ", displayDefaults.randomSwitchPoint);
   input = readSerialLine();
   if (input.length() > 0) {
     newConfig.randomSwitchPoint = input.toInt();
   }
   
   // Tumble Constant
-  Serial.printf("Tumble Constant [%.2f]: ", defaultConfig.tumbleConstant);
+  Serial.printf("Tumble Constant [%.2f]: ", displayDefaults.tumbleConstant);
   input = readSerialLine();
   if (input.length() > 0) {
     newConfig.tumbleConstant = input.toFloat();
@@ -1003,7 +1017,7 @@ void configureEEPROMSettings() {
   
   // Deep Sleep Timeout
   Serial.println("\n----------------------------------------");
-  Serial.printf("Deep Sleep Timeout in seconds [%d]: ", defaultConfig.deepSleepTimeout / 1000);
+  Serial.printf("Deep Sleep Timeout in seconds [%d]: ", displayDefaults.deepSleepTimeout / 1000);
   input = readSerialLine();
   if (input.length() > 0) {
     newConfig.deepSleepTimeout = input.toInt() * 1000;
@@ -1020,7 +1034,17 @@ void configureEEPROMSettings() {
   
   while (Serial.available() == 0) delay(10);
   char response = Serial.read();
-  while (Serial.available() > 0) Serial.read();
+  
+  // Consume any trailing newlines
+  delay(50);
+  while (Serial.available() > 0) {
+    char c = Serial.peek();
+    if (c == '\n' || c == '\r') {
+      Serial.read();
+    } else {
+      break;
+    }
+  }
   
   if (response == 'Y' || response == 'y') {
     // Validate before writing
@@ -1052,6 +1076,7 @@ void configureEEPROMSettings() {
 String readSerialLine() {
   String input = "";
   unsigned long startTime = millis();
+  bool gotNewline = false;
   
   // Wait for input with 30 second timeout
   while (millis() - startTime < 30000) {
@@ -1060,12 +1085,25 @@ String readSerialLine() {
       
       if (c == '\n' || c == '\r') {
         if (input.length() > 0) {
+          gotNewline = true;
           break;
-        }
-        // If just newline with no input, return empty string (accept default)
-        delay(50);
-        if (Serial.available() == 0) {
-          return "";
+        } else {
+          // Empty input - just newline pressed
+          gotNewline = true;
+          // Continue reading briefly to consume any paired \r\n or \n\r
+          unsigned long newlineTime = millis();
+          while (millis() - newlineTime < 50) {
+            if (Serial.available() > 0) {
+              char nc = Serial.peek();
+              if (nc == '\n' || nc == '\r') {
+                Serial.read(); // Consume it
+              } else {
+                break;
+              }
+            }
+            delay(5);
+          }
+          break;
         }
       } else if (c >= 32 && c <= 126) {  // Printable characters
         input += c;
@@ -1073,6 +1111,19 @@ String readSerialLine() {
       }
     }
     delay(10);
+  }
+  
+  // If we got a newline, consume any remaining newline characters
+  if (gotNewline) {
+    delay(50);  // Wait for any trailing newlines
+    while (Serial.available() > 0) {
+      char c = Serial.peek();
+      if (c == '\n' || c == '\r') {
+        Serial.read();
+      } else {
+        break;
+      }
+    }
   }
   
   Serial.println();  // Newline after input
