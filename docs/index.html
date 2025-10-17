@@ -285,7 +285,7 @@
 <body>
     <div class="container">
         <h1>🎲 QuantumDice Software Flasher</h1>
-        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.4.0</span></p>
+        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.4.1</span></p>
 
         <div class="warning" id="browserWarning" style="display: none;">
             <strong>⚠️ Browser Compatibility:</strong> This tool requires Chrome, Edge, or Opera browser with WebSerial API support. Baudrate: 115200
@@ -387,6 +387,10 @@
     </div>
 
     <script type="module">
+        // Add Buffer polyfill for browser
+        import { Buffer } from 'https://cdn.jsdelivr.net/npm/buffer@6.0.3/+esm';
+        window.Buffer = Buffer;
+        
         import { Transport, ESPLoader } from 'https://unpkg.com/esptool-js@0.4.3/bundle.js';
 
         let port;
