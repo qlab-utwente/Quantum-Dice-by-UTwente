@@ -285,7 +285,7 @@
 <body>
     <div class="container">
         <h1>🎲 QuantumDice Software Flasher</h1>
-        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.2.2</span></p>
+        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.3.0</span></p>
 
         <div class="warning" id="browserWarning" style="display: none;">
             <strong>⚠️ Browser Compatibility:</strong> This tool requires Chrome, Edge, or Opera browser with WebSerial API support. Baudrate: 115200
@@ -365,6 +365,8 @@
         <div class="section">
             <h2>3. Serial Monitor <span class="badge">115200 baud</span></h2>
             <div class="button-group">
+                <button id="startMonitorBtn" disabled>Start Monitor</button>
+                <button id="stopMonitorBtn" disabled>Stop Monitor</button>
                 <button id="clearBtn">Clear Output</button>
                 <button id="resetBtn" disabled>Reset ESP32</button>
             </div>
@@ -396,6 +398,8 @@
         const resetBtn = document.getElementById('resetBtn');
         const clearBtn = document.getElementById('clearBtn');
         const sendBtn = document.getElementById('sendBtn');
+        const startMonitorBtn = document.getElementById('startMonitorBtn');
+        const stopMonitorBtn = document.getElementById('stopMonitorBtn');
         const fileInput = document.getElementById('fileInput');
         const serialInput = document.getElementById('serialInput');
         const terminal = document.getElementById('terminal');
@@ -621,7 +625,10 @@
                 resetBtn.disabled = false;
                 sendBtn.disabled = false;
                 serialInput.disabled = false;
+                startMonitorBtn.disabled = false;
+                stopMonitorBtn.disabled = true;
 
+                // Auto-start monitoring
                 startReading();
             } catch (error) {
                 updateStatus(`Connection failed: ${error.message}`, 'error');
@@ -662,6 +669,8 @@
                 resetBtn.disabled = true;
                 sendBtn.disabled = true;
                 serialInput.disabled = true;
+                startMonitorBtn.disabled = true;
+                stopMonitorBtn.disabled = true;
                 
                 transport = null;
                 port = null;
@@ -689,6 +698,8 @@
         flashBtn.addEventListener('click', async () => {
             if (!selectedFile || !port) return;
 
+            const wasMonitoring = isReading;
+
             try {
                 updateStatus('Preparing to flash...', 'info');
                 logToTerminal('\n=== Starting Flash Process ===\n');
@@ -696,35 +707,29 @@
                 flashBtn.disabled = true;
                 progressBar.style.display = 'block';
 
-                // Stop reading first
-                logToTerminal('Stopping serial monitor...\n');
-                isReading = false;
-                
-                // Cancel and release the reader if it exists
-                if (currentReader) {
-                    try {
-                        await currentReader.cancel();
-                        currentReader.releaseLock();
-                        currentReader = null;
-                    } catch (e) {
-                        console.log('Reader already released');
+                // Stop serial monitor if running
+                if (isReading) {
+                    logToTerminal('Stopping serial monitor...\n');
+                    isReading = false;
+                    
+                    if (currentReader) {
+                        try {
+                            await currentReader.cancel();
+                            currentReader.releaseLock();
+                            currentReader = null;
+                        } catch (e) {
+                            console.log('Reader already released');
+                        }
                     }
+                    
+                    // Wait for reader to fully stop
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    startMonitorBtn.disabled = false;
+                    stopMonitorBtn.disabled = true;
                 }
-                
-                // Wait for reader to fully release
-                await new Promise(resolve => setTimeout(resolve, 200));
-                
-                // Close the current port connection
-                if (port.readable) {
-                    await port.close();
-                }
-                
-                // Reopen port for flashing
-                logToTerminal('Reopening port for flashing...\n');
-                await port.open({ baudRate: 115200 });
-                
-                // Create new transport for esptool
-                transport = new Transport(port, true);
+
+                // Use existing port and transport - no need to close/reopen
+                logToTerminal('Initializing flasher...\n');
 
                 // Import ESPLoader
                 const { ESPLoader } = await import('https://unpkg.com/esptool-js@0.4.3/bundle.js');
@@ -784,15 +789,19 @@
                     calculateMD5Hash: (image) => CryptoJS.MD5(CryptoJS.lib.WordArray.create(image)).toString()
                 });
 
-                updateStatus('Flash complete! Reconnecting serial monitor...', 'success');
+                updateStatus('Flash complete!', 'success');
                 logToTerminal('\n=== Flash Complete ===\n');
                 progressBar.style.display = 'none';
                 flashBtn.disabled = false;
                 
-                // Restart serial monitoring
-                logToTerminal('Restarting serial monitor...\n');
-                await new Promise(resolve => setTimeout(resolve, 500));
-                startReading();
+                // Restart serial monitor if it was running
+                if (wasMonitoring) {
+                    logToTerminal('Restarting serial monitor...\n');
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    startReading();
+                    startMonitorBtn.disabled = true;
+                    stopMonitorBtn.disabled = false;
+                }
                 
             } catch (error) {
                 updateStatus(`Flash failed: ${error.message}`, 'error');
@@ -800,17 +809,6 @@
                 flashBtn.disabled = false;
                 progressBar.style.display = 'none';
                 console.error('Flash error:', error);
-                
-                // Try to restart serial monitoring even after error
-                try {
-                    if (port && !port.readable) {
-                        await port.open({ baudRate: 115200 });
-                        transport = new Transport(port, true);
-                        startReading();
-                    }
-                } catch (reopenError) {
-                    logToTerminal('Could not reopen serial monitor. Please disconnect and reconnect.\n');
-                }
             }
         });
 
@@ -820,36 +818,32 @@
                 return;
             }
             
+            const wasMonitoring = isReading;
+            
             try {
                 updateStatus('Erasing flash...', 'info');
                 logToTerminal('\n=== Erasing Flash ===\n');
                 eraseBtn.disabled = true;
 
-                // Stop reading first
-                logToTerminal('Stopping serial monitor...\n');
-                isReading = false;
-                
-                // Cancel and release the reader
-                if (currentReader) {
-                    try {
-                        await currentReader.cancel();
-                        currentReader.releaseLock();
-                        currentReader = null;
-                    } catch (e) {
-                        console.log('Reader already released');
+                // Stop serial monitor if running
+                if (isReading) {
+                    logToTerminal('Stopping serial monitor...\n');
+                    isReading = false;
+                    
+                    if (currentReader) {
+                        try {
+                            await currentReader.cancel();
+                            currentReader.releaseLock();
+                            currentReader = null;
+                        } catch (e) {
+                            console.log('Reader already released');
+                        }
                     }
+                    
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    startMonitorBtn.disabled = false;
+                    stopMonitorBtn.disabled = true;
                 }
-                
-                await new Promise(resolve => setTimeout(resolve, 200));
-                
-                if (port.readable) {
-                    await port.close();
-                }
-                
-                // Reopen port for erasing
-                logToTerminal('Reopening port for erase operation...\n');
-                await port.open({ baudRate: 115200 });
-                transport = new Transport(port, true);
 
                 if (!esploader) {
                     const { ESPLoader } = await import('https://unpkg.com/esptool-js@0.4.3/bundle.js');
@@ -866,29 +860,23 @@
                 }
 
                 await esploader.eraseFlash();
-                updateStatus('Flash erased successfully. Reconnecting serial monitor...', 'success');
+                updateStatus('Flash erased successfully', 'success');
                 logToTerminal('=== Erase Complete ===\n');
                 eraseBtn.disabled = false;
                 
-                // Restart serial monitoring
-                await new Promise(resolve => setTimeout(resolve, 500));
-                startReading();
+                // Restart serial monitor if it was running
+                if (wasMonitoring) {
+                    logToTerminal('Restarting serial monitor...\n');
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    startReading();
+                    startMonitorBtn.disabled = true;
+                    stopMonitorBtn.disabled = false;
+                }
                 
             } catch (error) {
                 updateStatus(`Erase failed: ${error.message}`, 'error');
                 logToTerminal(`ERROR: ${error.message}\n`);
                 eraseBtn.disabled = false;
-                
-                // Try to restart serial monitoring
-                try {
-                    if (port && !port.readable) {
-                        await port.open({ baudRate: 115200 });
-                        transport = new Transport(port, true);
-                        startReading();
-                    }
-                } catch (reopenError) {
-                    logToTerminal('Could not reopen serial monitor. Please disconnect and reconnect.\n');
-                }
             }
         });
 
@@ -908,6 +896,38 @@
         // Clear terminal
         clearBtn.addEventListener('click', () => {
             terminal.textContent = '';
+        });
+
+        // Start serial monitor
+        startMonitorBtn.addEventListener('click', () => {
+            if (!isReading) {
+                startReading();
+                startMonitorBtn.disabled = true;
+                stopMonitorBtn.disabled = false;
+                logToTerminal('\n=== Serial Monitor Started ===\n');
+            }
+        });
+
+        // Stop serial monitor
+        stopMonitorBtn.addEventListener('click', async () => {
+            if (isReading) {
+                isReading = false;
+                
+                // Cancel and release the reader
+                if (currentReader) {
+                    try {
+                        await currentReader.cancel();
+                        currentReader.releaseLock();
+                        currentReader = null;
+                    } catch (e) {
+                        console.log('Reader already released');
+                    }
+                }
+                
+                startMonitorBtn.disabled = false;
+                stopMonitorBtn.disabled = true;
+                logToTerminal('\n=== Serial Monitor Stopped ===\n');
+            }
         });
 
         // Send serial data
@@ -955,6 +975,9 @@
             if (isReading) return; // Already reading
             
             isReading = true;
+            startMonitorBtn.disabled = true;
+            stopMonitorBtn.disabled = false;
+            
             try {
                 while (isReading && port.readable) {
                     currentReader = port.readable.getReader();
@@ -993,6 +1016,9 @@
                     console.error('Read error:', error);
                     logToTerminal(`\nSerial read error: ${error.message}\n`);
                 }
+            } finally {
+                startMonitorBtn.disabled = false;
+                stopMonitorBtn.disabled = true;
             }
         }
 
