@@ -41,7 +41,7 @@ void setup() {
   
   // Print version and configuration info
   Serial.println("\n" __FILE__ " " __DATE__ " " __TIME__);
-  Serial.print("Version: ");
+  Serial.print("FW: ");
   Serial.print(VERSION);
   Serial.print(" - Dice ID: ");
   Serial.println(currentConfig.diceId);  // Use diceId from config

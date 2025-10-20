@@ -427,7 +427,7 @@ void welcomeInfo(uint8_t screens) {
   tft.setTextSize(1);
   tft.setFont(&FreeSans18pt7b);
 
-  strcpy(displayText1, "V");
+  strcpy(displayText1, "FW");
   strcat(displayText1, VERSION);
   drawStringCentered(tft, displayText1, 62);
 
