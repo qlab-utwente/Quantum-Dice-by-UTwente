@@ -4,7 +4,6 @@
 #warning "ESP version 3.3.2 ,board esp32/Arduino Nano ESP32 or esp32/ESP32S3 Dev Module
 
 #include "Version.h"
-#include "diceConfig.h"
 #include "defines.h"
 #include "ImageLibrary/ImageLibrary.h"
 #include "ScreenStateDefs.h"
