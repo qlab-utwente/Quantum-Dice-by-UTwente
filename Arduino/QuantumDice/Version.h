@@ -14,6 +14,7 @@
 //#define VERSION "062" //speed up setup and new randomgenerator functions
 //#define VERSION "065" //merging NANO and DEVKIT
 //#define VERSION "070" //implementation new espnow class from M with esp32 core 3.2.1
-#define VERSION "071" //bugfixing implementation new espnow class from M with esp32 core 3.3.0
+//#define VERSION "071" //bugfixing implementation new espnow class from M with esp32 core 3.3.0
+#define VERSION "075" //config file in eeprom
 
 #endif // VERSION_H

@@ -3,25 +3,9 @@
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_GC9A01A.h>
-#include <Fonts/FreeSans18pt7b.h> //quote
-#include <Fonts/FreeSansBold18pt7b.h> // Include the bold font
-#include <Fonts/FreeSansOblique12pt7b.h> //signature
-
-// Pin definitions
-#if defined(NANO)
-#define TFT_CS 21         // To display chip-select pin
-#define TFT_RST 4         // To display reset pin
-#define TFT_DC 2          // To display data/command pin
-#endif
-
-#if defined(DEVKIT)
-#define TFT_CS 10         // To display chip-select pin
-#define TFT_RST 48         // To display reset pin
-#define TFT_DC 47          // To display data/command pin
-#endif
-
-#define PARALLEL_0 5  //addresss
-#define NUMBER_SCREENS 6
+#include <Fonts/FreeSans18pt7b.h>
+#include <Fonts/FreeSansBold18pt7b.h>
+#include <Fonts/FreeSansOblique12pt7b.h>
 
 #define HEIGHT 240
 #define WIDTH 240
@@ -30,36 +14,30 @@
 #define DOT_RADIUS 20
 #define DOT_OFFSET 60
 
-// Create display object
-//extern Adafruit_GC9A01A tft(TFT_CS, TFT_DC, TFT_RST);
-//extern Adafruit_GC9A01A tft;
-
-extern uint8_t screenAdress[];
-enum screenselections { X0,
-                        X1,
-                        Y0,
-                        Y1,
-                        Z0,
-                        Z1,
-                        XX,
-                        YY,
-                        ZZ,
-                        XXYY,
-                        XXZZ,
-                        YYZZ,
-                        ODD,
-                        EVEN,
-                        ALL,
-                        NO_ONE
+// Screen selection enum (moved from conditional compilation)
+enum screenselections { 
+  X0,
+  X1,
+  Y0,
+  Y1,
+  Z0,
+  Z1,
+  XX,
+  YY,
+  ZZ,
+  XXYY,
+  XXZZ,
+  YYZZ,
+  ODD,
+  EVEN,
+  ALL,
+  NO_ONE
 };
+
 extern screenselections selectScreen;
 extern int dotDia;
 
 void selectScreens(uint8_t i);
-void parallel_set_inputs(void);
-void parallel_set_outputs(void);
-uint8_t parallel_read(void);
-void parallel_write(uint8_t value);
 uint16_t blendColor(uint16_t foreground, uint16_t background, float alpha);
 void drawDot(int x, int y, float alpha = 1.0, uint16_t color = GC9A01A_WHITE, uint16_t bgColor = GC9A01A_BLACK);
 void displayImageWithBackground(const unsigned short* image, uint8_t screens);

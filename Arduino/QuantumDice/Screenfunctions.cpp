@@ -1,7 +1,6 @@
 #include "Adafruit_GC9A01A.h"
 #include "Arduino.h"
 #include "Version.h"
-#include "diceConfig.h"
 #include "IMUhelpers.h"
 #include "handyHelpers.h"
 #include "defines.h"
@@ -10,8 +9,8 @@
 #include "Screenfunctions.h"
 #include "Globals.h"
 
-// Global TFT object definition
-Adafruit_GC9A01A tft(TFT_CS, TFT_DC, TFT_RST);
+// Global TFT object - will be initialized dynamically
+Adafruit_GC9A01A tft(-1, -1, -1);  // Temporary pins, will be reinitialized
 
 // Global canvas declarations
 static GFXcanvas16 backgroundCanvas(240, 240);
@@ -20,96 +19,32 @@ static GFXcanvas16 staticCanvas(240, 100);
 
 screenselections selectScreen;
 
-#if defined(NANO)
-// Define CS pins for each device
-//const int csPins[6] = { 4, 5, 6, 7, 15, 16 };  //ESP32-DEV Rink
-const int csPins[6] = { 5, 6, 7, 8, 9, 10 };  //NANO ESP32
-//const int csPins[6] = {2,3,4,5,6,7}; //NANO ESP32 arduino number pin
-#endif
-
-#if defined(DEVKIT)
-// Define CS pins for each device
-const int csPins[6] = { 4, 5, 6, 7, 15, 16 };  //ESP32-DEV Rink
-//const int csPins[6] = { 5, 6, 7, 8, 9, 10 };  //NANO ESP32
-//const int csPins[6] = {2,3,4,5,6,7}; //NANO ESP32 arduino number pin
-#endif
-
-
-#if defined(HDR)
-uint8_t screenAdress[] = {
-  //singles
-  0b00001000,  //x0
-  0b00000010,  //x1
-  0b00000100,  //y0
-  0b00010000,  //y1
-  0b00100000,  //z0
-  0b00000001,  //z1
-  // doubles
-  0b00001010,  //xx
-  0b00010100,  //yy
-  0b00100001,  //zz
-  //quarters
-  0b00011110,
-  0b00101011,
-  0b00110101,
-  //triples + / -
-  0b00101100,  //x0y0z0
-  0b00010011,  //x1y1z1
-  //others
-  0b00111111,
-  0b00000000,
-};
-#endif
-
-#if defined(SMD)
-uint8_t screenAdress[] = {
-  //singles
-  0b00000100,  //x0
-  0b00010000,  //x1
-  0b00001000,  //y0
-  0b00000010,  //y1
-  0b00100000,  //z0
-  0b00000001,  //z1
-  // doubles
-  0b00010100,  //xx
-  0b00001010,  //yy
-  0b00100001,  //zz
-  //quarters
-  0b00011110,
-  0b00101011,
-  0b00110101,
-  //triples + / -
-  0b00101100,  //x0y0z0
-  0b00010011,  //x1y1z1
-  //others
-  0b00111111,
-  0b00000000,
-};
-#endif
-
 void selectScreens(uint8_t binaryCode) {
-  //Serial.println(screenAdress[binaryCode], BIN);
-  //  parallel_write(screenAdress[i] ^ 63);
+  // Use hwPins from handyHelpers
   for (int i = 0; i < 6; i++) {
-    if (screenAdress[binaryCode] & (1 << i)) {
-      digitalWrite(csPins[i], LOW);  // Activate device
+    if (hwPins.screenAddress[binaryCode] & (1 << i)) {
+      digitalWrite(hwPins.screen_cs[i], LOW);  // Activate device
     } else {
-      digitalWrite(csPins[i], HIGH);  // Deactivate device
+      digitalWrite(hwPins.screen_cs[i], HIGH);  // Deactivate device
     }
   }
 }
 
 void initDisplays() {
-  // parallel_set_outputs();
-  // delay(1000);
-
+  Serial.println("Initializing displays...");
+  
+  // Initialize CS pins for all screens
   for (int i = 0; i < 6; i++) {
-    pinMode(csPins[i], OUTPUT);
+    pinMode(hwPins.screen_cs[i], OUTPUT);
+    digitalWrite(hwPins.screen_cs[i], HIGH);  // Start with all deactivated
   }
-
-  selectScreens(ALL);  //alles laag
+  
+  // Reinitialize TFT with correct pins from configuration
+  tft = Adafruit_GC9A01A(hwPins.tft_cs, hwPins.tft_dc, hwPins.tft_rst);
+  
+  selectScreens(ALL);  // Select all screens
   delay(500);
-  tft.begin();  // Initialise the display
+  tft.begin();  // Initialize the display
   delay(1000);
   tft.fillScreen(GC9A01A_BLACK);
 
@@ -119,10 +54,10 @@ void initDisplays() {
   selectScreens(ZZ);
   tft.setRotation(2);
 
-  selectScreens(NO_ONE);  //no active screens
+  selectScreens(NO_ONE);  // Deactivate all screens
   delay(100);
-  //  tft.fillScreen(BLACK);
-  //  selectScreens(NONE);  //no active screens
+  
+  Serial.println("Displays initialized successfully!");
 }
 
 void blankScreen(uint8_t screens) {
@@ -163,17 +98,17 @@ void displayImageWithBackground(const unsigned short* image, uint8_t screens) {
   // Select the appropriate screens
   selectScreens(screens);
 
-  // Choose background color based on screen
+  // Choose background color based on screen - use config values
   uint16_t backgroundColor;
   switch (screens) {
     case XX:
-      backgroundColor = X_BACKGROUND;
+      backgroundColor = currentConfig.x_background;
       break;
     case YY:
-      backgroundColor = Y_BACKGROUND;
+      backgroundColor = currentConfig.y_background;
       break;
     case ZZ:
-      backgroundColor = Z_BACKGROUND;
+      backgroundColor = currentConfig.z_background;
       break;
     default:
       backgroundColor = 0x0000;  // Black
@@ -257,7 +192,7 @@ void displayLowBattery(uint8_t screens) {
   tft.setTextColor(GC9A01A_RED);
 
   // First line configuration
-  tft.setFont(&FreeSansBold18pt7b);  // Include the bold font
+  tft.setFont(&FreeSansBold18pt7b);
   tft.setTextSize(1);
 
   drawStringCentered(tft, "Low Battery", tft.height() / 2 + 9);
@@ -293,7 +228,7 @@ void displayN1(uint8_t screens) {
   int centerX = tft.width() / 2;
   int centerY = tft.height() / 2;
 
-  drawDot(centerX, centerY);  //
+  drawDot(centerX, centerY);
 }
 
 void displayN2(uint8_t screens) {
@@ -384,13 +319,14 @@ void displayMix1to6_entAB1(uint8_t screens) {
   int centerY = tft.height() / 2;
   int offset = DOT_OFFSET;
 
-  drawDot(centerX - offset, centerY - offset, 3 * 0.16 + 0.2, ENTANG_AB1_COLOR);
-  drawDot(centerX + offset, centerY - offset, 5 * 0.16 + 0.2, ENTANG_AB1_COLOR);
-  drawDot(centerX - offset, centerY, 1 * 0.16 + 0.2, ENTANG_AB1_COLOR);
-  drawDot(centerX + offset, centerY, 1 * 0.16 + 0.2, ENTANG_AB1_COLOR);
-  drawDot(centerX - offset, centerY + offset, 5 * 0.16 + 0.2, ENTANG_AB1_COLOR);
-  drawDot(centerX + offset, centerY + offset, 3 * 0.16 + 0.2, ENTANG_AB1_COLOR);
-  drawDot(centerX, centerY, 3 * 0.16 + 0.2, GC9A01A_YELLOW);
+  // Use entanglement color from config
+  drawDot(centerX - offset, centerY - offset, 3 * 0.16 + 0.2, currentConfig.entang_ab1_color);
+  drawDot(centerX + offset, centerY - offset, 5 * 0.16 + 0.2, currentConfig.entang_ab1_color);
+  drawDot(centerX - offset, centerY, 1 * 0.16 + 0.2, currentConfig.entang_ab1_color);
+  drawDot(centerX + offset, centerY, 1 * 0.16 + 0.2, currentConfig.entang_ab1_color);
+  drawDot(centerX - offset, centerY + offset, 5 * 0.16 + 0.2, currentConfig.entang_ab1_color);
+  drawDot(centerX + offset, centerY + offset, 3 * 0.16 + 0.2, currentConfig.entang_ab1_color);
+  drawDot(centerX, centerY, 3 * 0.16 + 0.2, currentConfig.entang_ab1_color);
 }
 
 void displayMix1to6_entAB2(uint8_t screens) {
@@ -400,21 +336,21 @@ void displayMix1to6_entAB2(uint8_t screens) {
   int centerY = tft.height() / 2;
   int offset = DOT_OFFSET;
 
-//offset of 0.2
-  drawDot(centerX - offset, centerY - offset, 3 * 0.16 + 0.2, ENTANG_AB2_COLOR);
-  drawDot(centerX + offset, centerY - offset, 5 * 0.16 + 0.2, ENTANG_AB2_COLOR);
-  drawDot(centerX - offset, centerY, 1 * 0.16 + 0.2, ENTANG_AB2_COLOR);
-  drawDot(centerX + offset, centerY, 1 * 0.16 + 0.2, ENTANG_AB2_COLOR);
-  drawDot(centerX - offset, centerY + offset, 5 * 0.16 + 0.2, ENTANG_AB2_COLOR);
-  drawDot(centerX + offset, centerY + offset, 3 * 0.16 + 0.2, ENTANG_AB2_COLOR);
-  drawDot(centerX, centerY, 3 * 0.16 + 0.2, ENTANG_AB2_COLOR);
+  // Use entanglement color from config
+  drawDot(centerX - offset, centerY - offset, 3 * 0.16 + 0.2, currentConfig.entang_ab2_color);
+  drawDot(centerX + offset, centerY - offset, 5 * 0.16 + 0.2, currentConfig.entang_ab2_color);
+  drawDot(centerX - offset, centerY, 1 * 0.16 + 0.2, currentConfig.entang_ab2_color);
+  drawDot(centerX + offset, centerY, 1 * 0.16 + 0.2, currentConfig.entang_ab2_color);
+  drawDot(centerX - offset, centerY + offset, 5 * 0.16 + 0.2, currentConfig.entang_ab2_color);
+  drawDot(centerX + offset, centerY + offset, 3 * 0.16 + 0.2, currentConfig.entang_ab2_color);
+  drawDot(centerX, centerY, 3 * 0.16 + 0.2, currentConfig.entang_ab2_color);
 }
 
-void printChar(uint8_t screens, char* letters, uint16_t fontcolor, uint16_t bckcolor, int x, int y) {  //not in use
+void printChar(uint8_t screens, char* letters, uint16_t fontcolor, uint16_t bckcolor, int x, int y) {
   selectScreens(screens);
   tft.fillScreen(bckcolor);
   tft.setTextColor(fontcolor);
-  tft.setFont(&FreeSansBold18pt7b);  // Include the bold font
+  tft.setFont(&FreeSansBold18pt7b);
   tft.setTextSize(1);
   tft.setCursor(x, y);
   tft.print(letters);
@@ -432,14 +368,10 @@ void drawStringCentered(Adafruit_GFX& gfx, const String& text, int16_t y) {
   int16_t x = (gfx.width() - w) / 2;
 
   // Set cursor
-  // Note: For many fonts, we need to adjust the y to account for baseline
   gfx.setCursor(x, y);
 
   // Draw the text
   gfx.print(text);
-
-  // Optional: Reset to default font if needed
-  // tft.setFont();
 }
 
 void voltageIndicator(uint8_t screens) {
@@ -447,7 +379,8 @@ void voltageIndicator(uint8_t screens) {
   char bufferPerc[10];
   selectScreens(screens);
 
-  float voltage = analogReadMilliVolts(ADCpin) / 1000.0 * 2.0;
+  // Use hwPins.adc_pin from configuration
+  float voltage = analogReadMilliVolts(hwPins.adc_pin) / 1000.0 * 2.0;
   float percentage = mapFloat(voltage, MINBATERYVOLTAGE, MAXBATERYVOLTAGE, 0.0, 100.0, true);
   if (percentage > 100.0) percentage = 100.0;
   dtostrf(voltage, 3, 2, bufferV);
@@ -479,7 +412,7 @@ void voltageIndicator(uint8_t screens) {
   staticCanvas.setCursor(x, 70);
   staticCanvas.print(bufferPerc);
 
-  // Draw a horizontal line at appropriate y-position (adjusted for canvas coordinates)
+  // Draw a horizontal line
   staticCanvas.drawFastHLine(0, 40, 5, GC9A01A_RED);
 
   // Draw the canvas to the TFT
@@ -488,7 +421,7 @@ void voltageIndicator(uint8_t screens) {
 
 void welcomeInfo(uint8_t screens) {
   char displayText1[10];
-  char displayText2[10];
+  char displayText2[20];
   selectScreens(screens);
   tft.fillScreen(GC9A01A_BLACK);
   tft.setTextSize(1);
@@ -498,7 +431,8 @@ void welcomeInfo(uint8_t screens) {
   strcat(displayText1, VERSION);
   drawStringCentered(tft, displayText1, 62);
 
-  strcpy(displayText2, DICE_ID);  // Use strcpy to copy the string
+  // Use DICE_ID from config
+  strcpy(displayText2, currentConfig.diceId);
   if (isDeviceA) {
     strcat(displayText2, " #A");
   }

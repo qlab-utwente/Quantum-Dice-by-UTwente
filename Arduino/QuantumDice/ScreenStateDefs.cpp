@@ -1,5 +1,4 @@
 #include "Arduino.h"
-#include "diceConfig.h"
 #include "defines.h"
 #include "IMUhelpers.h"
 #include "handyHelpers.h"
