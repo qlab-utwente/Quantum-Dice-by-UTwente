@@ -200,7 +200,7 @@ void displayMainMenu() {
   Serial.println("3. Calibrate BNO055 Sensor");
   Serial.println("4. Test BNO055 Sensor (Live Data)");
   Serial.println("5. Clear EEPROM (Erase calibration)");
-  Serial.println("6. Configure EEPROM Settings");
+  Serial.println("6. Configure Quantum Dice (EEPROM)");
   Serial.println("========================================");
   Serial.println("M. Show this menu");
   Serial.println("========================================");
