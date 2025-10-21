@@ -57,7 +57,7 @@ Because the software is identical, the assignment of role A or B is determined a
 ## 3. Sourcing of Materials
 
 All parts required to construct the Quantum Dice are listed in the **Bill of Materials (BOM)**.  
-The BOM can be found here: [BOM](https://github.com/ator1811/Quantum-Dice-by-UTwente/blob/main/3D%20print%20files/Bill%20of%20Material%20quantum%20dice.xlsx).
+The BOM can be found here: [BOM](https://github.com/ator1811/Quantum-Dice-by-UTwente/blob/main/3D%20print%20files).
 
 It is an Excel sheet containing all components and quantities. At the top of the sheet, you can specify the number of dice for role A and role B you wish to build. The total quantities will update automatically.
 
@@ -84,7 +84,7 @@ The electronics and software are identical for both versions.
 #### PowerPCB and ProcessorPCB
 
 The **PowerPCB** and **ProcessorPCB** can be obtained directly from the University of Twente:  
-[Quantum Dice by University of Twente](ut.onl/quantumdice).
+[Quantum Dice by University of Twente]([ut.onl/quantumdice](https://www.utwente.nl/en/mesaplus/education/quantum-dice/?utm_campaign=https%3A//ut.onl/quantumdice&utm_source=shorturl&utm_medium=ut.onl#)).
 
 The ProcessorPCB is supplied pre-configured with the latest firmware, including **IMU calibration** and **functional testing**.  
 Each board is labelled with its **MAC address** (on the rear side) and its assigned **role (A or B)**.
@@ -94,7 +94,7 @@ A set of **connection cables**, **screws**, and **bolts** is included.
 Alternatively, if you have experience with microcontroller software and PCB design, you can order the PCBs yourself and flash the software manually.
 
 - PCB fabrication files: [https://github.com/ator1811/Quantum-Dice-by-UTwente/tree/main/PCB%20files](https://github.com/ator1811/Quantum-Dice-by-UTwente/tree/main/PCB%20files))  
-- Arduino firmware can be downloaded [here](https://github.com/ator1811/Quantum-Dice-by-UTwente/tree/main/Arduino)
+- Arduino firmware can be downloaded [here](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/tree/main/Arduino)
 
 ---
 
