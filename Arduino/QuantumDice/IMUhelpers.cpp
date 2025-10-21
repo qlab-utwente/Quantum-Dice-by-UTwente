@@ -2,6 +2,7 @@
 #include "Arduino.h"
 #include "defines.h"
 #include "IMUhelpers.h"
+#include "handyHelpers.h"  // Include for EEPROM address definitions
 
 //***************************** IMU independant functions
 void IMUSensor::updateUpVector(double deltaTime) {
@@ -160,7 +161,9 @@ sensors_event_t angVelocityData, linearAccelData, gravityData;
 
 void BNO055IMUSensor::init() {
   Wire.begin();
-  EEPROM.begin(512);  // Initialize EEPROM for ESP32
+  // Note: EEPROM is already initialized by initEEPROM() in handyHelpers
+  // Don't call EEPROM.begin() here again
+
   while (!_accGyro.begin()) {
     debugln("BNO device not detected at default I2C address");
     delay(100);
@@ -170,7 +173,6 @@ void BNO055IMUSensor::init() {
   // Try to restore calibration data from EEPROM
   restoreCalibrationData();
 
-  // Add sensor config (update frequency and range)
   // Set external crystal use (must be done after loading calibration)
   _accGyro.setExtCrystalUse(true);
 
@@ -197,10 +199,10 @@ void BNO055IMUSensor::init() {
     debug(") Magnitude: ");
     debugln(gravityMagnitude);
 
-  } while (gravityMagnitude < 8.0 && attempts < 100);  // Wait for reasonable gravity magnitude (~9.8 m/s²)
+  } while (gravityMagnitude < 8.0 && attempts < 100);
 
   if (gravityMagnitude >= 8.0) {
-    reset();  // Now we have valid gravity data
+    reset();
     debugln("Up vector initialized successfully");
   } else {
     debugln("Warning: Failed to get valid gravity data after 100 attempts!");
@@ -214,20 +216,36 @@ void BNO055IMUSensor::init() {
   }
 
   debugln("IMU initialization complete");
-  //add sensor config (update frequency and range);
 }
 
 void BNO055IMUSensor::restoreCalibrationData() {
-  int eeAddress = 0;
   long bnoID;
   bool foundCalib = false;
 
-  // Get stored sensor ID from EEPROM
-  EEPROM.get(eeAddress, bnoID);
+  // Get stored sensor ID from EEPROM using the new address
+  EEPROM.get(EEPROM_BNO_SENSOR_ID_ADDR, bnoID);
 
   // Get current sensor info
   sensor_t sensor;
   AccGyro.getSensor(&sensor);
+
+  Serial.println("------------------------------------");
+  Serial.print("Sensor:       ");
+  Serial.println(sensor.name);
+  Serial.print("Driver Ver:   ");
+  Serial.println(sensor.version);
+  Serial.print("Unique ID:    ");
+  Serial.println(sensor.sensor_id);
+  Serial.print("Max Value:    ");
+  Serial.print(sensor.max_value);
+  Serial.println(" xxx");
+  Serial.print("Min Value:    ");
+  Serial.print(sensor.min_value);
+  Serial.println(" xxx");
+  Serial.print("Resolution:   ");
+  Serial.print(sensor.resolution);
+  Serial.println(" xxx");
+  Serial.println("------------------------------------");
 
   debug("Current sensor ID: ");
   debugln(sensor.sensor_id);
@@ -241,10 +259,9 @@ void BNO055IMUSensor::restoreCalibrationData() {
   } else {
     debugln("Found calibration data in EEPROM");
 
-    // Read calibration data
-    eeAddress += sizeof(long);
+    // Read calibration data from the new address
     adafruit_bno055_offsets_t calibrationData;
-    EEPROM.get(eeAddress, calibrationData);
+    EEPROM.get(EEPROM_BNO_CALIBRATION_ADDR, calibrationData);
 
     // Display what we're loading
     debugln("Loading calibration offsets:");

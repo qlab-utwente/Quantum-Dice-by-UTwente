@@ -4,7 +4,6 @@
 #warning "ESP version 3.3.2 ,board esp32/Arduino Nano ESP32 or esp32/ESP32S3 Dev Module
 
 #include "Version.h"
-#include "diceConfig.h"
 #include "defines.h"
 #include "ImageLibrary/ImageLibrary.h"
 #include "ScreenStateDefs.h"
@@ -19,43 +18,63 @@ StateMachine stateMachine;
 unsigned long previousMillisWatchDog = 0;
 
 void setup() {
-  //make sure power switch keeps on
+  // Make sure power switch keeps on - do this FIRST before anything else
   pinMode(REGULATOR_PIN, OUTPUT);
   digitalWrite(REGULATOR_PIN, LOW);
-
-  initSerial();  //  delay(1000); included
-
+  
+  // Initialize serial for debugging
+  initSerial(); // delay(1000) included
+  
+  // Initialize EEPROM ONCE for both config and IMU calibration
+  initEEPROM();
+  
+  // Load dice configuration from EEPROM
+  // This MUST be done early because it initializes hwPins which are needed for displays
+  if (!loadConfigFromEEPROM()) {
+    Serial.println("FATAL ERROR: Cannot load configuration!");
+    Serial.println("Please flash configuration using the setup sketch.");
+    // Halt execution - can't proceed without valid configuration
+    while(1) {
+      delay(1000);
+    }
+  }
+  
+  // Print version and configuration info
   Serial.println("\n" __FILE__ " " __DATE__ " " __TIME__);
-  debug("version:");
-  debug(VERSION);
-  debug(" - diceID:");
-  debugln(DICE_ID);
-#if defined(NANO)
-  debugln("nano board");
-#endif
-#if defined(DEVKIT)
-  debugln("devkit board");
-#endif
-
+  Serial.print("FW: ");
+  Serial.print(VERSION);
+  Serial.print(" - Dice ID: ");
+  Serial.println(currentConfig.diceId);  // Use diceId from config
+  Serial.print("Board type: ");
+  Serial.println(currentConfig.isNano ? "NANO" : "DEVKIT");  // Use config instead of defines
+  
+  // Initialize displays - now uses hwPins from loaded configuration
   initDisplays();
-  //init display and show something during setup
+  
+  // Show startup logo during setup
   displayQLab(ALL);
-
+  
+  // Initialize IMU sensor
   IMUSensor *imuSensor;
   imuSensor = new BNO055IMUSensor();
-
-  imuSensor->init();
+  imuSensor->init();  // This will load BNO055 calibration from EEPROM
   imuSensor->update();
   imuSensor->reset();
-
+  
+  // Set IMU sensor in state machine
   stateMachine.setImuSensor(imuSensor);
-
+  
+  // Initialize button
   initButton();
-
+  
+  // Initialize random number generators
   initRandomGenerators();
-  stateMachine.begin();  // Initialize the state machine
-
-  debugln("setup ready with new IMU-class!");
+  
+  // Initialize the state machine - this sets up ESP-NOW with config MACs
+  stateMachine.begin();
+  
+  Serial.println("Setup complete!");
+  Serial.println("==================================\n");
 }
 
 void loop() {

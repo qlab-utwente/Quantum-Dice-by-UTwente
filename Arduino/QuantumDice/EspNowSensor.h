@@ -10,6 +10,7 @@
 #include <WiFi.h>
 #include "defines.h"
 #include "Queue.h"
+#include "handyHelpers.h"  // Include for currentConfig access
 
 template <typename T>
 class EspNowSensor
@@ -31,7 +32,7 @@ private:
   bool poll(T* message);
 
   void onDataRecv(const esp_now_recv_info_t *mac, const unsigned char*incomingData, int len);
-  void onDataSend(const wifi_tx_info_t *tx_info, esp_now_send_status_t status);  // CHANGED
+  void onDataSend(const wifi_tx_info_t *tx_info, esp_now_send_status_t status);
   void promiscuousRxCb(void *buf, wifi_promiscuous_pkt_type_t type);
 
 private:
@@ -41,10 +42,10 @@ private:
     instance->onDataRecv(mac, incomingData, len);
   }
 
-  static void OnDataSend(const wifi_tx_info_t *tx_info, esp_now_send_status_t status)  // CHANGED
+  static void OnDataSend(const wifi_tx_info_t *tx_info, esp_now_send_status_t status)
   {
     assert(instance);
-    instance->onDataSend(tx_info, status);  // CHANGED
+    instance->onDataSend(tx_info, status);
   }
 
   static void PromiscuousRxCb(void *buf, wifi_promiscuous_pkt_type_t type)
@@ -195,8 +196,8 @@ void EspNowSensor<T>::getMacAddress(uint8_t *addr)
 template<typename T>
 bool EspNowSensor<T>::isCloseBy()
 {
-  //debugln(_rssi);
-  return (_rssi > RSSILIMIT && _rssi < -1);
+  // Use RSSI limit from configuration instead of hardcoded define
+  return (_rssi > currentConfig.rssiLimit && _rssi < -1);
 }
 
 template<typename T>
@@ -231,7 +232,7 @@ void EspNowSensor<T>::onDataRecv(const esp_now_recv_info_t *mac, const unsigned 
 }
 
 template<typename T>
-void EspNowSensor<T>::onDataSend(const wifi_tx_info_t *tx_info, esp_now_send_status_t status)  // CHANGED
+void EspNowSensor<T>::onDataSend(const wifi_tx_info_t *tx_info, esp_now_send_status_t status)
 {
   static bool prevStatus = false;
   if (status != prevStatus) {

@@ -6,7 +6,7 @@ The Quantum Dice were developed by the **University of Twente**. All designs are
 
 For further information, visit [Quantum Dice by University of Twente](ut.onl/quantumdice) or read the pre-print of our article on [arXiv](https://arxiv.org/abs/2510.04931).
 
-> The University of Twente supplies ready-to-use electronic boards.  Other components – such as 3D-printed parts, displays, and batteries – must be obtained separately.
+> In the near future the University of Twente supplies ready-to-use electronic boards.  Other components – such as 3D-printed parts, displays, and batteries – must be obtained separately.
 
 ---
 
@@ -93,8 +93,8 @@ A set of **connection cables**, **screws**, and **bolts** is included.
 
 Alternatively, if you have experience with microcontroller software and PCB design, you can order the PCBs yourself and flash the software manually.
 
-- The PCBs can be ordered [here](link)  
-- The firmware can be downloaded [here](link)
+- PCB fabrication files: [https://github.com/ator1811/Quantum-Dice-by-UTwente/tree/main/PCB%20files](https://github.com/ator1811/Quantum-Dice-by-UTwente/tree/main/PCB%20files))  
+- Arduino firmware can be downloaded [here](https://github.com/ator1811/Quantum-Dice-by-UTwente/tree/main/Arduino)
 
 ---
 
@@ -292,9 +292,11 @@ If you sourced pre-assembled boards from the **University of Twente**, some step
 - FPC cables (flat ribbon cables)  
 - Battery and charger cables  
 - M3 screws and threaded inserts  
+
 ---
 
 ### 6.3 Soldering Push Buttons  
+
 *(Skip this step if electronics were sourced from the University of Twente.)*
 
 Solder the push buttons onto both the **PowerPCB** and **ProcessorPCB** as indicated in the circuit diagram.  
@@ -330,7 +332,7 @@ This is necessary because alternative connectors will be used later.
 ![alt text](<../images/Displ_Mount.png>)
 
 > **Note:**  
-> On the inside of each yellow and red display cup you will find a “V” symbol. This symbol must always point **upwards** when mounted in the frame.
+> On the inside of each yellow and red display cup you will find a “^” symbol. This symbol must always point **upwards** when mounted in the frame.
 
 ---
 ## 7. Assembling the Quantum Die
