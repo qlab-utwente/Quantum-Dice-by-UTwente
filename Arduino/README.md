@@ -2,11 +2,11 @@
 
 Web-based firmware flasher for QuantumDice ESP32 devices. Flash your ESP32 directly from your browser - no drivers or Python installation required!
 
-If you want to upload the Arduino sketches yourself, please follow [these instructions]().
+If you want to upload the Arduino sketches yourself, please follow [these instructions](/Arduino/README.md).
 
 ## 🌐 Access the Flasher
 
-**Live Tool:** [https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/)
+**Live Tool:** [https://qlab-utwente.github.io/Quantum-Dice-by-UTwente/]( https://qlab-utwente.github.io/Quantum-Dice-by-UTwente/)
 
 ## 📋 Requirements
 
