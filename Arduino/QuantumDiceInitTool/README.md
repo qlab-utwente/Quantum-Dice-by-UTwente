@@ -200,7 +200,7 @@ Follow this step-by-step guide to initialize a new device from scratch (empty EE
 
    | Field | Description | Example | Notes |
    |-------|-------------|---------|-------|
-   | **Dice ID** | Unique identifier (max 15 chars) | `DICE_A` | Alpha-numeric |
+   | **Dice ID** | Unique identifier (max 5 chars) | `DICE_A` | Alpha-numeric |
    | **Device A MAC** | Primary device MAC address | `D0:CF:13:36:40:88` | From Step 1 |
    | **Device B1 MAC** | Secondary device 1 MAC | `D0:CF:13:33:58:5C` | From Step 1 |
    | **Device B2 MAC** | Secondary device 2 MAC | `DC:DA:0C:21:02:44` | From Step 1 |
@@ -209,12 +209,12 @@ Follow this step-by-step guide to initialize a new device from scratch (empty EE
    | **Z Background Color** | Display color (hex) | `0x0000` | 16-bit RGB565 |
    | **Entanglement AB1 Color** | Connection color (hex) | `0xFFE0` | Yellow |
    | **Entanglement AB2 Color** | Connection color (hex) | `0x07E0` | Green |
-   | **RSSI Limit** | Signal strength threshold (dBm) | `-35` | -100 to 0 |
+   | **RSSI Limit** | Signal strength threshold for entanglement (dBm) | `-35` | -100 to 0. |
    | **Is NANO board?** | Board type | `N` | Y=NANO, N=DEVKIT |
    | **Is SMD screen?** | Screen type | `Y` | Y=SMD, N=HDR |
    | **Always Seven mode?** | Debug mode | `N` | Y/N |
    | **Random Switch Point** | Randomness threshold (0-100) | `50` | 0-100 |
-   | **Tumble Constant** | Motion sensitivity | `0.2` | 0.0-10.0 |
+   | **Tumble Constant** | Minimum amount of rolling | `0.2` | 0.0-10.0 |
    | **Deep Sleep Timeout** | Auto-sleep time (seconds) | `300` | 10-3600 |
 
 5. **MAC Address Entry:**
