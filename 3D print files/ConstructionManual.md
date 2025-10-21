@@ -94,7 +94,7 @@ A set of **connection cables**, **screws**, and **bolts** is included.
 Alternatively, if you have experience with microcontroller software and PCB design, you can order the PCBs yourself and flash the software manually.
 
 - PCB fabrication files: [PCB fabrication files](../PCB%20files/)
-- Arduino firmware can be downloaded [here](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/tree/main/Arduino)
+- Arduino sketches can be downloaded [here](/Arduino/QuantumDice/)
 
 ---
 
