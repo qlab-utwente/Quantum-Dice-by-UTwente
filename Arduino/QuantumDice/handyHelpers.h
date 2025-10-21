@@ -10,7 +10,8 @@
 #define EEPROM_SIZE 512
 #define EEPROM_BNO_SENSOR_ID_ADDR 0                    // 4 bytes for sensor ID (long)
 #define EEPROM_BNO_CALIBRATION_ADDR 4                  // 20 bytes for calibration data
-#define EEPROM_CONFIG_ADDRESS 24                        // Start config after calibration data
+#define EEPROM_CONFIG_ADDRESS 32  // Moved to avoid overlap with BNO calibration data
+// Memory layout: [0-3: BNO ID][4-31: BNO Calibration][32+: Device Config]
 
 // Configuration structure to store in EEPROM
 struct DiceConfig {
