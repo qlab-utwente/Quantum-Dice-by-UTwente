@@ -113,7 +113,7 @@ You have two options for selecting firmware:
 5. Start using your QuantumDice!
 ```
 
-See [configuration](/Arduino/QuantumDiceInitTool/README.md) for detailled instructions.
+See [Quantum Dice Init Tool](/Arduino/QuantumDiceInitTool/README.md) for detailled instructions.
 
 ### Firmware Update
 
@@ -131,6 +131,7 @@ See [configuration](/Arduino/QuantumDiceInitTool/README.md) for detailled instru
 3. Flash → QuantumDice.vX.X.X.bin
 4. Resume normal operation
 ```
+See [Quantum Dice Init Tool](/Arduino/QuantumDiceInitTool/README.md) for detailled instructions.
 
 ---
 
