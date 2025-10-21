@@ -26,6 +26,7 @@ QuantumDice has **two separate programs** that need to be flashed depending on y
 - Configure your ESP32 for the first time
 - Calibrate quantum sensors
 - Change parameters
+- See README for detailled instructions
 
 
 ### 2. 🎲 Main Program (`QuantumDice.vX.X.X.bin`)
