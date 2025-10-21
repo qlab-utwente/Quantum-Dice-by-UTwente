@@ -2,11 +2,11 @@
 
 <img src="images/Quantum_Dice_Flyer.png" alt="flyer" width="600"/>
 
-This repo contains all files to build and assemble a Quantum Dice yourself including sourcing of parts
+In this repo you can find all relevant files, including assembly instructions, 3D printing files, and the parts list. Based on this information, you can build the Quantum Dice yourself.
 
 For further information see [Quantum Dice by University of Twente](ut.onl/quantumdice)
 
-Paper of Bart called [Visualising Quantum Entanglement Using Interactive Electronic Quantum Dice](https://arxiv.org/abs/2510.04931) on ArXiv
+You can find more information about the dice in our article, for which a preprint is available on [*arXiv*](https://arxiv.org/abs/2510.04931)
 
 - [Arduino Code](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/tree/main/Arduino)
 - [3D printfiles](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/tree/main/3D%20print%20files)
