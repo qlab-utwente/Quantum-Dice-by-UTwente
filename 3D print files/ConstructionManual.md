@@ -57,7 +57,7 @@ Because the software is identical, the assignment of role A or B is determined a
 ## 3. Sourcing of Materials
 
 All parts required to construct the Quantum Dice are listed in the **Bill of Materials (BOM)**.  
-The BOM can be found here: [BOM](Bill%20of%20Material%20quantum dice.xlsx).
+The BOM can be found here: [BOM](/3D%20print%20files/Bill%20of%20Material%20quantum%20dice.xlsx).
 
 It is an Excel sheet containing all components and quantities. At the top of the sheet, you can specify the number of dice for role A and role B you wish to build. The total quantities will update automatically.
 
@@ -93,7 +93,7 @@ A set of **connection cables**, **screws**, and **bolts** is included.
 
 Alternatively, if you have experience with microcontroller software and PCB design, you can order the PCBs yourself and flash the software manually.
 
-- PCB fabrication files: [PCB fabrication files](PCB%20files)
+- PCB fabrication files: [PCB fabrication files](../PCB%20files/)
 - Arduino firmware can be downloaded [here](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/tree/main/Arduino)
 
 ---
