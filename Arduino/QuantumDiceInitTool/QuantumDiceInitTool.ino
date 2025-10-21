@@ -13,6 +13,9 @@
   1. Upload sketch to ESP32-S3
   2. Open Serial Monitor at 115200 baud
   3. Follow menu prompts to perform initialization tasks
+
+
+  Release Version: 1.0.0
 */
 
 #include <Wire.h>
