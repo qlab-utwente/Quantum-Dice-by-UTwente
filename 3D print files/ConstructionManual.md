@@ -4,7 +4,7 @@ This construction manual provides all the information required to build your own
 
 The Quantum Dice were developed by the **University of Twente**. All designs are freely available under the **CC BY licence**.
 
-For further information, visit [Quantum Dice by University of Twente]([ut.onl/quantumdice](https://www.utwente.nl/en/mesaplus/education/quantum-dice/?utm_campaign=https%3A//ut.onl/quantumdice&utm_source=shorturl&utm_medium=ut.onl#)) or read the pre-print of our article on [arXiv](https://arxiv.org/abs/2510.04931).
+For further information, visit [Quantum Dice by University of Twente](https://www.utwente.nl/en/mesaplus/education/quantum-dice/) or read the pre-print of our article on [arXiv](https://arxiv.org/abs/2510.04931).
 
 > In the near future the University of Twente supplies ready-to-use electronic boards.  Other components – such as 3D-printed parts, displays, and batteries – must be obtained separately.
 
@@ -84,7 +84,7 @@ The electronics and software are identical for both versions.
 #### PowerPCB and ProcessorPCB
 
 The **PowerPCB** and **ProcessorPCB** can be obtained directly from the University of Twente:  
-[Quantum Dice by University of Twente]([ut.onl/quantumdice](https://www.utwente.nl/en/mesaplus/education/quantum-dice/?utm_campaign=https%3A//ut.onl/quantumdice&utm_source=shorturl&utm_medium=ut.onl#)).
+[Quantum Dice by University of Twente](https://www.utwente.nl/en/mesaplus/education/quantum-dice/).
 
 The ProcessorPCB is supplied pre-configured with the latest firmware, including **IMU calibration** and **functional testing**.  
 Each board is labelled with its **MAC address** (on the rear side) and its assigned **role (A or B)**.
