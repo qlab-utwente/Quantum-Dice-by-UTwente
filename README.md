@@ -4,14 +4,14 @@
 
 In this repo you can find all relevant files, including assembly instructions, 3D printing files, and the parts list. Based on this information, you can build the Quantum Dice yourself.
 
-For further information see [Quantum Dice by University of Twente](ut.onl/quantumdice)
+For further information see [Quantum Dice by University of Twente](https://www.utwente.nl/en/mesaplus/education/quantum-dice/)
 
 You can find more information about the dice in our article, for which a preprint is available on [*arXiv*](https://arxiv.org/abs/2510.04931)
 
-- [Arduino Code](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/tree/main/Arduino)
-- [3D printfiles](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/tree/main/3D%20print%20files)
-- [Construction manual](<3D print files/ConstructionManual.md>)
-- [Bill of Material and parts sourcing calculator](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/blob/main/3D%20print%20files/Bill%20of%20Material%20quantum%20dice.xlsx)
+- [Arduino Code](/Arduino/)
+- [3D printfiles](/3D%20print%20files/)
+- [Construction manual](/3D%20print%20files/ConstructionManual.md)
+- [Bill of Material and parts sourcing calculator](/3D%20print%20files/Bill%20of%20Material%20quantum%20dice.xlsx)
 
 ## Contribution
 
