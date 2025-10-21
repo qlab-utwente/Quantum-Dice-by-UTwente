@@ -57,7 +57,7 @@ Because the software is identical, the assignment of role A or B is determined a
 ## 3. Sourcing of Materials
 
 All parts required to construct the Quantum Dice are listed in the **Bill of Materials (BOM)**.  
-The BOM can be found here: [BOM](https://github.com/ator1811/Quantum-Dice-by-UTwente/blob/main/3D%20print%20files).
+The BOM can be found here: [BOM](Bill%20of%20Material%20quantum dice.xlsx).
 
 It is an Excel sheet containing all components and quantities. At the top of the sheet, you can specify the number of dice for role A and role B you wish to build. The total quantities will update automatically.
 
