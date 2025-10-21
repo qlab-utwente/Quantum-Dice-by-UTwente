@@ -2,6 +2,8 @@
 
 Web-based firmware flasher for QuantumDice ESP32 devices. Flash your ESP32 directly from your browser - no drivers or Python installation required!
 
+If you want to upload the Arduino sketches yourself, please follow [these instructions]().
+
 ## 🌐 Access the Flasher
 
 **Live Tool:** [https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/)
@@ -23,28 +25,16 @@ QuantumDice has **two separate programs** that need to be flashed depending on y
 **Use this firmware to:**
 - Configure your ESP32 for the first time
 - Calibrate quantum sensors
-- Set device parameters
-- Test hardware functionality
+- Change parameters
 
-**When to use:** 
-- ✅ First time setting up a new QuantumDice device
-- ✅ When recalibrating sensors
-- ✅ After hardware modifications
-- ✅ When resetting device to factory settings
 
 ### 2. 🎲 Main Program (`QuantumDice.vX.X.X.bin`)
 
-**Purpose:** Production firmware for normal operation
+**Purpose:** Production firmware for the Quantum Dice
 
 **Use this firmware for:**
 - Regular QuantumDice operation
-- Random number generation
-- Normal device functionality
 
-**When to use:**
-- ✅ After completing initialization/calibration
-- ✅ For everyday use of your QuantumDice
-- ✅ When updating to a new firmware version
 
 ---
 
@@ -54,7 +44,7 @@ QuantumDice has **two separate programs** that need to be flashed depending on y
 
 1. Connect your ESP32 to your computer via USB
 2. Wait for the device to be recognized
-3. Open the [QuantumDice Flasher](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/) in Chrome/Edge/Opera
+3. Open the [QuantumDice Flasher](https://qlab-utwente.github.io/Quantum-Dice-by-UTwente/) in Chrome/Edge/Opera
 
 ### Step 2: Connect to Serial Port
 
@@ -195,7 +185,7 @@ The serial monitor supports bidirectional communication:
 
 ### From GitHub Releases
 
-Visit: [https://github.com/ator1811/Quantum-Dice-by-UTwente/releases](https://github.com/ator1811/Quantum-Dice-by-UTwente/releases)
+Visit: [https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/releases/](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/releases)
 
 Each release contains:
 - `QuantumDiceInitTool.vX.X.X.bin` - Initialization & calibration tool
@@ -215,17 +205,4 @@ Download the version you need, then use the "Local File" tab in the flasher.
 
 ---
 
-## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/ator1811/Quantum-Dice-by-UTwente/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/ator1811/Quantum-Dice-by-UTwente/discussions)
-
----
-
-## 📄 License
-
-This project uses [esptool-js](https://github.com/espressif/esptool-js) by Espressif Systems.
-
----
-
-**Made with ❤️ for the QuantumDice community**
