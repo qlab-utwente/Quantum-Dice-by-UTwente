@@ -30,7 +30,8 @@
 #define EEPROM_SIZE 512
 #define EEPROM_BNO_SENSOR_ID_ADDR 0
 #define EEPROM_BNO_CALIBRATION_ADDR 4
-#define EEPROM_CONFIG_ADDRESS 24
+#define EEPROM_CONFIG_ADDRESS 32  // Moved to avoid overlap with BNO calibration data
+// Memory layout: [0-3: BNO ID][4-31: BNO Calibration][32+: Device Config]
 
 // ==================== DICE CONFIGURATION STRUCTURE ====================
 struct DiceConfig {
@@ -199,7 +200,7 @@ void displayMainMenu() {
   Serial.println("2. Configure ATECC508a (PERMANENT)");
   Serial.println("3. Calibrate BNO055 Sensor");
   Serial.println("4. Test BNO055 Sensor (Live Data)");
-  Serial.println("5. Clear EEPROM (Erase calibration)");
+  Serial.println("5. Clear EEPROM (incl. calibration)");
   Serial.println("6. Configure Quantum Dice (EEPROM)");
   Serial.println("========================================");
   Serial.println("M. Show this menu");
