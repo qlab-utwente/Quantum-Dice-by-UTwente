@@ -1,6 +1,6 @@
 # 🎲 QuantumDice Software Flasher
 
-Web-based firmware flasher for QuantumDice ESP32 devices. Flash your ESP32 directly from your browser - no drivers or Python installation required!
+Web-based firmware flasher for Quantum Dice ESP32 devices. Flash your ESP32 directly from your browser - no drivers or Python installation required!
 
 If you want to upload the Arduino sketches yourself, please follow [these instructions](/Arduino/QuantumDice/README.md).
 
@@ -11,8 +11,8 @@ If you want to upload the Arduino sketches yourself, please follow [these instru
 ## 📋 Requirements
 
 - **Browser:** Chrome, Edge, or Opera (WebSerial API support required)
-- **Hardware:** ESP32 board with USB connection
-- **Cable:** USB cable with data lines (not charge-only)
+- **Hardware:** Quantum Dice with top and bottom displays removed. The USB-C connector is on the lower side of the dice
+- **USB-C Cable:** USB-C cable with data lines (not charge-only)
 
 ## 🔧 Available Firmware
 
@@ -24,10 +24,10 @@ QuantumDice has **two separate programs** that need to be flashed depending on y
 
 **Use this firmware to:**
 
-- Configure your ESP32 for the first time
+- Configure your Quantum Dice ESP32 for the first time
 - Calibrate quantum sensors
 - Change parameters
-- See README for detailled instructions
+- See [Initialisation manual](/Arduino/QuantumDiceInitTool/README.md) for detailled instructions
 
 
 ### 2. 🎲 Main Program (`QuantumDice.vX.X.X.bin`)
@@ -44,7 +44,7 @@ QuantumDice has **two separate programs** that need to be flashed depending on y
 
 ### Step 1: Connect Your ESP32
 
-1. Connect your ESP32 to your computer via USB
+1. Connect your Quantum Dice to your computer via USB
 2. Wait for the device to be recognized
 3. Open the [QuantumDice Flasher](https://qlab-utwente.github.io/Quantum-Dice-by-UTwente/) in Chrome/Edge/Opera
 
@@ -131,6 +131,7 @@ See [Quantum Dice Init Tool](/Arduino/QuantumDiceInitTool/README.md) for detaill
 3. Flash → QuantumDice.vX.X.X.bin
 4. Resume normal operation
 ```
+
 See [Quantum Dice Init Tool](/Arduino/QuantumDiceInitTool/README.md) for detailled instructions.
 
 ---
@@ -215,6 +216,5 @@ Download the version you need, then use the "Local File" tab in the flasher.
 - **Flash Address:** 0x10000 (standard Arduino app partition)
 - **Compression:** Enabled
 - **Flash Mode:** Keep existing settings
-- **Supported Chips:** ESP32, ESP32-S2, ESP32-S3, ESP32-C3
 
 ---
