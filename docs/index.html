@@ -285,7 +285,15 @@
 <body>
     <div class="container">
         <h1>🎲 QuantumDice Software Flasher</h1>
-        <p class="subtitle">Flash firmware to your ESP32 directly from your browser <span class="badge" style="margin-left: 10px;">v1.5.1</span></p>
+        <p class="subtitle">
+            Flash firmware to your ESP32 directly from your browser 
+            <span class="badge" style="margin-left: 10px;">v1.5.1</span>
+            <a href="https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/blob/main/Arduino/README.md" 
+               target="_blank" 
+               style="text-decoration: none;">
+                <button style="margin-left: 15px; padding: 8px 20px; font-size: 14px;">📖 Help</button>
+            </a>
+        </p>
 
         <div class="warning" id="browserWarning" style="display: none;">
             <strong>⚠️ Browser Compatibility:</strong> This tool requires Chrome, Edge, or Opera browser with WebSerial API support. Baudrate: 115200
@@ -337,7 +345,7 @@
 
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">GitHub Repository:</label>
-                    <input type="text" id="repoInput" placeholder="username/repository" value="qlab-utwente/Quantum-Dice-by-UTwente"
+                    <input type="text" id="repoInput" placeholder="username/repository" value="ator1811/Quantum-Dice-by-UTwente"
                            style="width: 100%; padding: 10px; border: 2px solid #667eea; border-radius: 8px; font-size: 14px;">
                     <button id="fetchReleasesBtn" style="margin-top: 10px;">Fetch Releases</button>
                 </div>
