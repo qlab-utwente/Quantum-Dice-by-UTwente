@@ -39,6 +39,12 @@ DiceStates::CLASSIC
       case DiceStates::ENTANGLED_AB2:
         debugln("DiceStates::ENTANGLED_AB2");
         break;
+      case DiceStates::UN_ENTANGLED_AB1:
+        debugln("DiceStates::UN_ENTANGLED_AB1");
+        break;
+      case DiceStates::UN_ENTANGLED_AB2:
+        debugln("DiceStates::UN_ENTANGLED_AB2");
+        break;
       case DiceStates::MEASURED:
         debugln("DiceStates::MEASURED");
         break;
@@ -61,14 +67,7 @@ DiceStates::CLASSIC
 
 void printDiceStateName2(const char *objectName, DiceStates diceState) {
   static DiceStates previousDiceState = DiceStates::NONE;  // Local static variable to retain its value between function calls
-                                                           /*
-DiceStates::SINGLE
-DiceStates::ENTANGLED
-DiceStates::MEASURED
-DiceStates::ALL
-DiceStates::NONE
-DiceStates::CLASSIC
-*/
+
   debug(objectName);
   debug(": ");
   switch (diceState) {
@@ -80,6 +79,12 @@ DiceStates::CLASSIC
       break;
     case DiceStates::ENTANGLED_AB2:
       debugln("DiceStates::ENTANGLED_AB2");
+      break;
+    case DiceStates::UN_ENTANGLED_AB1:
+      debugln("DiceStates::UN_ENTANGLED_AB1");
+      break;
+    case DiceStates::UN_ENTANGLED_AB2:
+      debugln("DiceStates::UN_ENTANGLED_AB2");
       break;
     case DiceStates::MEASURED:
       debugln("DiceStates::MEASURED");

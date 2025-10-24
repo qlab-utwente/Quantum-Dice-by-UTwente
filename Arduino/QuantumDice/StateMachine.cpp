@@ -270,7 +270,7 @@ void StateMachine::changeState(Trigger trigger) {
 
 void StateMachine::update() {
   static unsigned long lastUpdateTime = 0;
-  
+
   message data;
 
   while (EspNowSensor<message>::Poll(&data)) {
@@ -286,6 +286,7 @@ void StateMachine::update() {
         diceStateSister = data.data.measurement.diceState;
         diceNumberSister = data.data.measurement.diceNumber;
         measureAxisSister = data.data.measurement.measureAxis;
+        measurementReceived = true;
         break;
 
       case MESSAGE_TYPE_ENTANGLE_REQUEST:  //device B1 and/or B2 receives entangle request from A
@@ -594,21 +595,35 @@ void StateMachine::whileWAITFORTHROW() {
 
     // and dice B1 and B2 respond to that
   } else if (roleSelf == Roles::ROLE_B1) {
-     if (entangleRequestRcvA && EspNowSensor<message>::IsCloseBy()) {
+    if (entangleRequestRcvA && EspNowSensor<message>::IsCloseBy()) {
       sendEntanglementConfirm(Roles::ROLE_A);
       entangleRequestRcvA = false;
       changeState(Trigger::closeByAB1);
     }
   } else if (roleSelf == Roles::ROLE_B2) {
-     if (entangleRequestRcvA && EspNowSensor<message>::IsCloseBy()) {
+    if (entangleRequestRcvA && EspNowSensor<message>::IsCloseBy()) {
       sendEntanglementConfirm(Roles::ROLE_A);
       entangleRequestRcvA = false;
       changeState(Trigger::closeByAB2);
     }
   }
 
+  //timeout of entangled state. No rolling during a period, so return to initSingle state
   if ((diceStateSelf == DiceStates::ENTANGLED_AB1 || diceStateSelf == DiceStates::ENTANGLED_AB2) && (millis() - stateEntryTime > MAXENTANGLEDWAITTIME)) {  //return to initSingle state
     changeState(Trigger::timed);
+  }
+
+  //when in entangled state and the sister or brother dice sends the measurement, then change state of the dice to UN_ENTANGLED_AB1/2 and refresh screens
+  if (measurementReceived) {
+    measurementReceived = false;
+    prevDiceStateSelf = diceStateSelf;  //store for the future
+    if (diceStateSelf == DiceStates::ENTANGLED_AB1) {
+      diceStateSelf = DiceStates::UN_ENTANGLED_AB1;
+    }
+    else if (diceStateSelf == DiceStates::ENTANGLED_AB2) {
+      diceStateSelf = DiceStates::UN_ENTANGLED_AB2;
+    }
+    refreshScreens();  //update screens ackordingly
   }
 }
 
@@ -627,6 +642,18 @@ void StateMachine::whileTHROWING() {
     debugln("isNotMoving triggered and Gravity values are within range");
     changeState(Trigger::nonMoving);
   }
+  //when in entangled state and the sister or brother dice sends the measurement, then change state of the dice to UN_ENTANGLED_AB1/2 and refresh screens
+  if (measurementReceived) {
+    measurementReceived = false;
+    prevDiceStateSelf = diceStateSelf;  //store for the future
+    if (diceStateSelf == DiceStates::ENTANGLED_AB1) {
+      diceStateSelf = DiceStates::UN_ENTANGLED_AB1;
+    }
+    else if (diceStateSelf == DiceStates::ENTANGLED_AB2) {
+      diceStateSelf = DiceStates::UN_ENTANGLED_AB2;
+    }
+    refreshScreens();  //update screens ackordingly
+  }
 };
 
 void StateMachine::enterINITMEASURED() {
@@ -639,7 +666,7 @@ void StateMachine::enterINITMEASURED() {
   if (_imuSensor->isMoving()) {
     changeState(Trigger::measurementFail);  //back to throwing state
   }
-  
+
   debug("gravity XYZ: ");
   debug(_imuSensor->getXGravity());
   debug(", ");
@@ -733,7 +760,36 @@ void StateMachine::enterINITMEASURED() {
       }
       break;
 
-    case DiceStates::ENTANGLED_AB1:
+    case DiceStates::ENTANGLED_AB1
+      debugln("entang AB1 secret sauce");
+      // Use alwaysSeven from config instead of compile-time define
+      if (currentConfig.alwaysSeven) {
+        if (measureAxisSister != MeasuredAxises::UNDEFINED) {
+          debugln("sister ready. always seven mode");
+          diceNumberSelf = selectOppositeOneToSix(diceNumberSister);
+        } else {
+          debugln("different axis");
+          diceNumberSelf = selectOneToSix();
+        }
+      } else {
+        // Normal mode - same axis check
+        if (measureAxisSelf == measureAxisSister) {
+          debugln("sister ready. same axis");
+          diceNumberSelf = selectOppositeOneToSix(diceNumberSister);
+        } else {
+          debugln("different axis");
+          diceNumberSelf = selectOneToSix();
+        }
+      }
+      // Send measurements to the opponent dice
+      if (roleSelf == Roles::ROLE_A) {
+        sendMeasurements(roleB1, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
+      } else if (roleSelf == Roles::ROLE_B1) {
+        sendMeasurements(roleA, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
+      }
+      break;
+
+    case DiceStates::UN_ENTANGLED_AB1
       debugln("entang AB1 secret sauce");
       // Use alwaysSeven from config instead of compile-time define
       if (currentConfig.alwaysSeven) {
@@ -790,6 +846,36 @@ void StateMachine::enterINITMEASURED() {
         sendMeasurements(roleA, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
       }
       break;
+
+   case DiceStates::UN_ENTANGLED_AB2:
+      debugln("entang AB2 secret sauce");
+      // Use alwaysSeven from config instead of compile-time define
+      if (currentConfig.alwaysSeven) {
+        if (measureAxisSister != MeasuredAxises::UNDEFINED) {
+          debugln("sister ready. always seven mode");
+          diceNumberSelf = selectOppositeOneToSix(diceNumberSister);
+        } else {
+          debugln("different axis");
+          diceNumberSelf = selectOneToSix();
+        }
+      } else {
+        // Normal mode - same axis check
+        if (measureAxisSelf == measureAxisSister) {
+          debugln("sister ready. same axis");
+          diceNumberSelf = selectOppositeOneToSix(diceNumberSister);
+        } else {
+          debugln("different axis");
+          diceNumberSelf = selectOneToSix();
+        }
+      }
+      // Send measurements to the opponent dice
+      if (roleSelf == Roles::ROLE_A) {
+        sendMeasurements(roleB2, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
+      } else if (roleSelf == Roles::ROLE_B2) {
+        sendMeasurements(roleA, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
+      }
+      break;      
+
 
     case DiceStates::MEASURED_AFTER_ENT:  // 2 options: no sister diceNumber or with diceNumber
       debugln("measured after entang secret sauce");
