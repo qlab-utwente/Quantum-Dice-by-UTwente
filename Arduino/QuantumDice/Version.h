@@ -16,5 +16,6 @@
 //#define VERSION "070" //implementation new espnow class from M with esp32 core 3.2.1
 //#define VERSION "071" //bugfixing implementation new espnow class from M with esp32 core 3.3.0
 //#define VERSION "075" //config file in eeprom
-#define VERSION "1.0.0" //release version
+//#define VERSION "1.0.0" //release version
+#define VERSION "1.0.1" //added: when in entanglement mode (yellow 1to60) and one dice is measured, the other will have the white 1to6 screen
 #endif // VERSION_H
