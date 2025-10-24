@@ -760,7 +760,7 @@ void StateMachine::enterINITMEASURED() {
       }
       break;
 
-    case DiceStates::ENTANGLED_AB1
+    case DiceStates::ENTANGLED_AB1:
       debugln("entang AB1 secret sauce");
       // Use alwaysSeven from config instead of compile-time define
       if (currentConfig.alwaysSeven) {
@@ -789,7 +789,7 @@ void StateMachine::enterINITMEASURED() {
       }
       break;
 
-    case DiceStates::UN_ENTANGLED_AB1
+    case DiceStates::UN_ENTANGLED_AB1:
       debugln("entang AB1 secret sauce");
       // Use alwaysSeven from config instead of compile-time define
       if (currentConfig.alwaysSeven) {
