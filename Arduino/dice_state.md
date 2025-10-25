@@ -1,21 +1,71 @@
 ```mermaid
 
-stateDiagram-v2
-CLASSIC --> SINGLE :quantum button
-SINGLE --> ENTANGLED_AB1 :AB1 closeby
-SINGLE --> ENTANGLED_AB2 :AB2 closeby
-ENTANGLED_AB1 --> MEASURED_AFTER_ENT :AB2 closeby
-ENTANGLED_AB2 --> MEASURED_AFTER_ENT :AB1 closeby
-ENTANGLED_AB1 --> MEASURED :rolling and stopped
-ENTANGLED_AB2 --> MEASURED :rolling and stopped
-ENTANGLED_AB1 --> SINGLE :time-out
-ENTANGLED_AB2 --> SINGLE :time_out
-MEASURED_AFTER_ENT --> MEASURED :rolling and stopped
-SINGLE --> MEASURED :rolling and stopped
-MEASURED --> SINGLE :quantum button
-MEASURED --> ENTANGLED_AB1 :AB1 closeby
-MEASURED --> ENTANGLED_AB2 :AB2 closeby
-[*] --> CLASSIC
+flowchart LR
+    subgraph Initialise
+        A["Determination measureAxis (X, Y, Z)
+        Determination upside (X0, X1, …, Z1)
+        Read sister measureAxis
+        Read sister DiceNumber
+        Read previous DiceNumber"]
+    end
+
+    subgraph Quantum Dice State
+        B["SINGLE"]
+        C["MEASURED"]
+        D["(UN_)ENTANGLED_AB1"]
+        E["(UN_)ENTANGLED_AB2"]
+        F["MEASURED_AFTER_ENT"]
+    end
+
+        subgraph Condition
+G["same axis as previous"]
+H["diffenent axis as previous"]
+I["same axis as sister"]
+J["different axis as sister"]
+K["same axis as sister"]
+L["different axis as sister"]
+M["no sister DiceNumber"]
+N["with sister DiceNumber"]
+    end
+        subgraph Outome
+        O["DiceNuber = random(1..6)"]
+P["DiceNumber = previous DiceNumer"]
+Q["DiceNumber = opposite (Sister DiceNumber)"]
+R["DiceNumer = Sister DiceNumber"]
+    end
+    subgraph Send messages
+    S["send measurement to sister"]
+    end
+
+
+
+    A --> B
+    A --> C
+    A --> D
+    A --> E
+    A --> F 
+    C --> G
+    C --> H
+    D --> I 
+    D --> J
+    E --> K
+    E --> L
+    F --> M 
+    F --> N 
+    B --> O
+    G --> P
+H --> O
+I --> Q
+J --> O
+K --> Q
+L --> O
+M --> O
+N --> R
+O --> S 
+Q --> S 
+
+
+
 
 
 ```
