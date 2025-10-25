@@ -1,3 +1,6 @@
+#Flow chart determination dice number on top laying display
+
+
 ```mermaid
 
 flowchart LR
