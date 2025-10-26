@@ -7,8 +7,8 @@ sequenceDiagram
     participant DiceB1
     Note over DiceA,DiceB1: state: WAIT_FOR_THROW
     Note over DiceA,DiceB1: diceState = SINGLE
-    DiceA->>DiceB1: entanglement request
     loop CloseBy?
+        DiceA->>DiceB1: entanglement request
         DiceB1->>DiceA: entanglement confirm
     end
     Note over DiceA,DiceB1: diceState = ENTANGLED_AB1
