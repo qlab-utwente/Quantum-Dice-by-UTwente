@@ -8,8 +8,9 @@ sequenceDiagram
     Note over DiceA,DiceB1: state: WAIT_FOR_THROW
     Note over DiceA,DiceB1: diceState = SINGLE
     DiceA->>DiceB1: entanglement request
-    Note over DiceB1: closeBy
-    DiceB1->>DiceA: entanglement confirm
+    loop CloseBy?
+        DiceB1->>DiceA: entanglement confirm
+    end
     Note over DiceA,DiceB1: diceState = ENTANGLED_AB1
 ```
 
@@ -17,16 +18,16 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    Note right of DiceB2: Measurements:<br/> diceState,<br/>diceNumber,<br/>upSide,<br/>measureAxis
+
     participant DiceB1
     participant DiceA
     participant DiceB2
     Note over DiceB1,DiceB2: state: WAIT_FOR_THROW
     Note over DiceB1,DiceB2: diceState = SINGLE
-
-    DiceA->>DiceB1: entanglement request
-    Note over DiceB1: closeBy
-    DiceB1->>DiceA: entanglement confirm
+    loop CloseBy?
+        DiceA->>DiceB1: entanglement request
+        DiceB1->>DiceA: entanglement confirm
+    end
     DiceB1->>DiceB2: measurements
     Note over DiceA: reset states
     DiceA->>DiceB1: measurements
@@ -38,8 +39,10 @@ sequenceDiagram
 
 
     DiceA->>DiceB2: entanglement request
-    Note over DiceB2: closeBy
-    DiceB2->>DiceA: entanglement confirm
+    loop CloseBy?
+        DiceA->>DiceB2: entanglement request
+        DiceB2->>DiceA: entanglement confirm
+    end
     DiceB2->>DiceB1: measurements
     Note over DiceA: reset states
     DiceA->>DiceB2: measurements
