@@ -6,7 +6,6 @@ title: Entanglement sequence double dice
 ---
 
 sequenceDiagram
-
     participant DiceA
     participant DiceB1
     Note over DiceA,DiceB1: state: WAIT_FOR_THROW
