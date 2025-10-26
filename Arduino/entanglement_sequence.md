@@ -1,6 +1,5 @@
 
-```
-mermaid
+```mermaid
 ---
 title: Entanglement sequence double dice
 ---
@@ -15,3 +14,4 @@ sequenceDiagram
     DiceB1->>DiceA: entanglement confirm
 
 ```
+
