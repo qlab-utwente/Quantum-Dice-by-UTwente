@@ -1,6 +1,6 @@
 # Entanglement sequence #
 
-## Entanglement sequence double dice ##
+## Entanglement sequence double dice (simplified) ##
 ```mermaid
 sequenceDiagram
     participant DiceA
