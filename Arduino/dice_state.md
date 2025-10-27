@@ -1,4 +1,6 @@
-# Flow chart determination dice number on top laying display #
+# Flowchart for determining the upward-facing number on the dice display #
+
+Starting conditions: the dice is in state INITMEASURED (in which the dice becomes in dice state MEASURED) after rolling the dice.
 
 
 ```mermaid
