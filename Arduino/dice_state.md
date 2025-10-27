@@ -9,7 +9,6 @@ Input are:
 - the DiceNumber of the upward-facing side of the previous rolling
 - the measureAxis and diceNumber as send by the sister dice to the dice
 - current diceState (SINGLE, MEASURED, (UN_)ENTANGLED_AB1, (UN_)ENTANGLED_AB2, MEASURED_AFTER_ENT)
-- 
 
 Output:
 - the numbers to display on the upward-facing and downward-facing display
