@@ -1,5 +1,7 @@
 ```mermaid
 stateDiagram-v2
+
+[*] --> IDLE
 IDLE-->CLASSIC_STATE: timed
 CLASSIC_STATE-->INITSINGLE: buttonPressed
 INITSINGLE-->WAITFORTHROW: timed
@@ -27,7 +29,3 @@ WAITFORTHROW-->INITSINGLE_AFTER_ENT: entangleStopReceived
 ```
 
 
-
-
-[*] --> IDLE
-```
