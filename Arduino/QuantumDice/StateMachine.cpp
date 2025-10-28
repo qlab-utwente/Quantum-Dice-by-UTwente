@@ -545,6 +545,7 @@ void StateMachine::enterWAITFORTHROW() {
   entangleRequestRcvA = false;  //prepare for
   entangleConfirmRcvB1 = false;
   entangleConfirmRcvB2 = false;
+  measurementReceived = false;
   if (diceStateSelf != DiceStates::MEASURED) {  //no refresh in measured state, because this is done in INITMEASURED
     refreshScreens();
   }
