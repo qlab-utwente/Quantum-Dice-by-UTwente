@@ -744,151 +744,76 @@ void StateMachine::enterINITMEASURED() {
   }
 
   // The secret sauce to set diceNumber on top
-  switch (diceStateSelf) {
-    case DiceStates::SINGLE:
-      debugln("single state secret sauce");
+switch (diceStateSelf) {
+  case DiceStates::SINGLE:
+    debugln("single state secret sauce");
+    diceNumberSelf = selectOneToSix();
+    break;
+
+  case DiceStates::MEASURED:  // 2 options: same measureAxisSelf or different measureAxis
+    debugln("measured state secret sauce");
+    if (measureAxisSelf != prevMeasureAxisSelf) {  // different, generate random upNumber
+      debugln("measured state. different axis");
       diceNumberSelf = selectOneToSix();
-      break;
+    } else {  // same axis
+      debugln("measured state. same axis. do nothing: ");
+      // nothing to do - diceNumberSelf is already set and will be put on top
+    }
+    break;
 
-    case DiceStates::MEASURED:  // 2 options: same measureAxisSelf or different measureAxis
-      debugln("measured state secret sauce");
-      if (measureAxisSelf != prevMeasureAxisSelf) {  // different, generate random upNumber
-        debugln("measured state. different axis");
-        diceNumberSelf = selectOneToSix();
-      } else {  // same axis
-        debugln("measured state. same axis. do nothing: ");
-        // nothing to do - diceNumberSelf is already set and will be put on top
-      }
-      break;
-
-    case DiceStates::ENTANGLED_AB1:
-      debugln("entang AB1 secret sauce");
-      // Use alwaysSeven from config instead of compile-time define
-      if (currentConfig.alwaysSeven) {
-        if (measureAxisSister != MeasuredAxises::UNDEFINED) {
-          debugln("sister ready. always seven mode");
-          diceNumberSelf = selectOppositeOneToSix(diceNumberSister);
-        } else {
-          debugln("different axis");
-          diceNumberSelf = selectOneToSix();
-        }
-      } else {
-        // Normal mode - same axis check
-        if (measureAxisSelf == measureAxisSister) {
-          debugln("sister ready. same axis");
-          diceNumberSelf = selectOppositeOneToSix(diceNumberSister);
-        } else {
-          debugln("different axis");
-          diceNumberSelf = selectOneToSix();
-        }
-      }
-      // Send measurements to the opponent dice
-      if (roleSelf == Roles::ROLE_A) {
-        sendMeasurements(roleB1, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
-      } else if (roleSelf == Roles::ROLE_B1) {
-        sendMeasurements(roleA, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
-      }
-      break;
-
-    case DiceStates::UN_ENTANGLED_AB1:
-      debugln("entang AB1 secret sauce");
-      // Use alwaysSeven from config instead of compile-time define
-      if (currentConfig.alwaysSeven) {
-        if (measureAxisSister != MeasuredAxises::UNDEFINED) {
-          debugln("sister ready. always seven mode");
-          diceNumberSelf = selectOppositeOneToSix(diceNumberSister);
-        } else {
-          debugln("different axis");
-          diceNumberSelf = selectOneToSix();
-        }
-      } else {
-        // Normal mode - same axis check
-        if (measureAxisSelf == measureAxisSister) {
-          debugln("sister ready. same axis");
-          diceNumberSelf = selectOppositeOneToSix(diceNumberSister);
-        } else {
-          debugln("different axis");
-          diceNumberSelf = selectOneToSix();
-        }
-      }
-      // Send measurements to the opponent dice
-      if (roleSelf == Roles::ROLE_A) {
-        sendMeasurements(roleB1, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
-      } else if (roleSelf == Roles::ROLE_B1) {
-        sendMeasurements(roleA, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
-      }
-      break;
-
-    case DiceStates::ENTANGLED_AB2:
-      debugln("entang AB2 secret sauce");
-      // Use alwaysSeven from config instead of compile-time define
-      if (currentConfig.alwaysSeven) {
-        if (measureAxisSister != MeasuredAxises::UNDEFINED) {
-          debugln("sister ready. always seven mode");
-          diceNumberSelf = selectOppositeOneToSix(diceNumberSister);
-        } else {
-          debugln("different axis");
-          diceNumberSelf = selectOneToSix();
-        }
-      } else {
-        // Normal mode - same axis check
-        if (measureAxisSelf == measureAxisSister) {
-          debugln("sister ready. same axis");
-          diceNumberSelf = selectOppositeOneToSix(diceNumberSister);
-        } else {
-          debugln("different axis");
-          diceNumberSelf = selectOneToSix();
-        }
-      }
-      // Send measurements to the opponent dice
-      if (roleSelf == Roles::ROLE_A) {
-        sendMeasurements(roleB2, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
-      } else if (roleSelf == Roles::ROLE_B2) {
-        sendMeasurements(roleA, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
-      }
-      break;
-
-   case DiceStates::UN_ENTANGLED_AB2:
-      debugln("entang AB2 secret sauce");
-      // Use alwaysSeven from config instead of compile-time define
-      if (currentConfig.alwaysSeven) {
-        if (measureAxisSister != MeasuredAxises::UNDEFINED) {
-          debugln("sister ready. always seven mode");
-          diceNumberSelf = selectOppositeOneToSix(diceNumberSister);
-        } else {
-          debugln("different axis");
-          diceNumberSelf = selectOneToSix();
-        }
-      } else {
-        // Normal mode - same axis check
-        if (measureAxisSelf == measureAxisSister) {
-          debugln("sister ready. same axis");
-          diceNumberSelf = selectOppositeOneToSix(diceNumberSister);
-        } else {
-          debugln("different axis");
-          diceNumberSelf = selectOneToSix();
-        }
-      }
-      // Send measurements to the opponent dice
-      if (roleSelf == Roles::ROLE_A) {
-        sendMeasurements(roleB2, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
-      } else if (roleSelf == Roles::ROLE_B2) {
-        sendMeasurements(roleA, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
-      }
-      break;      
-
-
-    case DiceStates::MEASURED_AFTER_ENT:  // 2 options: no sister diceNumber or with diceNumber
-      debugln("measured after entang secret sauce");
-      if (diceNumberSister == DiceNumbers::NONE) {  // different, generate random upNumber
-        debugln("no diceNumberSister");
-        diceNumberSelf = selectOneToSix();
-      } else {
-        debugln("defined diceNumberSister");
-        diceNumberSelf = diceNumberSister;
-      }
-      break;
+  case DiceStates::ENTANGLED_AB1:
+  case DiceStates::UN_ENTANGLED_AB1: {
+    debugln("entang AB1 secret sauce");
+    // Determine dice number based on config and sister state
+    if (currentConfig.alwaysSeven) {
+      diceNumberSelf = (measureAxisSister != MeasuredAxises::UNDEFINED) 
+        ? selectOppositeOneToSix(diceNumberSister)
+        : selectOneToSix();
+      debugln((measureAxisSister != MeasuredAxises::UNDEFINED) ? "sister ready. always seven mode" : "different axis");
+    } else {
+      diceNumberSelf = (measureAxisSelf == measureAxisSister)
+        ? selectOppositeOneToSix(diceNumberSister)
+        : selectOneToSix();
+      debugln((measureAxisSelf == measureAxisSister) ? "sister ready. same axis" : "different axis");
+    }
+    // Send measurements to the opponent dice
+    Roles targetRole = (roleSelf == Roles::ROLE_A) ? roleB1 : roleA;
+    sendMeasurements(targetRole, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
+    break;
   }
+
+  case DiceStates::ENTANGLED_AB2:
+  case DiceStates::UN_ENTANGLED_AB2: {
+    debugln("entang AB2 secret sauce");
+    // Determine dice number based on config and sister state
+    if (currentConfig.alwaysSeven) {
+      diceNumberSelf = (measureAxisSister != MeasuredAxises::UNDEFINED)
+        ? selectOppositeOneToSix(diceNumberSister)
+        : selectOneToSix();
+      debugln((measureAxisSister != MeasuredAxises::UNDEFINED) ? "sister ready. always seven mode" : "different axis");
+    } else {
+      diceNumberSelf = (measureAxisSelf == measureAxisSister)
+        ? selectOppositeOneToSix(diceNumberSister)
+        : selectOneToSix();
+      debugln((measureAxisSelf == measureAxisSister) ? "sister ready. same axis" : "different axis");
+    }
+    // Send measurements to the opponent dice
+    Roles targetRole = (roleSelf == Roles::ROLE_A) ? roleB2 : roleA;
+    sendMeasurements(targetRole, stateSelf, DiceStates::MEASURED, diceNumberSelf, upSideSelf, measureAxisSelf);
+    break;
+  }
+
+  case DiceStates::MEASURED_AFTER_ENT:  // 2 options: no sister diceNumber or with diceNumber
+    debugln("measured after entang secret sauce");
+    if (diceNumberSister == DiceNumbers::NONE) {  // different, generate random upNumber
+      debugln("no diceNumberSister");
+      diceNumberSelf = selectOneToSix();
+    } else {
+      debugln("defined diceNumberSister");
+      diceNumberSelf = diceNumberSister;
+    }
+    break;
+}
 
   prevMeasureAxisSelf = measureAxisSelf;
   prevUpSideSelf = upSideSelf;           // preserve for the history
