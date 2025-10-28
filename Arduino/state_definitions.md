@@ -4,7 +4,7 @@ The Quantum Dice is controlled via 2 state type:
 1. states defined as a Finite State Machine
 2. the dice States
 
-## Finite State Machine (FSM) states)
+## Finite State Machine (FSM) states
 
 The following states are defined:
 0.	IDLE
