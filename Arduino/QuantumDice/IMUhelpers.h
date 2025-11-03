@@ -40,7 +40,7 @@ protected:
   void updateUpVector(double deltaTime);
 
 protected:
-  const float threshold = 0.7; //maximum acceleration to indicate stable
+  const float threshold = 1.6; //maximum acceleration to indicate stable
   const unsigned long stableTime = 200;  //ms)
 
   unsigned long _prevMicros;
