@@ -74,8 +74,7 @@ public:
   void changeState(Trigger trigger);
   void update();
 
-  void setImuSensor(IMUSensor *imuSensor) 
-  {
+  void setImuSensor(IMUSensor *imuSensor) {
     _imuSensor = imuSensor;
   }
 
@@ -127,12 +126,12 @@ private:
   static const StateFunctions stateFunctions[];
   static const StateTransition stateTransitions[];
 
- bool entangleRequestRcvA;
+  bool entangleRequestRcvA;
   bool entangleConfirmRcvB1;
   bool entangleConfirmRcvB2;
   bool entangleStopRcv;
 
- //void printState(State state);
+  //void printState(State state);
 };
 
 #endif  // STATEMACHINE_H
