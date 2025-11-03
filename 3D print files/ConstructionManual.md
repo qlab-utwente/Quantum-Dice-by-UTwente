@@ -4,7 +4,7 @@ This construction manual provides all the information required to build your own
 
 The Quantum Dice were developed by the **University of Twente**. All designs are freely available under the **CC BY licence**.
 
-For further information, visit [Quantum Dice by University of Twente](ut.onl/quantumdice) or read the pre-print of our article on [arXiv](https://arxiv.org/abs/2510.04931).
+For further information, visit [Quantum Dice by University of Twente](https://www.utwente.nl/en/mesaplus/education/quantum-dice/) or read the pre-print of our article on [arXiv](https://arxiv.org/abs/2510.04931).
 
 > In the near future the University of Twente supplies ready-to-use electronic boards.  Other components – such as 3D-printed parts, displays, and batteries – must be obtained separately.
 
@@ -57,7 +57,7 @@ Because the software is identical, the assignment of role A or B is determined a
 ## 3. Sourcing of Materials
 
 All parts required to construct the Quantum Dice are listed in the **Bill of Materials (BOM)**.  
-The BOM can be found here: [BOM](<parts list quantum dice.xlsx>).
+The BOM can be found here: [BOM](/3D%20print%20files/Bill%20of%20Material%20quantum%20dice.xlsx).
 
 It is an Excel sheet containing all components and quantities. At the top of the sheet, you can specify the number of dice for role A and role B you wish to build. The total quantities will update automatically.
 
@@ -84,7 +84,7 @@ The electronics and software are identical for both versions.
 #### PowerPCB and ProcessorPCB
 
 The **PowerPCB** and **ProcessorPCB** can be obtained directly from the University of Twente:  
-[Quantum Dice by University of Twente](ut.onl/quantumdice).
+[Quantum Dice by University of Twente](https://www.utwente.nl/en/mesaplus/education/quantum-dice/).
 
 The ProcessorPCB is supplied pre-configured with the latest firmware, including **IMU calibration** and **functional testing**.  
 Each board is labelled with its **MAC address** (on the rear side) and its assigned **role (A or B)**.
@@ -93,8 +93,8 @@ A set of **connection cables**, **screws**, and **bolts** is included.
 
 Alternatively, if you have experience with microcontroller software and PCB design, you can order the PCBs yourself and flash the software manually.
 
-- PCB fabrication files: [https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/tree/main/PCB%20files](https://github.com/ator1811/Quantum-Dice-by-UTwente/tree/main/PCB%20files))  
-- Arduino firmware can be downloaded [here](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/tree/main/Arduino)
+- PCB fabrication files: [PCB fabrication files](../PCB%20files/)
+- Arduino sketches can be downloaded [here](/Arduino/QuantumDice/)
 
 ---
 

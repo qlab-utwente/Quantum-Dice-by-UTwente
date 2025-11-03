@@ -1,18 +1,18 @@
 # 🎲 QuantumDice Software Flasher
 
-Web-based firmware flasher for QuantumDice ESP32 devices. Flash your ESP32 directly from your browser - no drivers or Python installation required!
+Web-based firmware flasher for Quantum Dice ESP32 devices. Flash your ESP32 directly from your browser - no drivers or Python installation required!
 
-If you want to upload the Arduino sketches yourself, please follow [these instructions]().
+If you want to upload the Arduino sketches yourself, please follow [these instructions](/Arduino/QuantumDice/README.md).
 
 ## 🌐 Access the Flasher
 
-**Live Tool:** [https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/](https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/)
+**Live Tool:** [https://qlab-utwente.github.io/Quantum-Dice-by-UTwente/]( https://qlab-utwente.github.io/Quantum-Dice-by-UTwente/)
 
 ## 📋 Requirements
 
 - **Browser:** Chrome, Edge, or Opera (WebSerial API support required)
-- **Hardware:** ESP32 board with USB connection
-- **Cable:** USB cable with data lines (not charge-only)
+- **Hardware:** Quantum Dice with top and bottom displays removed. The USB-C connector is on the lower side of the dice
+- **USB-C Cable:** USB-C cable with data lines (not charge-only)
 
 ## 🔧 Available Firmware
 
@@ -23,10 +23,11 @@ QuantumDice has **two separate programs** that need to be flashed depending on y
 **Purpose:** First-time setup and sensor calibration
 
 **Use this firmware to:**
-- Configure your ESP32 for the first time
+
+- Configure your Quantum Dice ESP32 for the first time
 - Calibrate quantum sensors
 - Change parameters
-- See README for detailled instructions
+- See [Initialisation manual](/Arduino/QuantumDiceInitTool/README.md) for detailled instructions
 
 
 ### 2. 🎲 Main Program (`QuantumDice.vX.X.X.bin`)
@@ -34,8 +35,8 @@ QuantumDice has **two separate programs** that need to be flashed depending on y
 **Purpose:** Production firmware for the Quantum Dice
 
 **Use this firmware for:**
-- Regular QuantumDice operation
 
+- Regular QuantumDice operation
 
 ---
 
@@ -43,7 +44,7 @@ QuantumDice has **two separate programs** that need to be flashed depending on y
 
 ### Step 1: Connect Your ESP32
 
-1. Connect your ESP32 to your computer via USB
+1. Connect your Quantum Dice to your computer via USB
 2. Wait for the device to be recognized
 3. Open the [QuantumDice Flasher](https://qlab-utwente.github.io/Quantum-Dice-by-UTwente/) in Chrome/Edge/Opera
 
@@ -76,7 +77,7 @@ You have two options for selecting firmware:
 #### Option B: GitHub Release
 
 1. Click the **"🚀 GitHub Release"** tab
-2. The repository should be pre-filled: `ator1811/Quantum-Dice-by-UTwente`
+2. The repository should be pre-filled: `qlab-utwente/Quantum-Dice-by-UTwente`
 3. Click **"Fetch Releases"**
 4. Select your desired release version
 5. Select the .bin file you need
@@ -103,28 +104,35 @@ You have two options for selecting firmware:
 ## 🔄 Typical Usage Workflow
 
 ### First-Time Setup
-```
+
+```text
 1. Flash → QuantumDiceInitTool.vX.X.X.bin
-2. Follow on-screen calibration instructions
+2. Follow on-screen calibration and configuration instructions
 3. Save configuration
 4. Flash → QuantumDice.vX.X.X.bin
 5. Start using your QuantumDice!
 ```
 
+See [Quantum Dice Init Tool](/Arduino/QuantumDiceInitTool/README.md) for detailled instructions.
+
 ### Firmware Update
-```
+
+```text
 1. Download new QuantumDice.vX.X.X.bin
 2. Flash the new version
 3. Reset and test
 ```
 
-### Recalibration
-```
+### Recalibration or reconfiguration
+
+```text
 1. Flash → QuantumDiceInitTool.vX.X.X.bin
 2. Perform recalibration
 3. Flash → QuantumDice.vX.X.X.bin
 4. Resume normal operation
 ```
+
+See [Quantum Dice Init Tool](/Arduino/QuantumDiceInitTool/README.md) for detailled instructions.
 
 ---
 
@@ -152,29 +160,34 @@ The serial monitor supports bidirectional communication:
 ## ❓ Troubleshooting
 
 ### "WebSerial API is not supported"
+
 - ✅ Use Chrome, Edge, or Opera browser
 - ✅ Update your browser to the latest version
 - ❌ Safari and Firefox do not support WebSerial
 
 ### "Cannot connect to serial port"
+
 - ✅ Make sure no other program is using the serial port (close Arduino IDE, PuTTY, etc.)
 - ✅ Try a different USB port
 - ✅ Try a different USB cable (must support data transfer)
 - ✅ Check Device Manager (Windows) or `ls /dev/tty.*` (Mac/Linux) to verify the device is detected
 
 ### "MD5 of file does not match data in flash"
+
 - ✅ This warning is **common and usually harmless**
 - ✅ If progress reached 100%, the flash likely succeeded
 - ✅ Test your device - if it works, you can ignore this warning
 - ❌ If the device doesn't work, try flashing again with a slower baud rate
 
 ### "Flash failed" or incomplete flash
+
 - ✅ Make sure you stopped the serial monitor before flashing
 - ✅ Try disconnecting and reconnecting the ESP32
 - ✅ Check your USB cable quality
 - ✅ Try a different USB port (preferably USB 2.0)
 
 ### Device not booting after flash
+
 - ✅ Press the reset button on your ESP32
 - ✅ Check that you flashed the correct .bin file
 - ✅ Try erasing the flash and flashing again
@@ -189,6 +202,7 @@ The serial monitor supports bidirectional communication:
 Visit: [https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/releases/](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/releases)
 
 Each release contains:
+
 - `QuantumDiceInitTool.vX.X.X.bin` - Initialization & calibration tool
 - `QuantumDice.vX.X.X.bin` - Main program
 
@@ -202,8 +216,5 @@ Download the version you need, then use the "Local File" tab in the flasher.
 - **Flash Address:** 0x10000 (standard Arduino app partition)
 - **Compression:** Enabled
 - **Flash Mode:** Keep existing settings
-- **Supported Chips:** ESP32, ESP32-S2, ESP32-S3, ESP32-C3
 
 ---
-
-
