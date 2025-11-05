@@ -114,26 +114,31 @@ void printConfig(const DiceConfig& config, const char* title);
 bool readEEPROMConfig(DiceConfig& config);
 void writeEEPROMConfig(const DiceConfig& config);
 String readSerialLine();
-bool readMacFromSerial(uint8_t* mac);
+int readMacFromSerial(uint8_t* mac);
 uint16_t readColorFromSerial();
 
 // ==================== SETUP ====================
 void setup() {
   Serial.begin(115200);
   delay(2000);
-  
+
   Serial.println("\n\n");
   Serial.println("========================================");
   Serial.println("  ESP32-S3 Unified Sensor Setup Tool");
   Serial.println("========================================");
   Serial.println();
-  
+
   // Initialize I2C
   Wire.begin();
-  
+
   // Initialize EEPROM
   EEPROM.begin(EEPROM_SIZE);
-  
+
+  Serial.println("========================================");
+  Serial.println("  Check status of randomizer chip ATECC508a");
+  Serial.println("========================================");
+  configureATECC508a();
+
   displayMainMenu();
 }
 
@@ -141,55 +146,55 @@ void setup() {
 void loop() {
   if (Serial.available() > 0) {
     char input = Serial.read();
-    
+
     // Clear any remaining characters in buffer
     delay(10);
     while (Serial.available() > 0) {
       Serial.read();
     }
-    
+
     // Convert to uppercase
     if (input >= 'a' && input <= 'z') {
       input = input - 32;
     }
-    
+
     Serial.println();
-    
+
     switch (input) {
       case '1':
         getMacAddress();
         break;
-        
-      case '2':
+
+      case '5':
         configureATECC508a();
         break;
-        
+
       case '3':
         calibrateBNO055();
         break;
-        
-      case '4':
+
+      case '6':
         testBNO055();
         break;
-        
-      case '5':
-        clearEEPROM();
-        break;
-        
-      case '6':
+
+      case '2':
         configureEEPROMSettings();
         break;
-        
+
+      case '4':
+        clearEEPROM();
+        break;
+
       case 'M':
         displayMainMenu();
         break;
-        
+
       default:
         Serial.println("Invalid option. Please try again.");
         Serial.println("Type 'M' to show the menu.");
         break;
     }
-    
+
     Serial.println();
   }
 }
@@ -198,13 +203,14 @@ void loop() {
 void displayMainMenu() {
   Serial.println("\n========================================");
   Serial.println("           MAIN MENU");
-  Serial.println("========================================");
+  Serial.println("======= Configuration options ==========");
   Serial.println("1. Get MAC Address");
-  Serial.println("2. Configure ATECC508a (PERMANENT)");
+  Serial.println("2. Configure Quantum Dice (both MAC Address needed!)");
   Serial.println("3. Calibrate BNO055 Sensor");
-  Serial.println("4. Test BNO055 Sensor (Live Data)");
-  Serial.println("5. Clear EEPROM (incl. calibration)");
-  Serial.println("6. Configure Quantum Dice (EEPROM)");
+  Serial.println("========== Advanced options ============");
+  Serial.println("4. Clear EEPROM (incl. calibration)");
+  Serial.println("5. Configure ATECC508a (PERMANENT)");
+  Serial.println("6. Test BNO055 Sensor (Live Data)");
   Serial.println("========================================");
   Serial.println("M. Show this menu");
   Serial.println("========================================");
@@ -214,20 +220,20 @@ void displayMainMenu() {
 // ==================== MAC ADDRESS ====================
 void getMacAddress() {
   Serial.println("\n--- Getting MAC Address ---");
-  
+
   // Initialize WiFi to get MAC address
   WiFi.mode(WIFI_STA);
   delay(1000);
   String macStr = WiFi.macAddress();
-  
+
   // Print the original MAC address
-  Serial.print("Original MAC Address: ");
+  Serial.print("MAC Address: ");
   Serial.println(macStr);
-  
+  Serial.println("Copy - paste somewhere for further use");
   // Convert to hexadecimal array
   uint8_t macList[6];
   parseMacAddress(macStr, macList);
-  
+
   // Print formatted for code
   Serial.println();
   Serial.print("inline uint8_t deviceX_mac[6] = { ");
@@ -239,10 +245,10 @@ void getMacAddress() {
   }
   Serial.println(" };");
   Serial.println();
-  
+
   // Turn off WiFi to save power
   WiFi.mode(WIFI_OFF);
-  
+
   Serial.println("\nPress M for menu");
 }
 
@@ -257,7 +263,7 @@ void parseMacAddress(String macStr, uint8_t* macList) {
 // ==================== ATECC508a CONFIGURATION ====================
 void configureATECC508a() {
   Serial.println("\n--- ATECC508a Configuration ---");
-  
+
   if (atecc.begin() == true) {
     Serial.println("✓ ATECC508a detected - I2C connection good");
   } else {
@@ -266,10 +272,10 @@ void configureATECC508a() {
     Serial.println("\nPress M for menu");
     return;
   }
-  
+
   Serial.println();
   printATECCInfo();
-  
+
   // Check if already fully configured
   if (atecc.configLockStatus && atecc.dataOTPLockStatus && atecc.slot0LockStatus) {
     Serial.println("\n✓ ATECC508a is already fully configured and locked!");
@@ -278,24 +284,24 @@ void configureATECC508a() {
     Serial.println("\nPress M for menu");
     return;
   }
-  
+
   Serial.println("\n*** WARNING ***");
   Serial.println("Configuration settings are PERMANENT and cannot be changed!");
   Serial.println();
   Serial.println("Would you like to configure with SparkFun Standard settings?");
   Serial.println("Type 'Y' to proceed or any other key to cancel:");
-  
+
   // Wait for user input
   while (Serial.available() == 0) {
     delay(10);
   }
-  
+
   char response = Serial.read();
-  while (Serial.available() > 0) Serial.read(); // Clear buffer
-  
+  while (Serial.available() > 0) Serial.read();  // Clear buffer
+
   if (response == 'Y' || response == 'y') {
     Serial.println("\n>>> Starting configuration... <<<\n");
-    
+
     if (!atecc.configLockStatus) {
       Serial.print("Write Config:   ");
       if (atecc.writeConfigSparkFun() == true) {
@@ -303,7 +309,7 @@ void configureATECC508a() {
       } else {
         Serial.println("✗ Failure");
       }
-      
+
       Serial.print("Lock Config:    ");
       if (atecc.lockConfig() == true) {
         Serial.println("✓ Success");
@@ -313,7 +319,7 @@ void configureATECC508a() {
     } else {
       Serial.println("Config Zone:    Already locked ✓");
     }
-    
+
     if (!atecc.dataOTPLockStatus) {
       Serial.print("Key Creation:   ");
       if (atecc.createNewKeyPair() == true) {
@@ -321,7 +327,7 @@ void configureATECC508a() {
       } else {
         Serial.println("✗ Failure");
       }
-      
+
       Serial.print("Lock Data-OTP:  ");
       if (atecc.lockDataAndOTP() == true) {
         Serial.println("✓ Success");
@@ -331,7 +337,7 @@ void configureATECC508a() {
     } else {
       Serial.println("Data-OTP Zone:  Already locked ✓");
     }
-    
+
     if (!atecc.slot0LockStatus) {
       Serial.print("Lock Slot 0:    ");
       if (atecc.lockDataSlot0() == true) {
@@ -342,7 +348,7 @@ void configureATECC508a() {
     } else {
       Serial.println("Slot 0:         Already locked ✓");
     }
-    
+
     Serial.println("\n>>> Configuration complete! <<<");
     Serial.println();
     printATECCInfo();
@@ -350,36 +356,36 @@ void configureATECC508a() {
     Serial.println("\nConfiguration cancelled.");
     Serial.println("Note: ATECC508a features require configuration.");
   }
-  
+
   Serial.println("\nPress M for menu");
 }
 
 void printATECCInfo() {
   atecc.readConfigZone(false);
-  
+
   Serial.print("Serial Number:  ");
   for (int i = 0; i < 9; i++) {
     if ((atecc.serialNumber[i] >> 4) == 0) Serial.print("0");
     Serial.print(atecc.serialNumber[i], HEX);
   }
   Serial.println();
-  
+
   Serial.print("Rev Number:     ");
   for (int i = 0; i < 4; i++) {
     if ((atecc.revisionNumber[i] >> 4) == 0) Serial.print("0");
     Serial.print(atecc.revisionNumber[i], HEX);
   }
   Serial.println();
-  
+
   Serial.print("Config Zone:    ");
   Serial.println(atecc.configLockStatus ? "Locked" : "NOT Locked");
-  
+
   Serial.print("Data/OTP Zone:  ");
   Serial.println(atecc.dataOTPLockStatus ? "Locked" : "NOT Locked");
-  
+
   Serial.print("Data Slot 0:    ");
   Serial.println(atecc.slot0LockStatus ? "Locked" : "NOT Locked");
-  
+
   // If fully configured, show public key
   if (atecc.configLockStatus && atecc.dataOTPLockStatus && atecc.slot0LockStatus) {
     Serial.println();
@@ -392,28 +398,28 @@ void printATECCInfo() {
 // ==================== BNO055 CALIBRATION ====================
 void calibrateBNO055() {
   Serial.println("\n--- BNO055 Calibration ---");
-  
+
   if (!bno.begin()) {
     Serial.println("✗ BNO055 not detected!");
     Serial.println("Check wiring and I2C address (0x28 or 0x29).");
     Serial.println("\nPress M for menu");
     return;
   }
-  
+
   Serial.println("✓ BNO055 detected");
-  
+
   displaySensorDetails();
   displaySensorStatus();
-  
+
   bno.setExtCrystalUse(true);
   delay(1000);
-  
+
   // Check if calibration data already exists in EEPROM
   int eeAddress = EEPROM_BNO_SENSOR_ID_ADDR;
   long bnoID;
-  
+
   EEPROM.get(eeAddress, bnoID);
-  
+
   sensor_t sensor;
   bno.getSensor(&sensor);
 
@@ -424,30 +430,30 @@ void calibrateBNO055() {
 
   if (bnoID == sensor.sensor_id) {
     Serial.println("\n✓ Existing calibration data found in EEPROM!");
-    
+
     // Load and display the existing calibration
     adafruit_bno055_offsets_t existingCalib;
     eeAddress = EEPROM_BNO_CALIBRATION_ADDR;
     EEPROM.get(eeAddress, existingCalib);
-    
+
     Serial.println("\nStored calibration offsets:");
     displaySensorOffsets(existingCalib);
-    
+
     Serial.println("\n\nOptions:");
     Serial.println("Y - Perform new calibration (overwrites existing)");
     Serial.println("N - Keep existing calibration and return to menu");
     Serial.print("\nYour choice: ");
-    
+
     // Wait for user input
     while (Serial.available() == 0) {
       delay(10);
     }
-    
+
     char response = Serial.read();
-    while (Serial.available() > 0) Serial.read(); // Clear buffer
-    
+    while (Serial.available() > 0) Serial.read();  // Clear buffer
+
     Serial.println(response);
-    
+
     if (response == 'Y' || response == 'y') {
       Serial.println("\nProceeding with recalibration...");
       performCalibration();
@@ -460,7 +466,7 @@ void calibrateBNO055() {
     Serial.println("Starting calibration process...");
     performCalibration();
   }
-  
+
   Serial.println("\nPress M for menu");
 }
 
@@ -474,44 +480,44 @@ void performCalibration() {
   Serial.println("Goal: Minimize linear acceleration offset (should be near 0.0 m/s²)");
   Serial.println(">>> Type 'Q' at any time to quit calibration <<<");
   Serial.println("------------------------------------------------------------");
-  
+
   bool calibrationAborted = false;
-  
+
   while (!bno.isFullyCalibrated()) {
     // Check for user interrupt
     if (Serial.available() > 0) {
       char input = Serial.read();
       // Clear buffer
       while (Serial.available() > 0) Serial.read();
-      
+
       // Convert to uppercase
       if (input >= 'a' && input <= 'z') {
         input = input - 32;
       }
-      
+
       if (input == 'Q') {
         Serial.println("\n\n*** Calibration aborted by user ***");
         calibrationAborted = true;
         break;
       }
     }
-    
+
     bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
-    
+
     // Calculate magnitude
     double x = linearAccelData.acceleration.x;
     double y = linearAccelData.acceleration.y;
     double z = linearAccelData.acceleration.z;
     double mag = sqrt(x * x + y * y + z * z);
-    
+
     // Display calibration status first
     displayCalStatus();
-    
+
     // Display linear acceleration with clear offset warning
     Serial.print(" | Linear: ");
     Serial.print(mag, 3);
     Serial.print(" m/s² ");
-    
+
     // Color-coded threshold indicators
     if (mag > 0.5) {
       Serial.print("[⚠⚠ HIGH OFFSET - Keep calibrating! ]");
@@ -522,20 +528,20 @@ void performCalibration() {
     } else {
       Serial.print("[✓✓ Excellent offset!              ]");
     }
-    
+
     Serial.println();
     delay(BNO055_SAMPLERATE_DELAY_MS);
   }
-  
+
   // If calibration was aborted, exit without saving
   if (calibrationAborted) {
     Serial.println("Calibration data NOT saved.");
     Serial.println("Previous calibration (if any) remains in EEPROM.");
     return;
   }
-  
+
   Serial.println("\n✓ Fully calibrated!");
-  
+
   // Verify final offset
   Serial.println("\nVerifying calibration quality...");
   delay(500);
@@ -544,11 +550,11 @@ void performCalibration() {
   double y = linearAccelData.acceleration.y;
   double z = linearAccelData.acceleration.z;
   double finalMag = sqrt(x * x + y * y + z * z);
-  
+
   Serial.print("Final linear acceleration offset: ");
   Serial.print(finalMag, 4);
   Serial.print(" m/s² ");
-  
+
   if (finalMag < 0.15) {
     Serial.println("- Excellent! ✓✓");
   } else if (finalMag < 0.3) {
@@ -556,27 +562,27 @@ void performCalibration() {
   } else {
     Serial.println("- Consider recalibrating for better accuracy ⚠");
   }
-  
+
   Serial.println("================================");
-  
+
   // Get and display calibration data
   adafruit_bno055_offsets_t newCalib;
   bno.getSensorOffsets(newCalib);
   displaySensorOffsets(newCalib);
-  
+
   // Save to EEPROM
   Serial.println("\n\nSaving calibration to EEPROM...");
-  
+
   int eeAddress = EEPROM_BNO_SENSOR_ID_ADDR;
   sensor_t sensor;
   bno.getSensor(&sensor);
   long bnoID = sensor.sensor_id;
-  
+
   EEPROM.put(eeAddress, bnoID);
   eeAddress = EEPROM_BNO_CALIBRATION_ADDR;
   EEPROM.put(eeAddress, newCalib);
   EEPROM.commit();
-  
+
   Serial.println("✓ Calibration saved!");
   Serial.println("================================");
 }
@@ -584,24 +590,24 @@ void performCalibration() {
 // ==================== BNO055 TEST MODE ====================
 void testBNO055() {
   Serial.println("\n--- BNO055 Test Mode ---");
-  
+
   if (!bno.begin()) {
     Serial.println("✗ BNO055 not detected!");
     Serial.println("Check wiring and I2C address.");
     Serial.println("\nPress M for menu");
     return;
   }
-  
+
   Serial.println("✓ BNO055 detected");
-  
+
   // Try to load calibration from EEPROM
   int eeAddress = EEPROM_BNO_SENSOR_ID_ADDR;
   long bnoID;
   EEPROM.get(eeAddress, bnoID);
-  
+
   sensor_t sensor;
   bno.getSensor(&sensor);
-  
+
   if (bnoID == sensor.sensor_id) {
     Serial.println("✓ Loading stored calibration...");
     adafruit_bno055_offsets_t calibData;
@@ -611,36 +617,36 @@ void testBNO055() {
   } else {
     Serial.println("⚠ No calibration found - sensor may be less accurate");
   }
-  
+
   bno.setExtCrystalUse(true);
   delay(500);
-  
+
   Serial.println("\n>>> Live Sensor Data <<<");
   Serial.println("Monitoring linear acceleration offset - should be < 0.15 m/s² when stationary");
   Serial.println("Press any key to return to menu\n");
   Serial.println("--------------------------------------------------------------------");
-  
+
   // Display live data until user presses a key
   while (Serial.available() == 0) {
     bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
     bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
     bno.getEvent(&gravityData, Adafruit_BNO055::VECTOR_GRAVITY);
-    
+
     // Calculate linear acceleration magnitude
     double x = linearAccelData.acceleration.x;
     double y = linearAccelData.acceleration.y;
     double z = linearAccelData.acceleration.z;
     double mag = sqrt(x * x + y * y + z * z);
-    
+
     // Display calibration status
     displayCalStatus();
     Serial.print(" | ");
-    
+
     // Display linear acceleration with alert
     Serial.print("Linear: ");
     Serial.print(mag, 3);
     Serial.print(" m/s²");
-    
+
     // Alert if magnitude exceeds threshold
     if (mag > 0.4) {
       Serial.print(" [⚠⚠ HIGH - Recalibrate!]");
@@ -651,22 +657,22 @@ void testBNO055() {
     } else {
       Serial.print(" [✓✓ Excellent        ]");
     }
-    
+
     Serial.print(" | X:");
     Serial.print(x, 3);
     Serial.print(" Y:");
     Serial.print(y, 3);
     Serial.print(" Z:");
     Serial.print(z, 3);
-    
+
     Serial.println();
-    
+
     delay(BNO055_SAMPLERATE_DELAY_MS);
   }
-  
+
   // Clear input buffer
   while (Serial.available() > 0) Serial.read();
-  
+
   Serial.println("\nExiting test mode...");
   Serial.println("Press M for menu");
 }
@@ -676,12 +682,21 @@ void displaySensorDetails() {
   sensor_t sensor;
   bno.getSensor(&sensor);
   Serial.println("------------------------------------");
-  Serial.print("Sensor:       "); Serial.println(sensor.name);
-  Serial.print("Driver Ver:   "); Serial.println(sensor.version);
-  Serial.print("Unique ID:    "); Serial.println(sensor.sensor_id);
-  Serial.print("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" xxx");
-  Serial.print("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" xxx");
-  Serial.print("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" xxx");
+  Serial.print("Sensor:       ");
+  Serial.println(sensor.name);
+  Serial.print("Driver Ver:   ");
+  Serial.println(sensor.version);
+  Serial.print("Unique ID:    ");
+  Serial.println(sensor.sensor_id);
+  Serial.print("Max Value:    ");
+  Serial.print(sensor.max_value);
+  Serial.println(" xxx");
+  Serial.print("Min Value:    ");
+  Serial.print(sensor.min_value);
+  Serial.println(" xxx");
+  Serial.print("Resolution:   ");
+  Serial.print(sensor.resolution);
+  Serial.println(" xxx");
   Serial.println("------------------------------------");
 }
 
@@ -689,10 +704,13 @@ void displaySensorStatus() {
   uint8_t system_status, self_test_results, system_error;
   system_status = self_test_results = system_error = 0;
   bno.getSystemStatus(&system_status, &self_test_results, &system_error);
-  
-  Serial.print("System Status: 0x"); Serial.println(system_status, HEX);
-  Serial.print("Self Test:     0x"); Serial.println(self_test_results, HEX);
-  Serial.print("System Error:  0x"); Serial.println(system_error, HEX);
+
+  Serial.print("System Status: 0x");
+  Serial.println(system_status, HEX);
+  Serial.print("Self Test:     0x");
+  Serial.println(self_test_results, HEX);
+  Serial.print("System Error:  0x");
+  Serial.println(system_error, HEX);
   Serial.println();
 }
 
@@ -700,7 +718,7 @@ void displayCalStatus() {
   uint8_t system, gyro, accel, mag;
   system = gyro = accel = mag = 0;
   bno.getCalibration(&system, &gyro, &accel, &mag);
-  
+
   if (!system) Serial.print("! ");
   Serial.print("Cal: Sys:");
   Serial.print(system, DEC);
@@ -714,20 +732,26 @@ void displayCalStatus() {
 
 void displaySensorOffsets(const adafruit_bno055_offsets_t& calibData) {
   Serial.print("Accel: ");
-  Serial.print(calibData.accel_offset_x); Serial.print(" ");
-  Serial.print(calibData.accel_offset_y); Serial.print(" ");
+  Serial.print(calibData.accel_offset_x);
+  Serial.print(" ");
+  Serial.print(calibData.accel_offset_y);
+  Serial.print(" ");
   Serial.print(calibData.accel_offset_z);
-  
+
   Serial.print(" | Gyro: ");
-  Serial.print(calibData.gyro_offset_x); Serial.print(" ");
-  Serial.print(calibData.gyro_offset_y); Serial.print(" ");
+  Serial.print(calibData.gyro_offset_x);
+  Serial.print(" ");
+  Serial.print(calibData.gyro_offset_y);
+  Serial.print(" ");
   Serial.print(calibData.gyro_offset_z);
-  
+
   Serial.print(" | Mag: ");
-  Serial.print(calibData.mag_offset_x); Serial.print(" ");
-  Serial.print(calibData.mag_offset_y); Serial.print(" ");
+  Serial.print(calibData.mag_offset_x);
+  Serial.print(" ");
+  Serial.print(calibData.mag_offset_y);
+  Serial.print(" ");
   Serial.print(calibData.mag_offset_z);
-  
+
   Serial.print(" | Radius: A:");
   Serial.print(calibData.accel_radius);
   Serial.print(" M:");
@@ -736,7 +760,7 @@ void displaySensorOffsets(const adafruit_bno055_offsets_t& calibData) {
 
 void printEvent(sensors_event_t* event) {
   double x = -1000000, y = -1000000, z = -1000000, mag = 0;
-  
+
   if (event->type == SENSOR_TYPE_ACCELEROMETER) {
     Serial.print("Accl:");
     x = event->acceleration.x;
@@ -773,7 +797,7 @@ void printEvent(sensors_event_t* event) {
   } else {
     Serial.print("Unk:");
   }
-  
+
   Serial.print("\tx=");
   Serial.print(x);
   Serial.print(" |\ty=");
@@ -792,24 +816,24 @@ void clearEEPROM() {
   Serial.println();
   Serial.println("Are you sure you want to clear EEPROM?");
   Serial.println("Type 'Y' to confirm or any other key to cancel:");
-  
+
   // Wait for user input
   while (Serial.available() == 0) {
     delay(10);
   }
-  
+
   char response = Serial.read();
-  while (Serial.available() > 0) Serial.read(); // Clear buffer
-  
+  while (Serial.available() > 0) Serial.read();  // Clear buffer
+
   if (response == 'Y' || response == 'y') {
     Serial.println("\nClearing EEPROM...");
-    
+
     // Write zeros to entire EEPROM space
     for (int i = 0; i < EEPROM_SIZE; i++) {
       EEPROM.write(i, 0);
     }
     EEPROM.commit();
-    
+
     Serial.println("✓ EEPROM cleared successfully!");
     Serial.println();
     Serial.println("All data has been erased.");
@@ -818,7 +842,7 @@ void clearEEPROM() {
   } else {
     Serial.println("\nOperation cancelled. EEPROM data preserved.");
   }
-  
+
   Serial.println("\nPress M for menu");
 }
 
@@ -885,12 +909,18 @@ void configureEEPROMSettings() {
   Serial.println("\n========================================");
   Serial.println("  Interactive Configuration");
   Serial.println("========================================");
-  Serial.println("Press ENTER to accept default, or type new value\n");
+  Serial.println("Press ENTER to accept default, or type new value");
+  Serial.println("Press 'Q' at any time to quit without saving\n");
   
   // Dice ID
   Serial.println("----------------------------------------");
-  Serial.printf("Dice ID (max 5 letters) [%s]: ", displayDefaults.diceId);
+  Serial.printf("Dice ID [%s]: ", displayDefaults.diceId);
   String input = readSerialLine();
+  if (input == "QUIT_CONFIG") {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
   if (input.length() > 0) {
     strncpy(newConfig.diceId, input.c_str(), 15);
     newConfig.diceId[15] = '\0';
@@ -905,7 +935,13 @@ void configureEEPROMSettings() {
   }
   Serial.println("]");
   Serial.println("Enter MAC (format: AA:BB:CC:DD:EE:FF) or press ENTER:");
-  if (!readMacFromSerial(newConfig.deviceA_mac)) {
+  int macResult = readMacFromSerial(newConfig.deviceA_mac);
+  if (macResult == -1) {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
+  if (macResult == 0) {
     // Keep current/default
     memcpy(newConfig.deviceA_mac, displayDefaults.deviceA_mac, 6);
   }
@@ -919,7 +955,13 @@ void configureEEPROMSettings() {
   }
   Serial.println("]");
   Serial.println("Enter MAC (format: AA:BB:CC:DD:EE:FF) or press ENTER:");
-  if (!readMacFromSerial(newConfig.deviceB1_mac)) {
+  macResult = readMacFromSerial(newConfig.deviceB1_mac);
+  if (macResult == -1) {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
+  if (macResult == 0) {
     memcpy(newConfig.deviceB1_mac, displayDefaults.deviceB1_mac, 6);
   }
   
@@ -932,7 +974,13 @@ void configureEEPROMSettings() {
   }
   Serial.println("]");
   Serial.println("Enter MAC (format: AA:BB:CC:DD:EE:FF) or press ENTER:");
-  if (!readMacFromSerial(newConfig.deviceB2_mac)) {
+  macResult = readMacFromSerial(newConfig.deviceB2_mac);
+  if (macResult == -1) {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
+  if (macResult == 0) {
     memcpy(newConfig.deviceB2_mac, displayDefaults.deviceB2_mac, 6);
   }
   
@@ -940,6 +988,11 @@ void configureEEPROMSettings() {
   Serial.println("\n----------------------------------------");
   Serial.printf("X Background Color [0x%04X]: ", displayDefaults.x_background);
   input = readSerialLine();
+  if (input == "QUIT_CONFIG") {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
   if (input.length() > 0) {
     newConfig.x_background = strtoul(input.c_str(), NULL, 16);
   }
@@ -947,6 +1000,11 @@ void configureEEPROMSettings() {
   // Y Background Color
   Serial.printf("Y Background Color [0x%04X]: ", displayDefaults.y_background);
   input = readSerialLine();
+  if (input == "QUIT_CONFIG") {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
   if (input.length() > 0) {
     newConfig.y_background = strtoul(input.c_str(), NULL, 16);
   }
@@ -954,6 +1012,11 @@ void configureEEPROMSettings() {
   // Z Background Color
   Serial.printf("Z Background Color [0x%04X]: ", displayDefaults.z_background);
   input = readSerialLine();
+  if (input == "QUIT_CONFIG") {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
   if (input.length() > 0) {
     newConfig.z_background = strtoul(input.c_str(), NULL, 16);
   }
@@ -961,6 +1024,11 @@ void configureEEPROMSettings() {
   // Entanglement AB1 Color
   Serial.printf("Entanglement AB1 Color [0x%04X]: ", displayDefaults.entang_ab1_color);
   input = readSerialLine();
+  if (input == "QUIT_CONFIG") {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
   if (input.length() > 0) {
     newConfig.entang_ab1_color = strtoul(input.c_str(), NULL, 16);
   }
@@ -968,6 +1036,11 @@ void configureEEPROMSettings() {
   // Entanglement AB2 Color
   Serial.printf("Entanglement AB2 Color [0x%04X]: ", displayDefaults.entang_ab2_color);
   input = readSerialLine();
+  if (input == "QUIT_CONFIG") {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
   if (input.length() > 0) {
     newConfig.entang_ab2_color = strtoul(input.c_str(), NULL, 16);
   }
@@ -976,6 +1049,11 @@ void configureEEPROMSettings() {
   Serial.println("\n----------------------------------------");
   Serial.printf("RSSI Limit in dBm [%d]: ", displayDefaults.rssiLimit);
   input = readSerialLine();
+  if (input == "QUIT_CONFIG") {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
   if (input.length() > 0) {
     newConfig.rssiLimit = input.toInt();
   }
@@ -984,6 +1062,11 @@ void configureEEPROMSettings() {
   Serial.println("\n----------------------------------------");
   Serial.printf("Is NANO board? (Y/N) [%s]: ", displayDefaults.isNano ? "Y" : "N");
   input = readSerialLine();
+  if (input == "QUIT_CONFIG") {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
   if (input.length() > 0) {
     newConfig.isNano = (input[0] == 'Y' || input[0] == 'y');
   }
@@ -991,6 +1074,11 @@ void configureEEPROMSettings() {
   // Screen Type
   Serial.printf("Is SMD screen? (Y/N) [%s]: ", displayDefaults.isSMD ? "Y" : "N");
   input = readSerialLine();
+  if (input == "QUIT_CONFIG") {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
   if (input.length() > 0) {
     newConfig.isSMD = (input[0] == 'Y' || input[0] == 'y');
   }
@@ -999,6 +1087,11 @@ void configureEEPROMSettings() {
   Serial.println("\n----------------------------------------");
   Serial.printf("Always Seven mode? (Y/N) [%s]: ", displayDefaults.alwaysSeven ? "Y" : "N");
   input = readSerialLine();
+  if (input == "QUIT_CONFIG") {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
   if (input.length() > 0) {
     newConfig.alwaysSeven = (input[0] == 'Y' || input[0] == 'y');
   }
@@ -1006,6 +1099,11 @@ void configureEEPROMSettings() {
   // Random Switch Point
   Serial.printf("Random Switch Point (0-100) [%d]: ", displayDefaults.randomSwitchPoint);
   input = readSerialLine();
+  if (input == "QUIT_CONFIG") {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
   if (input.length() > 0) {
     newConfig.randomSwitchPoint = input.toInt();
   }
@@ -1013,6 +1111,11 @@ void configureEEPROMSettings() {
   // Tumble Constant
   Serial.printf("Tumble Constant [%.2f]: ", displayDefaults.tumbleConstant);
   input = readSerialLine();
+  if (input == "QUIT_CONFIG") {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
   if (input.length() > 0) {
     newConfig.tumbleConstant = input.toFloat();
   }
@@ -1021,6 +1124,11 @@ void configureEEPROMSettings() {
   Serial.println("\n----------------------------------------");
   Serial.printf("Deep Sleep Timeout in seconds [%d]: ", displayDefaults.deepSleepTimeout / 1000);
   input = readSerialLine();
+  if (input == "QUIT_CONFIG") {
+    Serial.println("\nConfiguration cancelled by user.");
+    Serial.println("Press M for menu");
+    return;
+  }
   if (input.length() > 0) {
     newConfig.deepSleepTimeout = input.toInt() * 1000;
   }
@@ -1087,6 +1195,12 @@ String readSerialLine() {
       
       if (c == '\n' || c == '\r') {
         if (input.length() > 0) {
+          // Check if user wants to quit
+          if (input == "Q" || input == "q") {
+            gotNewline = true;
+            input = "QUIT_CONFIG";
+            break;
+          }
           gotNewline = true;
           break;
         } else {
@@ -1132,11 +1246,17 @@ String readSerialLine() {
   return input;
 }
 
-bool readMacFromSerial(uint8_t* mac) {
+int readMacFromSerial(uint8_t* mac) {
+  // Returns: -1 = quit, 0 = use default, 1 = new MAC entered
   String input = readSerialLine();
   
+  // Check if user wants to quit
+  if (input == "QUIT_CONFIG") {
+    return -1;
+  }
+  
   if (input.length() == 0) {
-    return false;  // Use default
+    return 0;  // Use default
   }
   
   // Remove colons and spaces
@@ -1147,7 +1267,7 @@ bool readMacFromSerial(uint8_t* mac) {
   // Check length
   if (input.length() != 12) {
     Serial.println("⚠ Invalid MAC format, using default");
-    return false;
+    return 0;
   }
   
   // Parse hex values
@@ -1163,12 +1283,12 @@ bool readMacFromSerial(uint8_t* mac) {
   }
   Serial.println();
   
-  return true;
+  return 1;
 }
 
 bool validateConfig(const DiceConfig& config) {
   Serial.println("\nValidating configuration...");
-  
+
   // Check if diceId is null-terminated and contains printable characters
   bool validId = false;
   for (int i = 0; i < 16; i++) {
@@ -1181,36 +1301,36 @@ bool validateConfig(const DiceConfig& config) {
       return false;
     }
   }
-  
+
   if (!validId) {
     Serial.println("  ✗ Invalid diceId format");
     return false;
   }
-  
+
   // Validate RSSI limit
   if (config.rssiLimit > 0 || config.rssiLimit < -100) {
     Serial.printf("  ✗ Invalid RSSI limit: %d\n", config.rssiLimit);
     return false;
   }
-  
+
   // Validate randomSwitchPoint
   if (config.randomSwitchPoint > 100) {
     Serial.printf("  ✗ Invalid randomSwitchPoint: %d\n", config.randomSwitchPoint);
     return false;
   }
-  
+
   // Validate tumbleConstant
   if (config.tumbleConstant <= 0 || config.tumbleConstant > 10.0) {
     Serial.printf("  ✗ Invalid tumbleConstant: %.2f\n", config.tumbleConstant);
     return false;
   }
-  
+
   // Validate deepSleepTimeout
   if (config.deepSleepTimeout < 10000 || config.deepSleepTimeout > 3600000) {
     Serial.printf("  ✗ Invalid deepSleepTimeout: %lu ms\n", config.deepSleepTimeout);
     return false;
   }
-  
+
   Serial.println("✓ All validation checks passed");
   return true;
 }
@@ -1219,51 +1339,51 @@ void printConfig(const DiceConfig& config, const char* title) {
   Serial.println("========================================");
   Serial.println(title);
   Serial.println("========================================");
-  
+
   Serial.print("Dice ID: ");
   Serial.println(config.diceId);
-  
+
   Serial.print("Device A MAC:  ");
   for (int i = 0; i < 6; i++) {
     Serial.printf("%02X", config.deviceA_mac[i]);
     if (i < 5) Serial.print(":");
   }
   Serial.println();
-  
+
   Serial.print("Device B1 MAC: ");
   for (int i = 0; i < 6; i++) {
     Serial.printf("%02X", config.deviceB1_mac[i]);
     if (i < 5) Serial.print(":");
   }
   Serial.println();
-  
+
   Serial.print("Device B2 MAC: ");
   for (int i = 0; i < 6; i++) {
     Serial.printf("%02X", config.deviceB2_mac[i]);
     if (i < 5) Serial.print(":");
   }
   Serial.println();
-  
+
   Serial.println("\nDisplay Colors:");
   Serial.printf("  X Background:       0x%04X\n", config.x_background);
   Serial.printf("  Y Background:       0x%04X\n", config.y_background);
   Serial.printf("  Z Background:       0x%04X\n", config.z_background);
   Serial.printf("  Entanglement AB1:   0x%04X\n", config.entang_ab1_color);
   Serial.printf("  Entanglement AB2:   0x%04X\n", config.entang_ab2_color);
-  
+
   Serial.println("\nHardware Configuration:");
   Serial.printf("  Board Type:         %s\n", config.isNano ? "NANO" : "DEVKIT");
   Serial.printf("  Screen Type:        %s\n", config.isSMD ? "SMD" : "HDR");
-  
+
   Serial.println("\nOperational Parameters:");
   Serial.printf("  RSSI Limit:         %d dBm\n", config.rssiLimit);
   Serial.printf("  Always Seven:       %s\n", config.alwaysSeven ? "Yes" : "No");
   Serial.printf("  Random Switch:      %d\n", config.randomSwitchPoint);
   Serial.printf("  Tumble Constant:    %.2f\n", config.tumbleConstant);
-  Serial.printf("  Sleep Timeout:      %lu ms (%.1f min)\n", 
-                config.deepSleepTimeout, 
+  Serial.printf("  Sleep Timeout:      %lu ms (%.1f min)\n",
+                config.deepSleepTimeout,
                 config.deepSleepTimeout / 60000.0);
-  
+
   Serial.println("========================================");
 }
 
@@ -1274,19 +1394,19 @@ bool readEEPROMConfig(DiceConfig& config) {
 
 void writeEEPROMConfig(const DiceConfig& config) {
   Serial.println("\nWriting configuration to EEPROM...");
-  
+
   // Write byte-by-byte for reliability
   const uint8_t* data = (const uint8_t*)&config;
   for (size_t i = 0; i < sizeof(DiceConfig); i++) {
     EEPROM.write(EEPROM_CONFIG_ADDRESS + i, data[i]);
   }
-  
+
   // Commit to flash
   if (EEPROM.commit()) {
     Serial.println("✓ EEPROM commit successful");
   } else {
     Serial.println("✗ EEPROM commit failed!");
   }
-  
+
   delay(100);  // Ensure write completes
 }
