@@ -816,9 +816,9 @@
                     logToTerminal('\nThis MD5 mismatch is a common issue and usually does NOT mean the flash failed.\n');
                     logToTerminal('Your firmware was written successfully (100% completed).\n');
                     logToTerminal('\nNext steps:\n');
-                    logToTerminal('1. Click "Start Monitor"\n');
-                    logToTerminal('2. Click "Reset ESP32" or press the reset button\n');
-                    logToTerminal('3. Check if your firmware runs correctly\n');
+                    logToTerminal('1. Click "Disconnect" and remove cable or press reset button\n');
+                    logToTerminal('2. Click "Connect Serial Port" and select the correct Serial Port\n');
+                    logToTerminal('3. Check in "Serial Monitor" if data is comming in\n');
                     progressBar.style.display = 'none';
                     flashBtn.disabled = false;
                     eraseBtn.disabled = false;
