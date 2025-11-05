@@ -130,6 +130,7 @@ private:
   bool entangleConfirmRcvB1;
   bool entangleConfirmRcvB2;
   bool entangleStopRcv;
+  bool measurementReceived;
 
   //void printState(State state);
 };
