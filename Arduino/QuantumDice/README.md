@@ -111,6 +111,27 @@ Your Arduino IDE is now ready for QuantumDice development.
 
 ## 4. First Time Setup
 
+When connecting a fresh ESP32-S3 module (ESP32-S3N16R8) to Arduino IDE for the first time, you may see continuous reboot messages in the Serial monitor:
+```
+invalid header: 0xffffffff
+invalid header: 0xffffffff
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x7 (TG0WDT_SYS_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40048839
+invalid header: 0xffffffff
+...
+```
+
+This is **completely normal** for a fresh module from the supplier. Here's what's happening:
+
+- **`invalid header: 0xffffffff`** - The bootloader is searching for valid firmware in flash memory but finding only erased flash (0xFFFFFFFF = all bits set high = empty state)
+- **`rst:0x7 (TG0WDT_SYS_RST)`** - Watchdog timer reset triggered because no valid firmware was found to execute
+- **Bootloop** - The module continuously resets because there's no program to run
+
+The ESP32-S3 module has never been programmed and needs its first firmware upload.
+
+
 ### 4.1 Initial Upload - Blink Test
 
 When programming an ESP32-S3 for the first time, a specific initialization procedure is required. We'll use the built-in Blink example for this.
@@ -124,6 +145,8 @@ When programming an ESP32-S3 for the first time, a specific initialization proce
 3. Leave the code as-is (default `LED_BUILTIN` is fine)
 
 #### Step 2: Enter Download Mode
+
+You can skip this step first. If step 4 fails, repeat the procedure from step 2
 
 For the first upload, manually put the ESP32-S3 into download mode. See attached image for the locations of the **BOOT** and **RESET** button.
 ![alt text](../../images/bootAndReset.png)
@@ -154,6 +177,7 @@ Your board is now in download mode and ready to receive code.
 The Blink sketch is now running (though the LED may not be visible on this board).
 
 **After this initial upload, future uploads will not require the BOOT button procedure.**
+
 
 ### 4.2 Board Configuration
 
