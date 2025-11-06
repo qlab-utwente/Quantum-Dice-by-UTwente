@@ -146,8 +146,6 @@ When programming an ESP32-S3 for the first time, a specific initialization proce
 
 #### Step 2: Enter Download Mode
 
-You can skip this step first. If step 4 fails, repeat the procedure from step 2
-
 For the first upload, manually put the ESP32-S3 into download mode. See attached image for the locations of the **BOOT** and **RESET** button.
 ![alt text](../../images/bootAndReset.png)
 
