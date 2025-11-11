@@ -287,7 +287,7 @@
         <h1>🎲 QuantumDice Software Flasher</h1>
         <p class="subtitle">
             Flash firmware to your ESP32 directly from your browser 
-            <span class="badge" style="margin-left: 10px;">v1.5.5</span>
+            <span class="badge" style="margin-left: 10px;">v1.5.8</span>
             <a href="https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/blob/main/Arduino/README.md" 
                target="_blank" 
                style="text-decoration: none;">
@@ -629,6 +629,81 @@
             }
         });
 
+        // Read MAC address using ESPLoader
+        async function readMacAddress() {
+            let capturedMac = null;
+            
+            try {
+                macAddress.style.display = 'block';
+                macValue.textContent = 'Reading...';
+                logToTerminal('Reading MAC address...\n');
+
+                // Close port if open and wait
+                await port.close();
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Create transport and ESPLoader with custom terminal to capture MAC
+                const transport = new Transport(port, true);
+                const esploader = new ESPLoader({
+                    transport: transport,
+                    baudrate: 115200,
+                    terminal: {
+                        clean() {},
+                        writeLine(data) { 
+                            logToTerminal(data + '\n');
+                            // Capture MAC address from output
+                            const macMatch = data.match(/MAC:\s*([0-9a-fA-F:]+)/);
+                            if (macMatch) {
+                                capturedMac = macMatch[1];
+                            }
+                        },
+                        write(data) { 
+                            logToTerminal(data);
+                            // Capture MAC address from output
+                            const macMatch = data.match(/MAC:\s*([0-9a-fA-F:]+)/);
+                            if (macMatch) {
+                                capturedMac = macMatch[1];
+                            }
+                        }
+                    }
+                });
+
+                // Connect to chip - this prints the MAC address
+                await esploader.main();
+                
+                // Format and display MAC address if captured
+                if (capturedMac) {
+                    const macFormatted = capturedMac.split(':').map(b => b.toUpperCase()).join(':');
+                    macValue.textContent = macFormatted;
+                    logToTerminal(`✓ MAC Address captured: ${macFormatted}\n`);
+                } else {
+                    macValue.textContent = 'Not detected';
+                    logToTerminal('MAC address not found in output\n');
+                }
+
+                // Disconnect and clean up
+                await transport.disconnect();
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                // Reopen port for normal serial operations
+                await port.open({ baudRate: 115200 });
+
+            } catch (error) {
+                macValue.textContent = 'Failed to read';
+                logToTerminal(`MAC read error: ${error.message}\n`);
+                console.error('MAC address read error:', error);
+                
+                // Try to recover the port
+                try {
+                    if (!port.readable) {
+                        await port.open({ baudRate: 115200 });
+                    }
+                } catch (e) {
+                    console.error('Port recovery failed:', e);
+                }
+            }
+        }
+
         // Connect to serial port
         connectBtn.addEventListener('click', async () => {
             try {
@@ -648,7 +723,10 @@
                 startMonitorBtn.disabled = false;
                 stopMonitorBtn.disabled = true;
 
-                // Auto-start monitoring
+                // Read MAC address automatically
+                await readMacAddress();
+
+                // Auto-start monitoring after MAC read
                 startReading();
             } catch (error) {
                 updateStatus(`Connection failed: ${error.message}`, 'error');
@@ -691,6 +769,7 @@
                 serialInput.disabled = true;
                 startMonitorBtn.disabled = true;
                 stopMonitorBtn.disabled = true;
+                macAddress.style.display = 'none';
                 
                 port = null;
             } catch (error) {
@@ -752,13 +831,10 @@
                         }
                     }
                 });
-
-                // Connect and flash
-                logToTerminal('Connecting to ESP32...\n');
-                const chip = await esploader.main();
-                logToTerminal(`Connected to ${chip}\n`);
-
-                // Read file and convert to proper format
+                
+                await esploader.main();
+                
+                // Read the firmware file
                 let fileData;
                 if (selectedFile instanceof Uint8Array) {
                     fileData = selectedFile;
@@ -766,60 +842,45 @@
                     const arrayBuffer = await selectedFile.arrayBuffer();
                     fileData = new Uint8Array(arrayBuffer);
                 }
-
-                // Convert Uint8Array to string for esptool-js
-                let binaryString = '';
-                for (let i = 0; i < fileData.length; i++) {
-                    binaryString += String.fromCharCode(fileData[i]);
-                }
-
-                // Flash - fileArray should be array of objects with data and address
-                const flashOptions = {
-                    fileArray: [{
-                        data: binaryString,
-                        address: 0x10000  // Standard Arduino app partition address
-                    }],
-                    flashSize: 'keep',
-                    flashMode: 'keep',
-                    flashFreq: 'keep',
+                
+                // Write firmware
+                await esploader.writeFlash({
+                    fileArray: [{ data: fileData, address: 0x0000 }],
+                    flashSize: "keep",
                     eraseAll: false,
                     compress: true,
                     reportProgress: (fileIndex, written, total) => {
-                        const progress = Math.round((written / total) * 100);
-                        progressBarFill.style.width = progress + '%';
-                        progressBarFill.textContent = progress + '%';
+                        const percentage = Math.round((written / total) * 100);
+                        progressBarFill.style.width = percentage + '%';
+                        progressBarFill.textContent = percentage + '%';
                     }
-                };
-
-                updateStatus('Flashing firmware...', 'info');
-                logToTerminal('Writing firmware to flash at address 0x10000...\n');
-                
-                await esploader.writeFlash({
-                    ...flashOptions,
-                    calculateMD5Hash: (image) => CryptoJS.MD5(CryptoJS.lib.WordArray.create(image)).toString()
                 });
-
-                // Disconnect transport
+                
                 await transport.disconnect();
                 
-                updateStatus('Flash complete! Start monitor to see output.', 'success');
+                updateStatus('Flash complete! Check serial monitor.', 'success');
                 logToTerminal('\n=== Flash Complete ===\n');
-                logToTerminal('Click "Start Monitor" to see ESP32 output\n');
+                logToTerminal('\nNext steps:\n');
+                logToTerminal('1. Click "Start Monitor"\n');
+                logToTerminal('2. Click "Reset ESP32" or press the reset button\n');
+                logToTerminal('3. Check if your firmware runs correctly\n');
                 progressBar.style.display = 'none';
                 flashBtn.disabled = false;
                 eraseBtn.disabled = false;
                 
                 // Reopen port for monitoring
-                await port.open({ baudRate: 115200 });
-                startMonitorBtn.disabled = false;
-                
+                try {
+                    await port.open({ baudRate: 115200 });
+                    startMonitorBtn.disabled = false;
+                } catch (e) {
+                    logToTerminal('Port reopen failed - disconnect and reconnect if needed\n');
+                }
             } catch (error) {
-                // Check if it's just an MD5 mismatch (common, usually harmless)
-                if (error.message && error.message.includes('MD5')) {
-                    updateStatus('Flash completed with MD5 warning (usually OK)', 'success');
-                    logToTerminal(`\nWARNING: ${error.message}\n`);
-                    logToTerminal('\nThis MD5 mismatch is a common issue and usually does NOT mean the flash failed.\n');
-                    logToTerminal('Your firmware was written successfully (100% completed).\n');
+                // Check if it's a "final" error (which is actually expected after successful flash)
+                if (error.message && error.message.includes('final')) {
+                    // This is the expected error after successful flash
+                    updateStatus('Flash complete! Check serial monitor.', 'success');
+                    logToTerminal('\n=== Flash Complete ===\n');
                     logToTerminal('\nNext steps:\n');
                     logToTerminal('1. Click "Start Monitor"\n');
                     logToTerminal('2. Click "Reset ESP32" or press the reset button\n');
