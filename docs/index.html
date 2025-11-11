@@ -287,7 +287,7 @@
         <h1>🎲 QuantumDice Software Flasher</h1>
         <p class="subtitle">
             Flash firmware to your ESP32 directly from your browser 
-            <span class="badge" style="margin-left: 10px;">v1.5.8</span>
+            <span class="badge" style="margin-left: 10px;">v1.5.9</span>
             <a href="https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/blob/main/Arduino/README.md" 
                target="_blank" 
                style="text-decoration: none;">
@@ -315,6 +315,7 @@
             <div id="portStatus" class="status info" style="display: none;">Not connected</div>
             <div id="macAddress" class="status info" style="display: none; background: #e7f3ff; color: #004085; font-family: 'Courier New', monospace;">
                 <strong>MAC Address:</strong> <span id="macValue">Reading...</span>
+                <button id="copyMacBtn" style="margin-left: 15px; padding: 6px 15px; font-size: 14px; display: none;">📋 Copy</button>
             </div>
         </div>
 
@@ -410,6 +411,7 @@
         let selectedFileName = '';
         let releases = [];
         let currentReader = null;
+        let unformattedMac = ''; // Store unformatted MAC for copying
 
         const connectBtn = document.getElementById('connectBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
@@ -426,6 +428,7 @@
         const portStatus = document.getElementById('portStatus');
         const macAddress = document.getElementById('macAddress');
         const macValue = document.getElementById('macValue');
+        const copyMacBtn = document.getElementById('copyMacBtn');
         const fileInfo = document.getElementById('fileInfo');
         const progressBar = document.getElementById('progressBar');
         const progressBarFill = document.getElementById('progressBarFill');
@@ -674,10 +677,13 @@
                 // Format and display MAC address if captured
                 if (capturedMac) {
                     const macFormatted = capturedMac.split(':').map(b => b.toUpperCase()).join(':');
+                    unformattedMac = macFormatted; // Store with colons in uppercase
                     macValue.textContent = macFormatted;
+                    copyMacBtn.style.display = 'inline-block';
                     logToTerminal(`✓ MAC Address captured: ${macFormatted}\n`);
                 } else {
                     macValue.textContent = 'Not detected';
+                    copyMacBtn.style.display = 'none';
                     logToTerminal('MAC address not found in output\n');
                 }
 
@@ -690,6 +696,7 @@
 
             } catch (error) {
                 macValue.textContent = 'Failed to read';
+                copyMacBtn.style.display = 'none';
                 logToTerminal(`MAC read error: ${error.message}\n`);
                 console.error('MAC address read error:', error);
                 
@@ -770,10 +777,36 @@
                 startMonitorBtn.disabled = true;
                 stopMonitorBtn.disabled = true;
                 macAddress.style.display = 'none';
+                copyMacBtn.style.display = 'none';
                 
                 port = null;
             } catch (error) {
                 updateStatus(`Disconnect failed: ${error.message}`, 'error');
+            }
+        });
+
+        // Copy MAC address to clipboard
+        copyMacBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(unformattedMac);
+                const originalText = copyMacBtn.textContent;
+                copyMacBtn.textContent = '✓ Copied!';
+                copyMacBtn.style.background = '#28a745';
+                logToTerminal(`Copied to clipboard: ${unformattedMac}\n`);
+                
+                setTimeout(() => {
+                    copyMacBtn.textContent = originalText;
+                    copyMacBtn.style.background = '';
+                }, 2000);
+            } catch (error) {
+                copyMacBtn.textContent = '✗ Failed';
+                copyMacBtn.style.background = '#dc3545';
+                logToTerminal(`Copy failed: ${error.message}\n`);
+                
+                setTimeout(() => {
+                    copyMacBtn.textContent = '📋 Copy';
+                    copyMacBtn.style.background = '';
+                }, 2000);
             }
         });
 
