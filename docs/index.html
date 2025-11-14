@@ -286,8 +286,8 @@
     <div class="container">
         <h1>🎲 QuantumDice Software Flasher</h1>
         <p class="subtitle">
-            Flash firmware to your Quantum Dice (ESP32) directly from your browser 
-            <span class="badge" style="margin-left: 10px;">v1.5.3</span>
+            Flash firmware to your QuatumDice directly from your browser 
+            <span class="badge" style="margin-left: 10px;">v1.6.2</span>
             <a href="https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/blob/main/Arduino/README.md" 
                target="_blank" 
                style="text-decoration: none;">
@@ -301,18 +301,22 @@
 
         <div class="warning" style="background: #d1ecf1; border-left-color: #0c5460;">
             <strong>💡 Important Usage Notes:</strong><br>
-            • <strong>Before flashing</strong>: Stop the serial monitor first<br>
-            • <strong>After flashing</strong>: Reconnect to see output<br>
-            • This prevents port conflicts during flashing
+            • <strong>Flashing/Erasing</strong>: The serial monitor will be stopped automatically<br>
+            • <strong>After flashing</strong>: Click "Start Monitor" to see your firmware output<br>
+            • The monitor restarts automatically after connecting
         </div>
 
         <div class="section">
-            <h2>1. Connect to Quantum Dice</h2>
+            <h2>1. Connect to QuantumDice</h2>
             <div class="button-group">
                 <button id="connectBtn">Connect Serial Port</button>
                 <button id="disconnectBtn" disabled>Disconnect</button>
             </div>
             <div id="portStatus" class="status info" style="display: none;">Not connected</div>
+            <div id="macAddress" class="status info" style="display: none; background: #e7f3ff; color: #004085; font-family: 'Courier New', monospace;">
+                <strong>MAC Address:</strong> <span id="macValue">Reading...</span>
+                <button id="copyMacBtn" style="margin-left: 15px; padding: 6px 15px; font-size: 14px; display: none;">📋 Copy</button>
+            </div>
         </div>
 
         <div class="section">
@@ -383,7 +387,7 @@
                 <button id="startMonitorBtn" disabled>Start Monitor</button>
                 <button id="stopMonitorBtn" disabled>Stop Monitor</button>
                 <button id="clearBtn">Clear Output</button>
-                <button id="resetBtn" disabled>Reset QD</button>
+                <button id="resetBtn" disabled>Reset ESP32</button>
             </div>
             <div id="terminal"></div>
             
@@ -407,6 +411,7 @@
         let selectedFileName = '';
         let releases = [];
         let currentReader = null;
+        let unformattedMac = ''; // Store unformatted MAC for copying
 
         const connectBtn = document.getElementById('connectBtn');
         const disconnectBtn = document.getElementById('disconnectBtn');
@@ -421,6 +426,9 @@
         const serialInput = document.getElementById('serialInput');
         const terminal = document.getElementById('terminal');
         const portStatus = document.getElementById('portStatus');
+        const macAddress = document.getElementById('macAddress');
+        const macValue = document.getElementById('macValue');
+        const copyMacBtn = document.getElementById('copyMacBtn');
         const fileInfo = document.getElementById('fileInfo');
         const progressBar = document.getElementById('progressBar');
         const progressBarFill = document.getElementById('progressBarFill');
@@ -624,6 +632,106 @@
             }
         });
 
+        // Read MAC address using ESPLoader
+        async function readMacAddress() {
+            let capturedMac = null;
+            
+            try {
+                macAddress.style.display = 'block';
+                macValue.textContent = 'Reading...';
+                logToTerminal('Reading MAC address...\n');
+
+                // Close port if open and wait
+                await port.close();
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Create transport and ESPLoader with custom terminal to capture MAC
+                const transport = new Transport(port, true);
+                const esploader = new ESPLoader({
+                    transport: transport,
+                    baudrate: 115200,
+                    terminal: {
+                        clean() {},
+                        writeLine(data) { 
+                            logToTerminal(data + '\n');
+                            // Capture MAC address from output
+                            const macMatch = data.match(/MAC:\s*([0-9a-fA-F:]+)/);
+                            if (macMatch) {
+                                capturedMac = macMatch[1];
+                            }
+                        },
+                        write(data) { 
+                            logToTerminal(data);
+                            // Capture MAC address from output
+                            const macMatch = data.match(/MAC:\s*([0-9a-fA-F:]+)/);
+                            if (macMatch) {
+                                capturedMac = macMatch[1];
+                            }
+                        }
+                    }
+                });
+
+                // Connect to chip - this prints the MAC address
+                await esploader.main();
+                
+                // Format and display MAC address if captured
+                if (capturedMac) {
+                    const macFormatted = capturedMac.split(':').map(b => b.toUpperCase()).join(':');
+                    unformattedMac = macFormatted; // Store with colons in uppercase
+                    macValue.textContent = macFormatted;
+                    copyMacBtn.style.display = 'inline-block';
+                    logToTerminal(`✓ MAC Address captured: ${macFormatted}\n`);
+                } else {
+                    macValue.textContent = 'Not detected';
+                    copyMacBtn.style.display = 'none';
+                    logToTerminal('MAC address not found in output\n');
+                }
+
+                // Disconnect and clean up
+                await transport.disconnect();
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                // Reopen port for normal serial operations
+                await port.open({ baudRate: 115200 });
+
+            } catch (error) {
+                macValue.textContent = 'Failed to read';
+                copyMacBtn.style.display = 'none';
+                logToTerminal(`MAC read error: ${error.message}\n`);
+                console.error('MAC address read error:', error);
+                
+                // Try to recover the port
+                try {
+                    if (!port.readable) {
+                        await port.open({ baudRate: 115200 });
+                    }
+                } catch (e) {
+                    console.error('Port recovery failed:', e);
+                }
+            }
+        }
+
+        // Helper function to stop serial monitor
+        async function stopMonitor(logMessage = 'Serial monitor stopped automatically\n') {
+            if (isReading) {
+                isReading = false;
+                
+                if (currentReader) {
+                    try {
+                        await currentReader.cancel();
+                        currentReader.releaseLock();
+                        currentReader = null;
+                    } catch (e) {
+                        console.log('Reader already released');
+                    }
+                }
+                
+                startMonitorBtn.disabled = false;
+                stopMonitorBtn.disabled = true;
+                logToTerminal(logMessage);
+            }
+        }
+
         // Connect to serial port
         connectBtn.addEventListener('click', async () => {
             try {
@@ -631,7 +739,7 @@
                 await port.open({ baudRate: 115200 });
                 
                 updateStatus('Connected successfully! Baudrate: 115200', 'success');
-                logToTerminal('=== Connected to QD ===\n');
+                logToTerminal('=== Connected to QuantumDice ===\n');
                 
                 connectBtn.disabled = true;
                 disconnectBtn.disabled = false;
@@ -643,7 +751,10 @@
                 startMonitorBtn.disabled = false;
                 stopMonitorBtn.disabled = true;
 
-                // Auto-start monitoring
+                // Read MAC address automatically
+                await readMacAddress();
+
+                // Auto-start monitoring after MAC read
                 startReading();
             } catch (error) {
                 updateStatus(`Connection failed: ${error.message}`, 'error');
@@ -686,10 +797,37 @@
                 serialInput.disabled = true;
                 startMonitorBtn.disabled = true;
                 stopMonitorBtn.disabled = true;
+                macAddress.style.display = 'none';
+                copyMacBtn.style.display = 'none';
                 
                 port = null;
             } catch (error) {
                 updateStatus(`Disconnect failed: ${error.message}`, 'error');
+            }
+        });
+
+        // Copy MAC address to clipboard
+        copyMacBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(unformattedMac);
+                const originalText = copyMacBtn.textContent;
+                copyMacBtn.textContent = '✓ Copied!';
+                copyMacBtn.style.background = '#28a745';
+                logToTerminal(`Copied to clipboard: ${unformattedMac}\n`);
+                
+                setTimeout(() => {
+                    copyMacBtn.textContent = originalText;
+                    copyMacBtn.style.background = '';
+                }, 2000);
+            } catch (error) {
+                copyMacBtn.textContent = '✗ Failed';
+                copyMacBtn.style.background = '#dc3545';
+                logToTerminal(`Copy failed: ${error.message}\n`);
+                
+                setTimeout(() => {
+                    copyMacBtn.textContent = '📋 Copy';
+                    copyMacBtn.style.background = '';
+                }, 2000);
             }
         });
 
@@ -713,13 +851,14 @@
             if (!selectedFile || !port) return;
 
             try {
-                updateStatus('Preparing to flash... STOP SERIAL MONITOR FIRST!', 'info');
-                
+                // Automatically stop serial monitor if active
                 if (isReading) {
-                    alert('⚠️ Please STOP the serial monitor before flashing!\n\nClick "Stop Monitor" button first, then try flashing again.');
-                    return;
+                    logToTerminal('\n=== Stopping Serial Monitor for Flashing ===\n');
+                    await stopMonitor();
+                    await new Promise(resolve => setTimeout(resolve, 200)); // Brief delay for cleanup
                 }
                 
+                updateStatus('Preparing to flash...', 'info');
                 logToTerminal('\n=== Starting Flash Process ===\n');
                 logToTerminal(`File: ${selectedFileName}\n`);
                 flashBtn.disabled = true;
@@ -747,13 +886,10 @@
                         }
                     }
                 });
-
-                // Connect and flash
-                logToTerminal('Connecting to ESP32...\n');
-                const chip = await esploader.main();
-                logToTerminal(`Connected to ${chip}\n`);
-
-                // Read file and convert to proper format
+                
+                await esploader.main();
+                
+                // Read the firmware file
                 let fileData;
                 if (selectedFile instanceof Uint8Array) {
                     fileData = selectedFile;
@@ -761,64 +897,76 @@
                     const arrayBuffer = await selectedFile.arrayBuffer();
                     fileData = new Uint8Array(arrayBuffer);
                 }
-
-                // Convert Uint8Array to string for esptool-js
+                
+                // Convert Uint8Array to binary string for esptool-js
                 let binaryString = '';
                 for (let i = 0; i < fileData.length; i++) {
                     binaryString += String.fromCharCode(fileData[i]);
                 }
-
-                // Flash - fileArray should be array of objects with data and address
-                const flashOptions = {
-                    fileArray: [{
-                        data: binaryString,
-                        address: 0x10000  // Standard Arduino app partition address
-                    }],
-                    flashSize: 'keep',
-                    flashMode: 'keep',
-                    flashFreq: 'keep',
+                
+                // Write firmware
+                await esploader.writeFlash({
+                    fileArray: [{ data: binaryString, address: 0x0 }],
+                    flashSize: "keep",
                     eraseAll: false,
                     compress: true,
                     reportProgress: (fileIndex, written, total) => {
-                        const progress = Math.round((written / total) * 100);
-                        progressBarFill.style.width = progress + '%';
-                        progressBarFill.textContent = progress + '%';
-                    }
-                };
-
-                updateStatus('Flashing firmware...', 'info');
-                logToTerminal('Writing firmware to flash at address 0x10000...\n');
-                
-                await esploader.writeFlash({
-                    ...flashOptions,
+                        const percentage = Math.round((written / total) * 100);
+                        progressBarFill.style.width = percentage + '%';
+                        progressBarFill.textContent = percentage + '%';
+                    },
                     calculateMD5Hash: (image) => CryptoJS.MD5(CryptoJS.lib.WordArray.create(image)).toString()
                 });
-
-                // Disconnect transport
+                
                 await transport.disconnect();
                 
-                updateStatus('Flash complete! Start monitor to see output.', 'success');
+                updateStatus('Flash complete! Check serial monitor.', 'success');
                 logToTerminal('\n=== Flash Complete ===\n');
-                logToTerminal('Click "Start Monitor" to see QD output\n');
+                logToTerminal('\nNext steps:\n');
+                logToTerminal('1. Click "Start Monitor"\n');
+                logToTerminal('2. Click "Reset QuantumDice" or press the reset button\n');
+                logToTerminal('3. Check if your firmware runs correctly\n');
                 progressBar.style.display = 'none';
                 flashBtn.disabled = false;
                 eraseBtn.disabled = false;
                 
                 // Reopen port for monitoring
-                await port.open({ baudRate: 115200 });
-                startMonitorBtn.disabled = false;
-                
+                try {
+                    await port.open({ baudRate: 115200 });
+                    startMonitorBtn.disabled = false;
+                } catch (e) {
+                    logToTerminal('Port reopen failed - disconnect and reconnect if needed\n');
+                }
             } catch (error) {
-                // Check if it's just an MD5 mismatch (common, usually harmless)
+                // Check if it's an MD5 mismatch (common, usually harmless)
                 if (error.message && error.message.includes('MD5')) {
                     updateStatus('Flash completed with MD5 warning (usually OK)', 'success');
                     logToTerminal(`\nWARNING: ${error.message}\n`);
                     logToTerminal('\nThis MD5 mismatch is a common issue and usually does NOT mean the flash failed.\n');
                     logToTerminal('Your firmware was written successfully (100% completed).\n');
                     logToTerminal('\nNext steps:\n');
-                    logToTerminal('1. Click "Disconnect" and remove cable or press reset button\n');
-                    logToTerminal('2. Click "Connect Serial Port" and select the correct Serial Port\n');
-                    logToTerminal('3. Check in "Serial Monitor" if data is comming in\n');
+                    logToTerminal('1. Click "Start Monitor"\n');
+                    logToTerminal('2. Click "Reset QuantumDice" or press the reset button\n');
+                    logToTerminal('3. Check if your firmware runs correctly\n');
+                    progressBar.style.display = 'none';
+                    flashBtn.disabled = false;
+                    eraseBtn.disabled = false;
+                    
+                    // Reopen port for monitoring
+                    try {
+                        await port.open({ baudRate: 115200 });
+                        startMonitorBtn.disabled = false;
+                    } catch (e) {
+                        logToTerminal('Port reopen failed - disconnect and reconnect if needed\n');
+                    }
+                } else if (error.message && error.message.includes('final')) {
+                    // This is the expected error after successful flash
+                    updateStatus('Flash complete! Check serial monitor.', 'success');
+                    logToTerminal('\n=== Flash Complete ===\n');
+                    logToTerminal('\nNext steps:\n');
+                    logToTerminal('1. Click "Start Monitor"\n');
+                    logToTerminal('2. Click "Reset QuantumDice" or press the reset button\n');
+                    logToTerminal('3. Check if your firmware runs correctly\n');
                     progressBar.style.display = 'none';
                     flashBtn.disabled = false;
                     eraseBtn.disabled = false;
@@ -854,16 +1002,18 @@
 
         // Erase flash
         eraseBtn.addEventListener('click', async () => {
-            if (!confirm('Are you sure you want to erase the flash? This will delete all data on the Quantum Dice.')) {
-                return;
-            }
-            
-            if (isReading) {
-                alert('⚠️ Please STOP the serial monitor before erasing!\n\nClick "Stop Monitor" button first, then try again.');
+            if (!confirm('Are you sure you want to erase the flash? This will delete all data on the ESP32.')) {
                 return;
             }
             
             try {
+                // Automatically stop serial monitor if active
+                if (isReading) {
+                    logToTerminal('\n=== Stopping Serial Monitor for Erasing ===\n');
+                    await stopMonitor();
+                    await new Promise(resolve => setTimeout(resolve, 200)); // Brief delay for cleanup
+                }
+                
                 updateStatus('Erasing flash...', 'info');
                 logToTerminal('\n=== Erasing Flash ===\n');
                 eraseBtn.disabled = true;
@@ -921,7 +1071,7 @@
                 await new Promise(resolve => setTimeout(resolve, 100));
                 await port.setSignals({ dataTerminalReady: true });
                 updateStatus('ESP32 reset signal sent', 'success');
-                logToTerminal('\n=== QD Reset ===\n');
+                logToTerminal('\n=== ESP32 Reset ===\n');
             } catch (error) {
                 updateStatus(`Reset failed: ${error.message}`, 'error');
             }
@@ -942,23 +1092,7 @@
 
         // Stop serial monitor
         stopMonitorBtn.addEventListener('click', async () => {
-            if (isReading) {
-                isReading = false;
-                
-                if (currentReader) {
-                    try {
-                        await currentReader.cancel();
-                        currentReader.releaseLock();
-                        currentReader = null;
-                    } catch (e) {
-                        console.log('Reader already released');
-                    }
-                }
-                
-                startMonitorBtn.disabled = false;
-                stopMonitorBtn.disabled = true;
-                logToTerminal('\n=== Serial Monitor Stopped ===\n');
-            }
+            await stopMonitor('\n=== Serial Monitor Stopped ===\n');
         });
 
         // Send serial data
