@@ -53,16 +53,10 @@ QuantumDice has **two separate programs** that need to be flashed depending on y
 1. Click **"Connect Serial Port"**
 2. Select your ESP32 from the popup (look for "USB Serial" or "CP210x")
 3. Wait for "Connected successfully!" message
+4. The macAddress is retrieved and presented. Use the `Copy` button to copy the macAddress to clipboard
 4. The serial monitor will start automatically
 
-### Step 3: Stop the Serial Monitor
-
-⚠️ **Important:** Before flashing, you must stop the serial monitor!
-
-1. Click **"Stop Monitor"** button
-2. Wait for "Serial Monitor Stopped" message
-
-### Step 4: Select Firmware
+### Step 3: Select Firmware
 
 You have two options for selecting firmware:
 
@@ -85,7 +79,7 @@ You have two options for selecting firmware:
 
 ### Step 5: Flash Firmware
 
-1. Click **"Flash Firmware"**
+1. Click **"Flash Firmware"**. The Serial monitor stops automatically.
 2. Wait for the flashing process to complete
    - You'll see progress: "Writing at 0x10000... (0% - 100%)"
    - This typically takes 5-10 seconds
