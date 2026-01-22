@@ -237,8 +237,8 @@ void EspNowSensor<T>::onDataSend(const wifi_tx_info_t *tx_info, esp_now_send_sta
 {
   static bool prevStatus = false;
   if (status != prevStatus) {
-    debug("Last Packet Send Status: ");
-    debugln(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    //debug("Last Packet Send Status: ");
+    //debugln(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
     prevStatus = status;
   }
   
