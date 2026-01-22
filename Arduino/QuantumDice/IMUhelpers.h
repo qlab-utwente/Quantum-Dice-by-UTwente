@@ -108,6 +108,7 @@ public:
   // ============================================
 
   // Get accelerometer readings in m/s²
+  // NOTE: Returns LINEAR acceleration (gravity removed by sensor fusion)
   virtual float accelX() = 0;
   virtual float accelY() = 0;
   virtual float accelZ() = 0;
@@ -117,6 +118,16 @@ public:
 
   // Get acceleration change since last update
   virtual float getAccelChange() = 0;
+
+  // ============================================
+  // GRAVITY
+  // ============================================
+
+  // Get gravity vector components in m/s²
+  // NOTE: Returns gravity vector (for orientation detection)
+  virtual float gravityX() = 0;
+  virtual float gravityY() = 0;
+  virtual float gravityZ() = 0;
 
   // ============================================
   // CALIBRATION
@@ -230,6 +241,10 @@ public:
   float getAccelMagnitude() override;
   float getAccelChange() override;
 
+  float gravityX() override;
+  float gravityY() override;
+  float gravityZ() override;
+
   void getCalibration(uint8_t *system, uint8_t *gyro, uint8_t *accel, uint8_t *mag) override;
   bool isCalibrated() override;
 
@@ -256,7 +271,8 @@ private:
   Adafruit_BNO055 _bno;
 
   // Sensor readings
-  imu::Vector<3> _accel;
+  imu::Vector<3> _accel;   // Linear acceleration (gravity removed)
+  imu::Vector<3> _gravity; // Gravity vector (for orientation/tumble)
   imu::Vector<3> _gyro;
 
   // Motion detection state

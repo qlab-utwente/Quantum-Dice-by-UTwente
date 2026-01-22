@@ -22,6 +22,7 @@
 // #define VERSION "1.1.1" //removed ATECC chip and use esp32 internal random generator
 // #define VERSION "1.2.0" //renewed BNO055 IMUhelper to improve IMU stability and tumbling performance
 // #define VERSION "1.2.1" //removed: when in entanglement mode (yellow 1to6) and one dice is measured, the other will have the white 1to6 screen
-#define VERSION "1.3.0" // config data in littleFS
+// #define VERSION "1.3.0" // config data in littleFS
+#define VERSION "1.3.1" //IMUHelper improvement: use of LinearAcc and Gravity vector iso accelerometer. Tweaking stability config numbers
 
 #endif // VERSION_H
