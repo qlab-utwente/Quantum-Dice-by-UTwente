@@ -306,6 +306,8 @@ Ensure clean solder joints and avoid overheating the components.
 
 ### 6.4 Removing Display Connectors
 
+*(Skip this step if displays were sourced from the University of Twente.)*
+
 Before the TFT displays can be mounted in their cups, the **grey plastic connectors** (and their pins) on the displays must be removed.  
 This is necessary because alternative connectors will be used later.
 
