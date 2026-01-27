@@ -1,6 +1,6 @@
 # QuantumDice by UTwente
 
-[Quantum Dice trailer](https://youtu.be/Ihkr6yNOIKE?si=u6HU3Kxd4SXECz_O)
+[![Quantum Dice trailer](https://img.youtube.com/vi/Ihkr6yNOIKE/0.jpg)](https://www.youtube.com/watch?v=Ihkr6yNOIKE)
 
 <img src="images/Quantum_Dice_Flyer.png" alt="flyer" width="600"/>
 
