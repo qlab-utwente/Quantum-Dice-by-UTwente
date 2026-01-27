@@ -4,11 +4,11 @@
 
 1. [Introduction](#introduction)
 2. [Power On](#power-on)
-3. [Start Up Sequence](#start-up-sequence)
-4. [Basic Quantum State](#basic-quantum-state)
-5. [Using the Quantum Button](#using-the-quantum-button)
-6. [Entanglement](#entanglement)
-7. [Charging the Battery](#charging-the-battery)
+3. [Charging the Battery](#charging-the-battery)
+4. [Start Up Sequence](#start-up-sequence)
+5. [Basic Quantum State](#basic-quantum-state)
+6. [Using the Quantum Button](#using-the-quantum-button)
+7. [Entanglement](#entanglement)
 
 ---
 
@@ -27,8 +27,7 @@ Once your Quantum Dice assembly is complete, you're ready to start using it! Thi
 - **Blue** - top and bottom sides
 - **Red** - left and right sides  
 - **Yellow** - front and rear sides
-
-For programming instructions, please refer to the YouTube video tutorial.
+Watch the [instructional video](https://youtu.be/DUJu3AJgXRc?si=qqh9P63NLDmi5nQ0) for usage guidance
 
 ---
 
@@ -37,6 +36,29 @@ For programming instructions, please refer to the YouTube video tutorial.
 Locate the power button on one of the yellow sides (marked with a power symbol).
 
 **To power on/off:** Press the button briefly.
+
+---
+
+## Charging the Battery
+
+**Battery specifications:**
+
+- Capacity: 1800 mAh
+- Charging current: 500 mA
+
+**Charging instructions:**
+
+1. Locate the USB-C connector on one of the yellow sides
+2. **⚠️ Important:** This connector is **only** for battery charging and is not connected to the ESP32 processor
+3. **Use a USB-A to USB-C cable** with a USB-A charger (USB-C chargers will not work)
+4. Charging takes approximately **2-3 hours**
+
+**Monitoring charging status:**
+
+The charge indicator LEDs are located inside the dice and are not visible during charging. To monitor the charging process, you can use:
+
+- A USB charger with a built-in current indicator, or
+- A USB current monitor dongle such as [this one](https://www.amazon.com/Multi-function-Voltmeter-Electrical-Appliances-Detection/dp/B0CRTBWTQF?th=1)
 
 ---
 
@@ -50,7 +72,7 @@ After powering on, the dice initializes and displays the following:
    - Firmware version
    - Battery voltage
 
-**⚠️ Low battery warning:** If the battery voltage is low, charge the device before use.
+**⚠️ Low battery warning:** If the battery voltage is low, charge the device before use. See [Charging the Battery](#charging-the-battery)
 
 The startup sequence completes in **Classic mode**, where each side displays a fixed number (like a traditional die). Press the Quantum button to enter Quantum mode.
 
@@ -94,29 +116,6 @@ The Quantum button is located on the opposite side from the power button.
 - After measurement, each die returns to its previous state
 
 **⚠️ Important:** After entanglement, separate the dice by **more than 1 meter** to prevent them from re-entangling after rolling.
-
----
-
-## Charging the Battery
-
-**Battery specifications:**
-
-- Capacity: 1700 mAh
-- Charging current: 500 mA
-
-**Charging instructions:**
-
-1. Locate the USB-C connector on one of the yellow sides
-2. **⚠️ Important:** This connector is **only** for battery charging and is not connected to the ESP32 processor
-3. **Use a USB-A to USB-C cable** with a USB-A charger (USB-C chargers will not work)
-4. Charging takes approximately **2-3 hours**
-
-**Monitoring charging status:**
-
-The charge indicator LEDs are located inside the dice and are not visible during charging. To monitor the charging process, you can use:
-
-- A USB charger with a built-in current indicator, or
-- A USB current monitor dongle such as [this one](https://www.amazon.com/Multi-function-Voltmeter-Electrical-Appliances-Detection/dp/B0CRTBWTQF?th=1)
 
 ---
 
