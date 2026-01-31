@@ -35,14 +35,6 @@ inline auto determineScreens(State state, DiceNumbers diceNumber, UpSide upSide)
         config.z1 = ScreenStates::N1;
         return config;
     }
-
-    // === LOW BATTERY MODE ===
-    if (state.mode == Mode::LOW_BATTERY) {
-        config.x0 = config.x1 = config.y0 = config.y1 = config.z0 = config.z1
-          = ScreenStates::LOWBATTERY;
-        return config;
-    }
-
     // === QUANTUM MODE ===
 
     // THROWING STATE - show superposition

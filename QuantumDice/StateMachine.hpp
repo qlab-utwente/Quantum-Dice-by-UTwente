@@ -18,18 +18,14 @@ enum class UpSide : uint8_t;
 
 class StateMachine; // Forward declaration
 
-constexpr unsigned int IDLETIME         = 3000; // 5000 ms-en
-constexpr unsigned int SHOWNEWSTATETIME = 1000; // ms-en to show when new state is initated
 constexpr unsigned int MAXENTANGLEDWAITTIME
   = 120000; // ms-en wait for throw in entangled wait, befor return to intitSingle state
-constexpr unsigned int STABTIME
-  = 200; // ms-en to stabilize after measurement
-         // #define WAITTOTHROW 1000            //minumum time it stays in wait to trow
+constexpr unsigned int BATTERY_WARNING_INTERVAL
+  = 120000; // ms-en max time in entangled state, before return to initSingle state
 
 enum class Mode : uint8_t {
     CLASSIC,
     QUANTUM,
-    LOW_BATTERY,
 };
 
 enum class ThrowState : uint8_t {
@@ -93,7 +89,6 @@ enum class Trigger : uint8_t {
     MEASURE_FAIL,
     // System triggers
     TIMED,
-    LOW_BATTERY,
 };
 
 struct StateTransition {

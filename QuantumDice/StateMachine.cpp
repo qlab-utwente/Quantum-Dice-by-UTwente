@@ -114,10 +114,6 @@ const std::map<State, StateMachine::StateFunction> StateMachine::stateFunctions 
    {&StateMachine::enterObserved, &StateMachine::whileObserved}      },
   {State{Mode::QUANTUM, ThrowState::OBSERVED, EntanglementState::TELEPORTED},
    {&StateMachine::enterObserved, &StateMachine::whileObserved}      },
-
-  // === LOW BATTERY MODE ===
-  {State{Mode::LOW_BATTERY, ThrowState::IDLE, EntanglementState::PURE},
-   {&StateMachine::enterLowBattery, &StateMachine::whileLowBattery}}
 };
 
 namespace {
@@ -289,8 +285,6 @@ const std::array<StateTransition, 37> StateMachine::stateTransitions = {
    // === CLASSIC MODE TRANSITIONS ===
    StateTransition{Mode::CLASSIC, Mode::QUANTUM, ThrowState::IDLE, ThrowState::IDLE, std::nullopt,
                    EntanglementState::PURE, Trigger::BUTTON_PRESSED},
-   StateTransition{Mode::CLASSIC, std::nullopt, std::nullopt, std::nullopt, std::nullopt,
-                   std::nullopt, Trigger::LOW_BATTERY},
 
    // === QUANTUM MODE - IDLE TRANSITIONS ===
    StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::IDLE, ThrowState::THROWING,
@@ -388,10 +382,7 @@ const std::array<StateTransition, 37> StateMachine::stateTransitions = {
    StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::OBSERVED, std::nullopt,
                    EntanglementState::ENTANGLED, EntanglementState::POST_ENTANGLEMENT,
                    Trigger::MEASUREMENT_RECEIVED},
-
-   // === LOW BATTERY ===
-   StateTransition{std::nullopt, Mode::LOW_BATTERY, std::nullopt, std::nullopt, std::nullopt,
-                   std::nullopt, Trigger::LOW_BATTERY}}
+  }
 };
 
 auto StateMachine::getStateTransition(State currentState, Trigger trigger) -> StateTransition {
@@ -439,6 +430,12 @@ void StateMachine::begin() {
     infoln("StateMachine Begin: Calling onEntry for initial state");
     printStateName("StateMachine", currentState);
 
+    infoln("Displaying voltage indicator for 3 seconds on startup");
+    voltageIndicator(ALL);
+    sleep(3);
+    refreshScreens();
+
+    infoln("StateMachine Begin: Setting initial state");
     // Call the onEntry function for the initial state
     auto it = stateFunctions.find(currentState);
     if (it != stateFunctions.end()) {
@@ -489,8 +486,9 @@ void StateMachine::changeState(Trigger trigger) {
 }
 
 void StateMachine::update() {
-    static unsigned long lastUpdateTime   = 0;
-    static unsigned long lastWatchdogTime = 0;
+    static unsigned long lastUpdateTime     = 0;
+    static unsigned long lastWatchdogTime   = 0;
+    static unsigned long lastBatteryWarning = 0;
 
     message data;
     uint8_t source[6];
@@ -772,6 +770,18 @@ void StateMachine::update() {
     _imuSensor->update();
     unsigned long currentTime = millis();
 
+    // Battery monitoring
+    if (checkMinimumVoltage()) {
+        if (currentTime - lastBatteryWarning >= BATTERY_WARNING_INTERVAL) {
+            debugln("Low battery detected!");
+            lastBatteryWarning = currentTime;
+
+            voltageIndicator(ALL);
+            sleep(3);
+            refreshScreens();
+        }
+    }
+
     // State-independent: Handle short click to toggle color display (only in QUANTUM mode)
     if (clicked) {
         clicked = false;
@@ -838,14 +848,6 @@ void StateMachine::enterClassicIdle() {
 }
 
 void StateMachine::whileClassicIdle() {
-    // Check for low battery
-    if (checkMinimumVoltage()) {
-        currentState.entanglementState = EntanglementState::PURE; // Reset entanglement state
-        currentState.throwState        = ThrowState::IDLE;   // Reset throw state
-        changeState(Trigger::LOW_BATTERY);
-        return;
-    }
-
     // Check for button press to switch to quantum mode
     if (longclicked) {
         longclicked = false;
@@ -875,14 +877,6 @@ void StateMachine::enterQuantumIdle() {
 }
 
 void StateMachine::whileQuantumIdle() {
-    // Check for low battery
-    if (checkMinimumVoltage()) {
-        currentState.entanglementState = EntanglementState::PURE; // Reset entanglement state
-        currentState.throwState        = ThrowState::IDLE;   // Reset throw state
-        changeState(Trigger::LOW_BATTERY);
-        return;
-    }
-
     // Check for button press to switch back to classic mode
     // Allow switching from PURE, POST_ENTANGLEMENT, or TELEPORTED states (not when entangled)
     if (longclicked
@@ -971,14 +965,6 @@ void StateMachine::enterThrowing() {
 }
 
 void StateMachine::whileThrowing() {
-    // Check for low battery
-    if (checkMinimumVoltage()) {
-        currentState.entanglementState = EntanglementState::PURE; // Reset entanglement state
-        currentState.throwState        = ThrowState::IDLE;   // Reset throw state
-        changeState(Trigger::LOW_BATTERY);
-        return;
-    }
-
     // Check for button press to switch back to classic mode
     // Allow switching from PURE, POST_ENTANGLEMENT, or TELEPORTED states (not when entangled)
     if (longclicked
@@ -1183,14 +1169,6 @@ void StateMachine::enterObserved() {
 }
 
 void StateMachine::whileObserved() {
-    // Check for low battery
-    if (checkMinimumVoltage()) {
-        currentState.entanglementState = EntanglementState::PURE; // Reset entanglement state
-        currentState.throwState        = ThrowState::IDLE;   // Reset throw state
-        changeState(Trigger::LOW_BATTERY);
-        return;
-    }
-
     // Check for button press to switch back to classic mode
     // Allow switching from PURE, POST_ENTANGLEMENT, or TELEPORTED states (not when entangled)
     if (longclicked
