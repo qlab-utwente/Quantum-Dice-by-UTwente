@@ -1,5 +1,7 @@
 # QuantumDice by UTwente
 
+[![Quantum Dice trailer](https://img.youtube.com/vi/Ihkr6yNOIKE/0.jpg)](https://www.youtube.com/watch?v=Ihkr6yNOIKE)
+
 <img src="images/Quantum_Dice_Flyer.png" alt="flyer" width="600"/>
 
 In this repo you can find all relevant files, including assembly instructions, 3D printing files, and the parts list. Based on this information, you can build the Quantum Dice yourself.

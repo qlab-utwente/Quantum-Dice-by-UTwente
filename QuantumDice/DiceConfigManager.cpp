@@ -5,6 +5,7 @@
 
 #include <LittleFS.h>
 #include <WiFi.h>
+#include <cstdlib>
 
 // Constructor
 DiceConfigManager::DiceConfigManager() {
@@ -109,6 +110,8 @@ auto DiceConfigManager::load(const String &filename) -> bool {
             _config.isSMD = parseBool(value);
         } else if (key == "isNano") {
             _config.isNano = parseBool(value);
+        } else if (key == "tumbleConstant") {
+            _config.tumbleConstant = (float) strtod(value.c_str(), nullptr);
         } else if (key == "deepSleepTimeout") {
             _config.deepSleepTimeout = strtoul(value.c_str(), nullptr, 0);
         } else if (key == "checksum") {
@@ -212,6 +215,8 @@ void DiceConfigManager::initDefaultConfig() {
     _config.isSMD  = true;
     _config.isNano = false;
 
+    _config.tumbleConstant = 45;
+
     // Default operational parameters
     _config.deepSleepTimeout = 300000; // 5 minutes
 
@@ -257,6 +262,7 @@ void printGlobalConfig() {
     infof("RSSI Limit: %d dBm\n", currentConfig.rssiLimit);
     infof("Is SMD: %s\n", currentConfig.isSMD ? "true" : "false");
     infof("Is Nano: %s\n", currentConfig.isNano ? "true" : "false");
+    infof("Tumble Constant: %d\n", currentConfig.tumbleConstant);
     infof("Deep Sleep Timeout: %u ms\n", currentConfig.deepSleepTimeout);
     infof("Checksum: 0x%02X\n", currentConfig.checksum);
     infoln("============================");
@@ -273,7 +279,7 @@ auto findConfigFile(String &foundPath, size_t maxLen) -> bool {
         return false;
     }
 
-    if (!root.isDirectory()) {    
+    if (!root.isDirectory()) {
         errorln("Root is not a directory");
         return false;
     }
@@ -312,7 +318,7 @@ auto findConfigFile(String &foundPath, size_t maxLen) -> bool {
         errorln("No files matching *_config.txt pattern found");
         return false;
     }
-    
+
     // Ensure path starts with /
     if (firstMatch[0] != '/') {
         foundPath = "/";
@@ -329,7 +335,7 @@ auto ensureLittleFSAndConfig() -> bool {
 
     if (!LittleFS.begin(false, "/littlefs", 10, "littlefs")) {
         warnln("✗ Mount failed - formatting filesystem...");
-        
+
         if (LittleFS.begin(true, "/littlefs", 10, "littlefs")) {  // true = format if needed
             warnln("✓ LittleFS formatted and mounted successfully!");
         } else {
@@ -379,6 +385,7 @@ auto createDefaultConfigFile() -> bool {
     file.println("rssiLimit=-35");
     file.println("isSMD=true");
     file.println("isNano=false");
+    file.println("tumbleConstant=45");
     file.println("deepSleepTimeout=300000");
     file.println("checksum=0");
 
