@@ -117,6 +117,14 @@ class IMUSensor
         // Get acceleration change since last update
         virtual auto getAccelChange() -> float = 0;
 
+        // ===========================================
+        // GRAVITY VECTOR
+        // ===========================================
+
+        virtual auto getGravityX() -> float = 0;
+        virtual auto getGravityY() -> float = 0;
+        virtual auto getGravityZ() -> float = 0;
+
         // ============================================
         // CALIBRATION
         // ============================================
@@ -229,6 +237,10 @@ class BNO055IMUSensor : public IMUSensor
         auto getAccelMagnitude() -> float override;
         auto getAccelChange() -> float override;
 
+        auto getGravityX() -> float override;
+        auto getGravityY() -> float override;
+        auto getGravityZ() -> float override;
+
         void getCalibration(uint8_t *system, uint8_t *gyro, uint8_t *accel, uint8_t *mag) override;
         auto isCalibrated() -> bool override;
 
@@ -256,6 +268,7 @@ class BNO055IMUSensor : public IMUSensor
 
         // Sensor readings
         imu::Vector<3> _accel;
+        imu::Vector<3> _gravity;
         imu::Vector<3> _gyro;
 
         // Motion detection state

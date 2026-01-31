@@ -56,6 +56,7 @@ When used as a pair, one die is labelled **A (Alice)** and the other **B (Bob)**
 Because the software is identical, the assignment of role A or B is determined automatically by the **MAC address** of the MCU, as defined in the configuration file.
 
 ---
+
 ## 3. Sourcing of Materials
 
 All parts required to construct the Quantum Dice are listed in the **Bill of Materials (BOM)**.  
@@ -107,16 +108,16 @@ The links to obtain the TFT displays are included in the **BOM file**.
 Links for sourcing **LiPo batteries** are also included, although availability may vary.  
 If a listed supplier is unavailable, equivalent alternatives can be used.
 
-![lipo](https://eu.robotshop.com/cdn/shop/files/679609ed_bateria-lipo-37v-1100mah-20c-903048.webp?v=1720476163&width=500)
+![alt text](<../images/123048 battery.jpg>)
 
 **Battery specifications:**
 
 - **Type:** 3.7 V LiPo  
 - **Protection:** Built-in protection circuit (hidden under the black tape in the image above)  
-- **Capacity:** > 1000 mAh  
+- **Capacity:** ~ 1700 mAh  
 - **Dimensions:** Maximum height 48 mm, width 35 mm. Thickness typically 9–12 mm (depending on capacity)  
 - **LiPo Code:** e.g. *903048* → 9 mm thick, 30 mm wide, 48 mm high  
-- **Connector:** JST or JST-XH
+- **Connector:** JST-PH 2.0
 
 ---
 
@@ -153,6 +154,7 @@ A hardness of **95A** or **40D** is recommended.
 - [Fiberlogy Fiberflex-40D](https://www.3djake.nl/fiberlogy/fiberflex-40d) – limited colour options; system preset available for Prusa3D (reduce print speed to ~60%).
 
 For more details on TPU printing:
+
 - [Bambu Lab TPU Printing Guide](https://wiki.bambulab.com/en/knowledge-sharing/tpu-printing-guide)
 - [How to Improve TPU Print Quality on Bambu Lab X1 Carbon (YouTube)](https://youtu.be/yN3RximKNiE?si=DYWy9xm7ewkI_fWw)
 
@@ -175,6 +177,7 @@ Filenames include the **colour**, **material**, and a **version number**.
 Each Quantum Die consists of the following printed components:
 
 #### Display Cups (for mounting TFT displays)
+
 - Three colour variants for the X, Y, and Z axes.  
 - Each cup requires a **backplane** that must be **glued** onto it.  
 - The **yellow backplanes** (front and rear) differ from the others, as they are designed to hold the **PowerPCB** and **ProcessorPCB**.  
@@ -182,10 +185,12 @@ Each Quantum Die consists of the following printed components:
 - **No support** is required for printing these parts.
 
 #### Upper and Lower Frame Parts (black)
+
 - Printed flat-side down on the print plate.  
 - **Supports are required** for these components.
 
 #### Selecting Parts
+
 In the provided **Excel sheet**, fill in the number of dice required for roles A and B.  
 The sheet will calculate which 3D files and electronic parts are needed.
 
@@ -249,10 +254,12 @@ A small amount of pressure may be required to click it into place.
 After printing all components, **threaded inserts** must be installed in several parts. These inserts are used for screwing the dice together securely.
 
 Threaded inserts are required in:
+
 - the **black frame**, and  
 - both **yellow display cups**
 
 **Procedure:**
+
 1. Place each insert into its designated hole with the **smooth side facing outwards**. The insert should initially sit about one-third deep.  
 2. Touch the insert gently with a **heated soldering iron**.  
 3. Apply slight downward pressure so that the insert melts into the plastic until it sits flush with the surface (see figure).  
@@ -308,6 +315,8 @@ Ensure clean solder joints and avoid overheating the components.
 
 ### 6.4 Removing Display Connectors
 
+*(Skip this step if displays were sourced from the University of Twente.)*
+
 Before the TFT displays can be mounted in their cups, the **grey plastic connectors** (and their pins) on the displays must be removed.  
 This is necessary because alternative connectors will be used later.
 
@@ -337,6 +346,7 @@ This is necessary because alternative connectors will be used later.
 > On the inside of each yellow and red display cup you will find a “^” symbol. This symbol must always point **upwards** when mounted in the frame.
 
 ---
+
 ## 7. Assembling the Quantum Die
 
 ### 7.1 Introduction
@@ -352,7 +362,7 @@ Locking and unlocking these connectors can be delicate, so follow the instructio
 
 ![alt text](<../images/FPC slide lock.png>)
 
-#### Steps:
+#### Steps
 
 1. **Unlock the connector**  
    On the back of each display there is a small FPC terminal.  
@@ -397,7 +407,6 @@ This cup connects to the **ProcessorPCB**.
    - Leave the *FRONT* cable disconnected for now from the display side.  
 6. Remember: the **blue side** of each cable must face **away** from the indentation of the connector.
 
-
 ![alt text](<../images/Cable_Mount_Frame.png>)
 
 ---
@@ -429,6 +438,9 @@ This one holds the **PowerPCB** and the **battery**.
 
 ![alt text](<../images/PowerPCB.png>)
 
+From januari 2026 a different connector of the lipo battery is in use (JST-PH 2.0). See image on how to connect this battery to the PowerPCB.
+![alt text](<../images/battery connection.jpg>)
+
 ---
 
 ### 7.6 Testing the Displays
@@ -457,8 +469,8 @@ Now you can begin placing the display cups into the **lower black frame** and cl
 
 > Excessive stress or bending can damage the FPC cables. Handle them carefully.
 
-3. Test the display connections again by powering on the dice.  
-4. Slide the **upper frame** onto the lower frame, ensuring that the cables do not become pinched.  
+1. Test the display connections again by powering on the dice.  
+2. Slide the **upper frame** onto the lower frame, ensuring that the cables do not become pinched.  
    Press down evenly until the two halves fit together securely.
 
 ![alt text](<../images/Mount_in_Frame.png>)
@@ -492,9 +504,8 @@ Power on the Quantum Die once more to confirm that all six displays light up cor
 
 ---
 
-## Congratulations!
+## Congratulations
 
 You have successfully built your own **Quantum Die**.  
 When used in a pair, the dice will communicate automatically based on their configured MAC addresses (*A – Alice* and *B – Bob*).  
 Your Quantum Dice are now ready for demonstration, experimentation, or educational use.
-

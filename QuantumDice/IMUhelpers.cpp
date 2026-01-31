@@ -6,7 +6,7 @@
 // ============================================
 
 // Constructor
-BNO055IMUSensor::BNO055IMUSensor() : _bno(55), _prevAccelMag(0), _currentAccelMag(0), _accelChange(0), _isMoving(false), _stableCounter(0), _currentOrientation(ORIENTATION_UNKNOWN), _motionThreshold(0.5), _stableThreshold(0.15), _stableCountRequired(5), _flatGravityMin(9.0), _flatGravityMax(10.5), _flatOtherAxisMax(2.0), _axisRemapConfig(0x06), _axisRemapSign(0x01), _xUp(0.0), _yUp(0.0), _zUp(1.0), _xUpStart(0.0), _yUpStart(0.0), _zUpStart(1.0), _prevMicros(0), _tumbleThreshold(0.707), _tumbleDetected(false), _tumbleReferenceSet(false), _firstUpdateAfterReset(false) {}
+BNO055IMUSensor::BNO055IMUSensor() : _bno(55), _prevAccelMag(0), _currentAccelMag(0), _accelChange(0), _isMoving(false), _stableCounter(0), _currentOrientation(ORIENTATION_UNKNOWN), _motionThreshold(0.5), _stableThreshold(0.15), _stableCountRequired(10), _flatGravityMin(9.2), _flatGravityMax(10.5), _flatOtherAxisMax(3.5), _axisRemapConfig(0x06), _axisRemapSign(0x01), _xUp(0.0), _yUp(0.0), _zUp(1.0), _xUpStart(0.0), _yUpStart(0.0), _zUpStart(1.0), _prevMicros(0), _tumbleThreshold(0.707), _tumbleDetected(false), _tumbleReferenceSet(false), _firstUpdateAfterReset(false) {}
 
 // ============================================
 // CORE FUNCTIONS
@@ -46,7 +46,8 @@ auto BNO055IMUSensor::init() -> bool {
     while (!sensibleReading && (millis() - startTime < timeout)) {
         // Read acceleration
         _accel = _bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
-        float mag = sqrt(_accel.x()*_accel.x() + _accel.y()*_accel.y() + _accel.z()*_accel.z());
+        _gravity = _bno.getVector(Adafruit_BNO055::VECTOR_GRAVITY);
+        float mag = sqrt(_gravity.x()*_gravity.x() + _gravity.y()*_gravity.y() + _gravity.z()*_gravity.z());
 
         // Check if reading is sensible (close to gravity, not zero or wildly off)
         // Valid range: 7-12 m/s² (allows for some movement during init)
@@ -79,6 +80,7 @@ auto BNO055IMUSensor::init() -> bool {
     for (int i = 0; i < 5; i++) {
         _accel = _bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
         _gyro = _bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
+        _gravity = _bno.getVector(Adafruit_BNO055::VECTOR_GRAVITY);
         _currentAccelMag = sqrt(_accel.x()*_accel.x() + _accel.y()*_accel.y() + _accel.z()*_accel.z());
         _prevAccelMag = _currentAccelMag;
         delay(20);
@@ -97,6 +99,7 @@ void BNO055IMUSensor::update() {
 
     // Read sensor data
     _accel = _bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    _gravity = _bno.getVector(Adafruit_BNO055::VECTOR_GRAVITY);
     _gyro = _bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
 
     // Calculate acceleration magnitude
@@ -243,6 +246,22 @@ auto BNO055IMUSensor::getAccelChange() -> float {
 }
 
 // ============================================
+// GRAVITY
+// ===========================================
+
+auto BNO055IMUSensor::getGravityX() -> float {
+    return _gravity.x();
+}
+
+auto BNO055IMUSensor::getGravityY() -> float {
+    return _gravity.y();
+}
+
+auto BNO055IMUSensor::getGravityZ() -> float {
+    return _gravity.z();
+}
+
+// ============================================
 // CALIBRATION
 // ============================================
 
@@ -265,17 +284,17 @@ auto BNO055IMUSensor::isCalibrated() -> bool {
 
 void BNO055IMUSensor::resetTumbleDetection() {
     // Get current acceleration (gravity) vector
-    _accel = _bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    _gravity = _bno.getVector(Adafruit_BNO055::VECTOR_GRAVITY);
 
     // Calculate magnitude
-    float mag = sqrt(_accel.x()*_accel.x() + _accel.y()*_accel.y() + _accel.z()*_accel.z());
+    float mag = sqrt(_gravity.x()*_gravity.x() + _gravity.y()*_gravity.y() + _gravity.z()*_gravity.z());
 
     // Normalize to unit vector (invert because gravity points down, we want "up")
     // Avoid division by zero
     if (mag > 0.1) {
-        _xUpStart = -_accel.x() / mag;
-        _yUpStart = -_accel.y() / mag;
-        _zUpStart = -_accel.z() / mag;
+        _xUpStart = -_gravity.x() / mag;
+        _yUpStart = -_gravity.y() / mag;
+        _zUpStart = -_gravity.z() / mag;
 
         // Initialize current up vector to same as start
         _xUp = _xUpStart;
@@ -362,9 +381,9 @@ void BNO055IMUSensor::getAxisRemap(uint8_t* config, uint8_t* sign) {
 // ============================================
 
 auto BNO055IMUSensor::detectOrientation() -> IMU_Orientation {
-    float x = _accel.x();
-    float y = _accel.y();
-    float z = _accel.z();
+    float x = _gravity.x();
+    float y = _gravity.y();
+    float z = _gravity.z();
 
     // Note: Accelerometer reads NEGATIVE when axis points UP (gravity pulls down)
     // and POSITIVE when axis points DOWN (accelerating toward ground)
