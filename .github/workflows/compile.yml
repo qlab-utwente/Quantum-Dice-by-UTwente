@@ -1,0 +1,19 @@
+name: Compile code using arduino-cli
+on: pull_request
+jobs:
+  esp32s3_dev:
+    name: ESP32S3_DEV
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install arduino-cli
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/local/bin sh
+
+      - name: Compile the project
+        run: |
+          arduino-cli compile --jobs 0 --profile esp32s3_dev_module QuantumDice

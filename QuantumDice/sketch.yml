@@ -1,0 +1,14 @@
+profiles:
+  esp32s3_dev_module:
+    fqbn: esp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=16M,PartitionScheme=app3M_fat9M_16MB,PSRAM=opi
+    platforms:
+      - platform: esp32:esp32 (3.3.2)
+    libraries:
+      - Adafruit BNO055 (1.6.4)
+      - Adafruit Unified Sensor (1.1.15)
+      - Adafruit GFX Library (1.12.4)
+      - Adafruit GC9A01A (1.1.1)
+      - Adafruit BusIO (1.17.4)
+      - Button2 (2.5.0)
+
+default_profile: esp32s3_dev_module

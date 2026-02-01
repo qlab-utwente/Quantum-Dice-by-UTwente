@@ -1,18 +1,8 @@
-3D print files/~$Bill of Material quantum dice.xlsx
-Arduino/QuantumDiceInitTool/build/esp32.esp32.esp32s3/QuantumDiceInitTool.ino.partitions.bin
-Arduino/QuantumDiceInitTool/build/esp32.esp32.esp32s3/QuantumDiceInitTool.ino.merged.bin
-Arduino/QuantumDiceInitTool/build/esp32.esp32.esp32s3/QuantumDiceInitTool.ino.map
-Arduino/QuantumDiceInitTool/build/esp32.esp32.esp32s3/QuantumDiceInitTool.ino.elf
-Arduino/QuantumDiceInitTool/build/esp32.esp32.esp32s3/QuantumDiceInitTool.ino.bootloader.bin
-Arduino/QuantumDiceInitTool/build/esp32.esp32.esp32s3/QuantumDiceInitTool.ino.bin
-Arduino/QuantumDice/build/esp32.esp32.esp32s3/QuantumDice V1.0.0.bin
-Arduino/QuantumDice/build/esp32.esp32.esp32s3/QuantumDice.ino.bootloader.bin
-Arduino/QuantumDice/build/esp32.esp32.esp32s3/QuantumDice.ino.elf
-Arduino/QuantumDice/build/esp32.esp32.esp32s3/QuantumDice.ino.map
-Arduino/QuantumDice/build/esp32.esp32.esp32s3/QuantumDice.ino.merged.bin
-Arduino/QuantumDice/build/esp32.esp32.esp32s3/QuantumDice.ino.partitions.bin
-Arduino/~$DiceStateGenerators v2.xlsx
-Arduino/QuantumDice/build/esp32.esp32.esp32s3/QuantumDice.ino.bin
-Arduino/QuantumDice/build/esp32.esp32.esp32s3/QuantumDice. V1.0.1.bin
+QuantumDice/build/
+
+.vscode/
+.idea/
+
 *.bin
-Arduino/~$O08x Stability Classifier Configuration Guide.docx
+*.elf
+*.map

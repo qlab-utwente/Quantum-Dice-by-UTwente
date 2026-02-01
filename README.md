@@ -12,12 +12,12 @@ You can find more information about the dice in our article, including didactica
 
 Content of this repo:
 
-- [Arduino Code](/Arduino/)
-- [Firmware upload procedure](Arduino/README.md)
+- [Arduino Code](/QuantumDice/)
+- [Firmware upload procedure](/SETUP.md)
 - [3D printfiles](/3D%20print%20files/)
 - [Construction manual](/3D%20print%20files/ConstructionManual.md)
 - [Bill of Material and parts sourcing calculator](/3D%20print%20files/Bill%20of%20Material%20quantum%20dice.xlsx)
-- [Arduino Technical documentation](<Arduino/QuantumDice/technical documentation.md>) and [Installation and configuration Arduino IDE](Arduino/QuantumDice/README.md)
+- [Arduino Technical documentation](/QuantumDice/technical%20documentation.md) and [Installation and configuration Arduino IDE](Arduino/QuantumDice/README.md)
 
 ## Contribution
 

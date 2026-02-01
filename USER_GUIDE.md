@@ -25,7 +25,7 @@ Once your Quantum Dice assembly is complete, you're ready to start using it! Thi
 **Device orientation:** The dice has 3 axes, color-coded as follows:
 
 - **Blue** - top and bottom sides
-- **Red** - left and right sides  
+- **Red** - left and right sides
 - **Yellow** - front and rear sides
 Watch the [instructional video](https://youtu.be/DUJu3AJgXRc?si=qqh9P63NLDmi5nQ0) for usage guidance
 
@@ -74,7 +74,7 @@ After powering on, the dice initializes and displays the following:
 
 **⚠️ Low battery warning:** If the battery voltage is low, charge the device before use. See [Charging the Battery](#charging-the-battery)
 
-The startup sequence completes in **Classic mode**, where each side displays a fixed number (like a traditional die). Press the Quantum button to enter Quantum mode.
+The startup sequence completes in **Classic mode**, where each side displays a fixed number (like a traditional die). Long press the Quantum button to enter Quantum mode.
 
 ---
 
@@ -94,20 +94,25 @@ In Quantum mode, all six sides display a **superposition state**.
 
 The Quantum button is located on the opposite side from the power button.
 
-**Long press:** Clears the previous measurement and returns the dice to the superposition state.
+**Short press:** Toggle entanglement colour display
+**Long press:** Return to Classic mode
+
+### Entanglement Colour Display
+
+When two dice are entangled, the Quantum Dice will display colours on the superposition state to indicate entanglement status. Both dice will have the same colour. When the colour display is toggled off, the dice will show the entanglement colour, and shortly after revert to the standard superposition state display.
 
 ---
 
 ## Entanglement
 
-**Requirements:** Both dice must be in Quantum mode and have **matching IDs**.
+**Requirements:** Both dice must be in Quantum mode.
 
 **How to entangle:**
 
 1. Ensure both dice are in Quantum mode (superposition state visible)
 2. Bring the two dice close together
 3. You may need to adjust their position slightly
-4. **Success indicator:** The superposition state turns **yellow**
+4. **Success indicator:** The superposition state turns **coloured**
 
 **After entanglement:**
 
@@ -116,6 +121,25 @@ The Quantum button is located on the opposite side from the power button.
 - After measurement, each die returns to its previous state
 
 **⚠️ Important:** After entanglement, separate the dice by **more than 1 meter** to prevent them from re-entangling after rolling.
+
+---
+
+## Teleportation
+
+**Requirements:** Three dice in Quantum mode, here called A, B, and M.
+
+**How to teleport:**
+1. Entangle Dice A and Dice B
+2. Bringt Dice M into the disired quantum state (either superposition, mearsured state, or entangled state with another die)
+3. Place Dice M close to Dice A to perform the teleportation operation
+4. **Success indicator:** Dice B will now reflect the quantum state of Dice M
+    - If Dice M was in superposition, Dice B will now be in superposition
+    - If Dice M was measured, Dice B will show the same measurement outcome **when rolled in the same basis**
+    - If Dice M was entangled with another die, Dice B will now be entangled with that die
+
+### Entangelemnt Colour Display with Teleportation
+
+When teleportation is successful, Dice B will display the entanglement colour of Dice A and M. If the colour display is toggled off, Dice B will show the entanglement colour briefly before reverting to the standard superposition state display.
 
 ---
 
