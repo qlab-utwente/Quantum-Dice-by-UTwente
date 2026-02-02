@@ -50,9 +50,6 @@ The MCU monitors the battery voltage continuously.
 
 ![alt text](<../images/board layout.png>)
 
-When used as a pair, one die is labelled **A (Alice)** and the other **B (Bob)**.  
-Because the software is identical, the assignment of role A or B is determined automatically by the **MAC address** of the MCU, as defined in the configuration file.
-
 ---
 
 ## 3. Sourcing of Materials
@@ -60,23 +57,13 @@ Because the software is identical, the assignment of role A or B is determined a
 All parts required to construct the Quantum Dice are listed in the **Bill of Materials (BOM)**.  
 The BOM can be found here: [BOM](/3D%20print%20files/Bill%20of%20Material%20quantum%20dice.xlsx).
 
-It is an Excel sheet containing all components and quantities. At the top of the sheet, you can specify the number of dice for role A and role B you wish to build. The total quantities will update automatically.
+It is an Excel sheet containing all components and quantities. At the top of the sheet, you can specify the number of die you wish to build. The total quantities will update automatically.
 
 ---
 
 ### 3.1 Quantum Dice Versions
 
-Currently, there are **two available versions** of the Quantum Dice:
-
-- **AllTPU** – both the frame and display cups are printed in flexible TPU material.  
-- **TPUFrameOnly** – the frame and bumper are printed in flexible TPU, while the display cups are printed in PLA.
-
-For the **TPUFrameOnly** version, only **one colour of TPU** (black) is needed to print the frame.  
-The other parts can be printed using regular, less expensive materials such as **PLA** or **PETG**.
-
-It is also possible to print the *AllTPU* version in PLA or PETG.  
-However, to reduce the impact of rolling on the construction, it is recommended to roll the dice on a **soft surface**, such as a yoga mat or foam pad.  
-The electronics and software are identical for both versions.
+Not applicable anymore
 
 ---
 
@@ -477,8 +464,6 @@ Now you can begin placing the display cups into the **lower black frame** and cl
 
 ### 7.8 Bottom Display Cup (Blue)
 
-> Use the **blue display cup without** the *A* or *B* marking!
-
 1. Guide the **bottom FPC cable** through the opening in the lower frame.  
 2. Ensure that the **blue side of the cable** faces upwards.  
 3. Insert the FPC cable into the display connector and close the latch.  
@@ -488,7 +473,7 @@ Now you can begin placing the display cups into the **lower black frame** and cl
 
 ### 7.9 Top Display Cup (Blue)
 
-1. Use the **blue display cup marked A or B**, according to your intended role.  
+1. Use the **blue display cup**
 2. Check that all connections are secure and aligned.  
 3. Screw the **top display cup** firmly into place.
 
