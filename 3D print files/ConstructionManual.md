@@ -6,18 +6,15 @@ The Quantum Dice were developed by the **University of Twente**. All designs are
 
 For further information, visit [Quantum Dice by University of Twente](https://www.utwente.nl/en/mesaplus/education/quantum-dice/) or read the pre-print of our article on [arXiv](https://arxiv.org/abs/2510.04931).
 
-> In the near future the University of Twente supplies ready-to-use electronic boards.  Other components – such as 3D-printed parts, displays, and batteries – must be obtained separately.
-
 ---
 
 ## 2. General description of the Quantum Dice
 
 The Quantum Dice are designed to make abstract quantum-mechanical concepts such as **Quantum Superposition**, **Entanglement**, and **Quantum Key Distribution** more tangible.
 
-The dice are always used in pairs: **Die A** and **Die B**.  
-Both share identical software and 3D-printed parts, except for the **top (blue) display cup**, which is marked with either *A* or *B*.
+The dice are used in pairs. Both share identical software and 3D-printed parts.
 
-Each Quantum Die consists of a **3D-printed frame** with electronic displays on all six sides. The displays are driven by a **microcontroller unit (MCU)** – an **ESP32-S3** module equipped with an orientation sensor and a true random generator. Power is supplied by a rechargeable battery.
+Each Quantum Die consists of a **3D-printed frame** with electronic displays on all six sides. The displays are driven by a **microcontroller unit (MCU)** – an **ESP32-S3** module equipped with an orientation sensor and a random generator. Power is supplied by a rechargeable battery.
 
 The base of the Quantum Die is a **black frame** holding six **TFT displays**, each mounted in a *display cup*.  
 The display cup colour indicates its orientation axis:
