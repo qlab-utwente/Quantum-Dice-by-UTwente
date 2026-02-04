@@ -1,0 +1,13 @@
+CompileFlags:
+  Remove:
+    - -mlongcalls
+    - -fno-tree-switch-conversion
+    - -fstrict-volatile-bitfields
+    - -mdisable-hardware-atomics
+    - -target
+    - xtensa-esp32-unknown-elf
+
+  Add:
+    # Fake a host target so clang can parse headers
+    - -target
+    - x86_64-unknown-linux-gnu

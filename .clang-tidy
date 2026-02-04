@@ -1,0 +1,9 @@
+# Written for clang-tidy 18.1.8
+---
+Checks:            'bugprone-*, cert-*, cppcoreguidelines-*, misc-*, modernize-*, performance-*, readability-*'
+WarningsAsErrors:  'bugprone-*, cert-*'
+HeaderFileExtensions:         ['hh', 'hpp', 'hxx']
+ImplementationFileExtensions: ['cc', 'cpp', 'cxx', 'ino']
+HeaderFilterRegex: '^QuantumDice/'
+FormatStyle:       file
+SystemHeaders:     false

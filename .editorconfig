@@ -1,0 +1,27 @@
+; https://editorconfig.org
+root = true
+
+; Settings for all files.
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+tab_width = 4
+
+[*.sh]
+end_of_line = lf
+indent_style = tab
+tab_width = 4
+
+; Settings for .clang-format and .clang-tidy
+[.clang-format, .clang-tidy]
+indent_size = 2
+tab_width = 2
+
+; Settings for YAML files.
+[*.{yml, yaml}]
+indent_size = 2
+tab_width = 2
