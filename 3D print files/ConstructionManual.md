@@ -1,5 +1,3 @@
-> NOTE: **This instruction set was made for the v1.X.X version of the dice. You may need to adapt some steps for it work with the v2.X.X verion.
-
 ## 1. Introduction
 
 This construction manual provides all the information required to build your own set of **Quantum Dice**. It includes component sourcing, 3D printing, and step-by-step assembly instructions.
