@@ -9,6 +9,7 @@
 5. [Basic Quantum State](#basic-quantum-state)
 6. [Using the Quantum Button](#using-the-quantum-button)
 7. [Entanglement](#entanglement)
+8. [Teleportation](#teleportation)
 
 ---
 
@@ -129,6 +130,7 @@ When two dice are entangled, the Quantum Dice will display colours on the superp
 **Requirements:** Three dice in Quantum mode, here called A, B, and M.
 
 **How to teleport:**
+
 1. Entangle Dice A and Dice B
 2. Bringt Dice M into the disired quantum state (either superposition, mearsured state, or entangled state with another die)
 3. Place Dice M close to Dice A to perform the teleportation operation

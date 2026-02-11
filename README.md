@@ -1,5 +1,14 @@
 # QuantumDice by UTwente
 
+> NEW RELEASE 📢: Quantum Dice V2.0.0
+[see](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/releases)
+
+- Every Quantum Die can entangle with another. No need to use pairs of QD's
+- Implementation of Teleportation protocol with 3 or more Quantum Die [See User Guide](USER_GUIDE.md)
+- Simplified configuration file
+- If you are on version V1.x.x.x  [use this guide](MIGRATION_GUIDE_V1.1.X_TO_V2.0.0.md) to migrate to V2.0.x
+- Lots software changes to create a more robust, better maintainable software framework.
+
 [![Quantum Dice trailer](https://img.youtube.com/vi/Ihkr6yNOIKE/0.jpg)](https://www.youtube.com/watch?v=Ihkr6yNOIKE)
 
 <img src="images/Quantum_Dice_Flyer.png" alt="flyer" width="600"/>
