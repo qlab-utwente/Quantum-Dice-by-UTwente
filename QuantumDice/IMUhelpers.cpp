@@ -104,15 +104,15 @@ void BNO055IMUSensor::update() {
 
     // Calculate acceleration magnitude
     _currentAccelMag = sqrt(_accel.x()*_accel.x() + _accel.y()*_accel.y() + _accel.z()*_accel.z());
-    _accelChange = abs(_currentAccelMag - _prevAccelMag);
+    float _gyroMag = sqrt(_gyro.x()*_gyro.x() + _gyro.y()*_gyro.y() + _gyro.z()*_gyro.z());
 
     // Motion detection logic
-    if (_accelChange > _motionThreshold) {
+    if (_gyroMag > _motionThreshold) {
         // Significant change = motion detected
         _isMoving = true;
         _stableCounter = 0;
     }
-    else if (_accelChange < _stableThreshold) {
+    else if (_gyroMag < _stableThreshold) {
         // Very little change = potentially stable
         _stableCounter++;
 
