@@ -1,7 +1,7 @@
 #ifndef DEFINES_H_
 #define DEFINES_H_
 
-#define VERSION "2.0.0"
+#define VERSION "2.0.1"
 
 #define DEBUG 1
 #if DEBUG == 1
