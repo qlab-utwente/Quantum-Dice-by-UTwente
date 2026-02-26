@@ -191,7 +191,7 @@ void DiceConfigManager::setError(String error) {
 
 void DiceConfigManager::initDefaultConfig() {
     // Default values
-    _config.diceId = "DEFAULT";
+    _config.diceId = DEFAULT_DICE_ID;  // Changed from "DEFAULT"
 
     // Default colors (RGB565)
     _config.x_background = 0x0; // Black
@@ -369,14 +369,14 @@ auto ensureLittleFSAndConfig() -> bool {
 }
 
 auto createDefaultConfigFile() -> bool {
-    const char* filename = "/DEFAULT_config.txt";
+    const char* filename = "/" DEFAULT_DICE_ID "_config.txt";  // Changed from "/DEFAULT_config.txt"
     File file = LittleFS.open(filename, "w");
     if (!file) {
         debugf("Failed to create file: %s\n", filename);
         return false;
     }
 
-    file.println("diceId=DEFAULT");
+    file.println("diceId=" DEFAULT_DICE_ID);  // Changed from "diceId=DEFAULT"
     file.println("x_background=0");
     file.println("y_background=0");
     file.println("z_background=0");
