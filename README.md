@@ -1,6 +1,6 @@
 # QuantumDice by UTwente
 
-> NEW RELEASE 📢: Quantum Dice V2.0.0
+> NEW RELEASE 📢: Quantum Dice V2.0.1
 [see](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/releases)
 
 - Every Quantum Die can entangle with another. No need to use pairs of QD's
