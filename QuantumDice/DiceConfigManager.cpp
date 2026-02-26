@@ -381,7 +381,7 @@ auto createDefaultConfigFile() -> bool {
     file.println("y_background=0");
     file.println("z_background=0");
     file.println("entang_colors=65504,2016,2047,63519");
-    file.println("colorFlashTimeout=250");
+    file.println("colorFlashTimeout=1000");
     file.println("rssiLimit=-35");
     file.println("isSMD=true");
     file.println("isNano=false");
