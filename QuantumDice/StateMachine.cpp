@@ -430,8 +430,6 @@ void StateMachine::begin() {
     infoln("StateMachine Begin: Calling onEntry for initial state");
     printStateName("StateMachine", currentState);
 
-    infoln("Displaying voltage indicator for 3 seconds on startup");
-    voltageIndicator(ALL);
     sleep(3);
     refreshScreens();
 

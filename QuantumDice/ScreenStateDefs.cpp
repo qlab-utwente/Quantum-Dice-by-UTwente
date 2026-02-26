@@ -13,8 +13,8 @@ DiceNumbers    diceNumberSelf, diceNumberSister;
 UpSide         upSideSelf, prevUpSideSelf, upSideSister;
 uint16_t       entanglement_color_self = 0xFFE0; // Default yellow
 uint16_t       prev_entanglement_color = 0xFFE0; // Track previous color for change detection
-bool           showColors              = true;   // Toggle for showing entanglement colors
-bool           prev_showColors         = true;   // Track previous showColors state
+bool           showColors              = false;  // Toggle for showing entanglement colors
+bool           prev_showColors         = false;  // Track previous showColors state
 bool           flashColor              = false;  // Whether to flash color briefly
 bool           prev_flashColor         = false;  // Track previous flashColor state
 unsigned long  flashColorStartTime     = 0;      // When the color flash started
