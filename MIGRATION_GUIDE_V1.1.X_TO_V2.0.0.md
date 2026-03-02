@@ -161,7 +161,7 @@ The firmware updates wil take approximitely 5 minutes per dice!
 **Make sure your dice is still connected.**
 
 1. **In ESPConnect, click "LittleFS Tools"** in the left sidebar
-![alt text](<../images/littlefs screen.png>)
+![alt text](<images/littlefs screen.png>)
 2. **Click "Download Backup"** button
    - This is a safety step required before uploading
    - Even if there's nothing to back up, click it anyway
