@@ -1,4 +1,4 @@
-# 🎲 Quantum Dice Software Migration Guide from V1.x.x. to V2.0.0
+# 🎲 Quantum Dice Software Migration Guide from V1.x.x. to V2.0.x
 
 **Welcome!** This guide will walk you through updating the Quantum Dice from version 1.0.x to version 2.0.0 firmware step-by-step. Don't worry if you're not technical – we've designed this guide to be easy to follow. Just take it one step at a time, and you'll have your Quantum Dice up and running in no time!
 
