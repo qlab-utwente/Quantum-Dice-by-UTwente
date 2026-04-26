@@ -30,7 +30,10 @@ if (_imuSensor->moving()) {
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
+#include <Adafruit_LSM6DS3.h>
 #include <utility/imumaths.h>
+
+#include "sensor_processing_lib.h"
 
 // ============================================
 // ORIENTATION ENUMERATION
@@ -317,6 +320,122 @@ class BNO055IMUSensor : public IMUSensor
         auto readRegister(uint8_t reg) -> uint8_t;
         void writeRegister(uint8_t reg, uint8_t value);
         void updateUpVector(float deltaTime); // Apply rotation matrices
+};
+
+// ============================================
+// CONCRETE CLASS: LSM6DS3STRCIMUSensor
+// ============================================
+
+class LSM6DS3TRCIMUSensor : public IMUSensor
+{
+    public:
+        // Constructor
+        LSM6DS3TRCIMUSensor();
+
+        // ============================================
+        // IMPLEMENTATION OF IMUSensor INTERFACE
+        // ============================================
+
+        auto init() -> bool override;
+        void update() override;
+
+        auto moving() -> bool override;
+        auto stable() -> bool override;
+
+        auto on_table() -> bool override;
+        auto orientation() -> IMU_Orientation override;
+        auto getOrientationString() -> String override;
+
+        auto gyroX() -> float override;
+        auto gyroY() -> float override;
+        auto gyroZ() -> float override;
+
+        auto accelX() -> float override;
+        auto accelY() -> float override;
+        auto accelZ() -> float override;
+        auto getAccelMagnitude() -> float override;
+        auto getAccelChange() -> float override;
+
+        auto getGravityX() -> float override;
+        auto getGravityY() -> float override;
+        auto getGravityZ() -> float override;
+
+        void getCalibration(uint8_t *system, uint8_t *gyro, uint8_t *accel, uint8_t *mag) override;
+        auto isCalibrated() -> bool override;
+
+        void resetTumbleDetection() override;
+        auto tumbled() -> bool override;
+        auto getTumbleAngle() -> float override;
+        void setTumbleThreshold(float threshold) override;
+
+        auto getDebugDotProduct() -> float override;
+        void getDebugUpVector(float *x, float *y, float *z) override;
+        void getDebugUpStart(float *x, float *y, float *z) override;
+        void printDebugInfo() override;
+
+        void setMotionThreshold(float threshold) override;
+        void setStableThreshold(float threshold) override;
+        void setStableCount(int count) override;
+        void setOrientationThresholds(float minGravity, float maxGravity, float maxOtherAxis) override;
+
+        void setAxisRemap(uint8_t config, uint8_t sign) override;
+        void getAxisRemap(uint8_t *config, uint8_t *sign) override;
+
+    private:
+        // LSM6DS3TR-C sensor object
+        Adafruit_LSM6DS3 _lsm;
+
+        // Sensor readings
+        imu::Vector<3> _accel;
+        imu::Vector<3> _gravity;
+        imu::Vector<3> _gyro;
+
+        // Motion detection state
+        float _prevAccelMag;
+        float _currentAccelMag;
+        float _accelChange;
+        bool _isMoving;
+        int _stableCounter;
+
+        // Orientation state
+        IMU_Orientation _currentOrientation;
+
+        // Thresholds (tunable)
+        float _motionThreshold;
+        float _stableThreshold;
+        int _stableCountRequired;
+        float _flatGravityMin;
+        float _flatGravityMax;
+        float _flatOtherAxisMax;
+
+        // Axis remap configuration
+        uint8_t _axisRemapConfig;
+        uint8_t _axisRemapSign;
+
+        // Tumble detection (rotation matrix-based)
+        float _xUp; // Current "up" vector (updated by rotation matrices)
+        float _yUp;
+        float _zUp;
+        float _xUpStart; // Initial reference "up" vector
+        float _yUpStart;
+        float _zUpStart;
+        unsigned long _prevMicros; // For delta time calculation
+        float _tumbleThreshold;    // Threshold as cosine of angle (default: 0.707 = 45°)
+        bool _tumbleDetected;
+        bool _tumbleReferenceSet;
+        bool _firstUpdateAfterReset; // Flag to skip first update with bad deltaTime
+
+        // sensor processing lib
+        vector_ijk fused_vector;
+        Quaternion q_acc;
+        euler_angles angles;
+
+        // Helper function
+        auto detectOrientation() -> IMU_Orientation;
+        void updateUpVector(float deltaTime);
+        auto _readAccel() -> imu::Vector<3>;
+        auto _readGyro() -> imu::Vector<3>;
+        auto _calcGrav(imu::Vector<3> accel, imu::Vector<3> gyro, float deltaTime) -> imu::Vector<3>;
 };
 
 #endif /* IMUHELPERS_H_ */

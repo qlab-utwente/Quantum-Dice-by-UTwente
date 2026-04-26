@@ -45,7 +45,7 @@ void initDisplays() {
 
     selectScreens(ALL); // Select all screens
     delay(500);
-    tft.begin(); // Initialize the display
+    tft.begin(8*24000000); // Initialize the display
     delay(1000);
     tft.fillScreen(GC9A01A_BLACK);
 

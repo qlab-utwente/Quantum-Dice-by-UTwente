@@ -5,6 +5,7 @@ profiles:
       - platform: esp32:esp32 (3.3.2)
     libraries:
       - Adafruit BNO055 (1.6.4)
+      - Adafruit LSM6DS (4.7.4)
       - Adafruit Unified Sensor (1.1.15)
       - Adafruit GFX Library (1.12.4)
       - Adafruit GC9A01A (1.1.1)

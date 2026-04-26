@@ -37,18 +37,18 @@ void initHardwarePins() {
         hwPins.screen_cs[5] = 10;
     } else {
         // DEVKIT
-        hwPins.tft_cs = 10;
-        hwPins.tft_rst = 48;
-        hwPins.tft_dc = 47;
-        hwPins.adc_pin = 2;
+        hwPins.tft_cs = -1;
+        hwPins.tft_rst = GPIO_NUM_48;
+        hwPins.tft_dc = GPIO_NUM_47;
+        hwPins.adc_pin = GPIO_NUM_2;
 
         // Screen CS pins for DEVKIT
-        hwPins.screen_cs[0] = 4;
-        hwPins.screen_cs[1] = 5;
-        hwPins.screen_cs[2] = 6;
-        hwPins.screen_cs[3] = 7;
-        hwPins.screen_cs[4] = 15;
-        hwPins.screen_cs[5] = 16;
+        hwPins.screen_cs[0] = GPIO_NUM_4;
+        hwPins.screen_cs[1] = GPIO_NUM_5;
+        hwPins.screen_cs[2] = GPIO_NUM_6;
+        hwPins.screen_cs[3] = GPIO_NUM_7;
+        hwPins.screen_cs[4] = GPIO_NUM_15;
+        hwPins.screen_cs[5] = GPIO_NUM_16;
     }
 
     // Set screen address mapping based on SMD vs HDR
@@ -151,7 +151,7 @@ void checkTimeForDeepSleep(IMUSensor* imuSensor) {
 }
 
 void initButton() {
-    button.begin(BUTTON_PIN, INPUT, false);
+    button.begin(BUTTON_PIN);
     button.setLongClickDetectedHandler(longClickDetected);
     button.setLongClickTime(1000);
     button.setClickHandler(click);

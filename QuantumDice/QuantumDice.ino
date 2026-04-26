@@ -18,6 +18,10 @@ void setup() {
     // Make sure power switch keeps on - do this FIRST before anything else
     pinMode(REGULATOR_PIN, OUTPUT);
     digitalWrite(REGULATOR_PIN, LOW);
+    pinMode(GPIO_NUM_10, OUTPUT);
+    digitalWrite(GPIO_NUM_10, HIGH);
+    pinMode(GPIO_NUM_3, OUTPUT);
+    digitalWrite(GPIO_NUM_3, HIGH);
 
     // Initialize serial for debugging
     initSerial();  // delay(1000) included
@@ -33,17 +37,17 @@ void setup() {
     // Step 1: Initialize LittleFS and ensure config file exists
     // ═══════════════════════════════════════════════════════════════════
     infoln("Step 1: Initializing filesystem and configuration...\n");
-    
+
     if (!ensureLittleFSAndConfig()) {
         errorln("✗ CRITICAL: Failed to initialize filesystem or config!");
         errorln("Device cannot operate. Check serial output above.");
-        while(true) { 
+        while(true) {
             delay(SECOND);  // Halt
         }
     }
-    
+
     infoln("✓ Filesystem and configuration ready!\n");
-    
+
     // Print loaded configuration
     printGlobalConfig();
 
@@ -51,7 +55,7 @@ void setup() {
     // Step 2: Initialize hardware
     // ═══════════════════════════════════════════════════════════════════
     infoln("Step 2: Initializing hardware...\n");
-    
+
     // intitialise the hardware pins and display addresses
     initHardwarePins();
 
@@ -71,29 +75,44 @@ void setup() {
     infoln("Step 3: Initializing IMU sensor...\n");
 
     // Initialize IMU sensor
-    IMUSensor* imuSensor = new BNO055IMUSensor();
+    IMUSensor* imuSensor = new LSM6DS3TRCIMUSensor();
     if (!imuSensor->init()) {  // Show initialization progress
         warnln("Failed to initialize sensor!");
+        while (true);
     }
-    if (currentConfig.isNano) {
-        constexpr uint8_t NANO_AXIS_REMAP_CONFIG = 0x06;
-        imuSensor->setAxisRemap(NANO_AXIS_REMAP_CONFIG, NANO_AXIS_REMAP_CONFIG);
-    }
+    //if (currentConfig.isNano) {
+    //    constexpr uint8_t NANO_AXIS_REMAP_CONFIG = 0x06;
+    //    imuSensor->setAxisRemap(NANO_AXIS_REMAP_CONFIG, NANO_AXIS_REMAP_CONFIG);
+    //}
 
     imuSensor->update();
     imuSensor->resetTumbleDetection();
 
-    usleep(SECOND);
+    //while (true) {
+    //    delay(100);
+    //    imuSensor->update();
+    //}
 
     welcomeInfo(screenselections::X0);
+    imuSensor->update();
+
     voltageIndicator(screenselections::X0);
+    imuSensor->update();
+
     displayQRcode(screenselections::X1);
+    imuSensor->update();
 
     displayEinstein(screenselections::ZZ);
-    displayUTlogo(screenselections::YY);
+    imuSensor->update();
 
-    usleep(SECOND);
-    
+    displayUTlogo(screenselections::YY);
+    imuSensor->update();
+
+    for (uint8_t i = 0; i < 10; i++) {
+        delay(100);
+        imuSensor->update();
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     // Step 4: Complete initialization
     // ═══════════════════════════════════════════════════════════════════
@@ -117,6 +136,7 @@ void loop() {
     static unsigned long lastUpdateTime = 0;
     unsigned long currentTime = millis();
     if (currentTime - lastUpdateTime >= UPDATE_INTERVAL) {
+        lastUpdateTime = currentTime;
         button.loop();
         stateMachine.update();
     }
