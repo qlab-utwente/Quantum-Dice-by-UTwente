@@ -92,7 +92,7 @@ class IMUSensor
         virtual auto orientation() -> IMU_Orientation = 0;
 
         // Get orientation as human-readable string
-        virtual auto getOrientationString() -> String = 0;
+        virtual auto getOrientationString() -> const char * = 0;
 
         // ============================================
         // GYROSCOPE
@@ -228,7 +228,7 @@ class BNO055IMUSensor : public IMUSensor
 
         auto on_table() -> bool override;
         auto orientation() -> IMU_Orientation override;
-        auto getOrientationString() -> String override;
+        auto getOrientationString() -> const char * override;
 
         auto gyroX() -> float override;
         auto gyroY() -> float override;
@@ -344,7 +344,7 @@ class LSM6DS3TRCIMUSensor : public IMUSensor
 
         auto on_table() -> bool override;
         auto orientation() -> IMU_Orientation override;
-        auto getOrientationString() -> String override;
+        auto getOrientationString() -> const char * override;
 
         auto gyroX() -> float override;
         auto gyroY() -> float override;
@@ -425,17 +425,17 @@ class LSM6DS3TRCIMUSensor : public IMUSensor
         bool _tumbleReferenceSet;
         bool _firstUpdateAfterReset; // Flag to skip first update with bad deltaTime
 
-        // sensor processing lib
-        vector_ijk fused_vector;
-        Quaternion q_acc;
-        euler_angles angles;
+        // Mahony fusion
+        static constexpr float _accelCalib[6] = { 0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F };
+        static constexpr float _gyroCalib[3] = { -0.053F, -0.080F, -0.064F };
+        static constexpr float _kp = 15.0F, _ki = 0.0F;
+        float _quaternion[4] = { 1.0F, 0.0F, 0.0F, 0.0F };
+        float _roll, _yaw, _pitch;
 
         // Helper function
         auto detectOrientation() -> IMU_Orientation;
         void updateUpVector(float deltaTime);
-        auto _readAccel() -> imu::Vector<3>;
-        auto _readGyro() -> imu::Vector<3>;
-        auto _calcGrav(imu::Vector<3> accel, imu::Vector<3> gyro, float deltaTime) -> imu::Vector<3>;
+        void _mahonyUpdate(float accelX, float accelY, float accelZ, float gyroX, float gyroY, float gyroZ, float deltaTime);
 };
 
 #endif /* IMUHELPERS_H_ */

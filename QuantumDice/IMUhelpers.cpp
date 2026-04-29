@@ -185,7 +185,7 @@ auto BNO055IMUSensor::orientation() -> IMU_Orientation {
     return _currentOrientation;
 }
 
-auto BNO055IMUSensor::getOrientationString() -> String {
+auto BNO055IMUSensor::getOrientationString() -> const char * {
     switch (_currentOrientation) {
         case ORIENTATION_Z_UP:
             return "Z+ UP (Vertical - Normal)";
@@ -586,108 +586,151 @@ LSM6DS3TRCIMUSensor::LSM6DS3TRCIMUSensor()
     _tumbleThreshold(0.707),
     _tumbleDetected(false),
     _tumbleReferenceSet(false),
-    _firstUpdateAfterReset(false),
-    fused_vector(vector_3d_initialize(0.0,0.0,-1.0)),
-    q_acc(quaternion_initialize(1.0,0.0,0.0,0.0)) {}
+    _firstUpdateAfterReset(false) {}
 
 // ============================================
 // CORE FUNCTIONS
 // ============================================
 
 auto LSM6DS3TRCIMUSensor::init() -> bool {
-    // Initialize I2C and LSM6DS3TR-C
-    debugln("Initializing LSM6DS3TR-C... ");
+    // Initialize I2C and LSM6DS3
+    debugln("Initializing LSM6DS3... ");
 
     if (!_lsm.begin_I2C()) {
         errorln("FAILED! Sensor not detected.");
         return false;  // Sensor not detected
     }
 
-    debugln("LSM6DS3TR-C detected.");
-    delay(100);
+    debugln("LSM6DS3 detected.");
 
     // Wait for sensor to produce sensible readings
     // This is especially important with ESP32 and I2C initialization
-    debug("Waiting for stable readings... ");
+    debugln("Waiting for stable readings... ");
 
-    unsigned long startTime = millis();
-    constexpr unsigned long timeout = 5000;  // 5 second timeout
-    int attempts = 0;
+    _prevMicros = 0;
+    unsigned long startTime = micros();
+    constexpr unsigned long microsToSecond = 1000 * 1000;
+    constexpr unsigned long timeout = 5 * microsToSecond;
+    constexpr unsigned long delayBetweenAttempts = 50;
+    int attempts = 1;
 
-    while (millis() - startTime < timeout) {
-        constexpr float deltaTime = 50.0F / 1000.0F;
+    while (true) {
+        unsigned long now = micros();
+        float deltaTime = static_cast<float>(now - _prevMicros) / static_cast<float>(microsToSecond);
+        _prevMicros = now;
 
-        // Read acceleration
-        sensors_event_t accel, gyro, temp;
-        _lsm.getEvent(&accel, &gyro, &temp);
-        imu::Vector<3> absAccel = imu::Vector<3>(accel.acceleration.x, accel.acceleration.y, accel.acceleration.z);
-        _gyro = imu::Vector<3>(gyro.gyro.x, gyro.gyro.y, gyro.gyro.z);
-        _gravity = _calcGrav(_accel, _gyro, deltaTime);
-        _accel = absAccel - _gravity;
-        debugf("Accel: %.3f, %.3f, %.3f\n", _accel.x(), _accel.y(), _accel.z());
-        float mag = sqrt(_gravity.x()*_gravity.x() + _gravity.y()*_gravity.y() + _gravity.z()*_gravity.z());
+        if (now - startTime > timeout) {
+            debugln("\nFAILED! Timeout - sensor not producing valid readings.");
+            debugln("Check connections and try again.");
+            return false;
+        }
 
-        // Check if reading is sensible (close to gravity, not zero or wildly off)
-        // Valid range: 7-12 m/s² (allows for some movement during init)
-        if (mag > 7.0 && mag < 12.0) {
-            _prevAccelMag = mag;
-            _currentAccelMag = mag;
-            debug("OK (");
-            debug(mag, 2);
-            debug(" m/s² after ");
-            debug(attempts);
-            debugln(" attempts)");
+        // Get the sensor readings.
+        sensors_event_t acceleration;
+        sensors_event_t gyroscope;
+        sensors_event_t temperature;
+        _lsm.getEvent(&acceleration, &gyroscope, &temperature);
+
+        // Calculate new values.
+        float accel[3] = { acceleration.acceleration.x, acceleration.acceleration.y, acceleration.acceleration.z };
+        for (uint8_t i = 0; i < 3; i++) {
+            accel[i] = (accel[i] - _accelCalib[i]) * _accelCalib[i + 3];
+        }
+
+        float gyro[3] = { gyroscope.gyro.x, gyroscope.gyro.y, gyroscope.gyro.z };
+        for (uint8_t i = 0; i < 3; i++) {
+            gyro[i] = gyro[i] - _gyroCalib[i];
+        }
+
+        // Update Mahony.
+        _mahonyUpdate(accel[0], accel[1], accel[2], gyro[0], gyro[1], gyro[2], deltaTime);
+
+        // Calculate gravity vector.
+        Quaternion mahonyQuaternion = quaternion_initialize(_quaternion[0], _quaternion[1], _quaternion[2], _quaternion[3]);
+        vector_ijk gravity_z = quaternion_rotate_vector({ 0.0F, 0.0F, 9.81F }, mahonyQuaternion);
+        vector_ijk gravity_y = quaternion_rotate_vector({ 0.0F, 9.81F, 0.0F }, mahonyQuaternion);
+        vector_ijk gravity_x = quaternion_rotate_vector({ 9.81F, 0.0F, 0.0F }, mahonyQuaternion);
+        vector_ijk gravity = {
+            -gravity_x.c,
+             gravity_y.c,
+            -gravity_z.c
+        };
+
+        // Calculate linear acceleration.
+        float linAccel[3] = {
+            accel[0] - gravity.a,
+            accel[1] - gravity.b,
+            accel[2] - gravity.c
+        };
+
+        // Store the result.
+        _accel = imu::Vector<3>(linAccel[0], linAccel[1], linAccel[2]);
+        _gyro = imu::Vector<3>(gyro[0], gyro[1], gyro[2]);
+        _gravity = imu::Vector<3>(gravity.a, gravity.b, gravity.c);
+
+        // Is the reading stable?
+        if (attempts > 10) {
             break;
         }
 
+        // Wait a bit before next attempt.
         attempts++;
-        if (attempts % 10 == 0) {
-            debug(".");
-        }
-        delay(50);  // Wait a bit before next reading
+        delay(delayBetweenAttempts);
     }
 
-    if (millis() - startTime >= timeout) {
-        debugln("\nFAILED! Timeout - sensor not producing valid readings.");
-        debugln("Check connections and try again.");
-        return false;  // Timeout - sensor not producing valid readings
-    }
-
-    // Do a few more updates to stabilize the baseline
-    debug("Stabilizing baseline... ");
-    for (int i = 0; i < 50; i++) {
-        delay(20);
-        constexpr float deltaTime = 20.0f / 1000.0f;
-        sensors_event_t accel, gyro, temp;
-        _lsm.getEvent(&accel, &gyro, &temp);
-        imu::Vector<3> absAccel = imu::Vector<3>(accel.acceleration.x, accel.acceleration.y, accel.acceleration.z);
-        _gyro = imu::Vector<3>(gyro.gyro.x, gyro.gyro.y, gyro.gyro.z);
-        _gravity = _calcGrav(_accel, _gyro, deltaTime);
-        _accel = absAccel - _gravity;
-        debugf("Accel: %.3f, %.3f, %.3f\n", _accel.x(), _accel.y(), _accel.z());
-        _currentAccelMag = sqrt(_accel.x()*_accel.x() + _accel.y()*_accel.y() + _accel.z()*_accel.z());
-        _prevAccelMag = _currentAccelMag;
-    }
     debugln("done.");
-    debugln("✓ BNO055 initialization complete!");
-
+    debugln("✓ LSM6DS3 initialization complete!");
     return true;  // Success
 }
 
 void LSM6DS3TRCIMUSensor::update() {
     // Calculate delta time for rotation matrices
-    unsigned long currentMicros = micros();
-    float deltaTime = (currentMicros - _prevMicros) * 1e-6;  // Convert to seconds
-    _prevMicros = currentMicros;
+    unsigned long now = micros();
+    float deltaTime = static_cast<float>(now - _prevMicros) * 1e-6F;  // Convert to seconds
+    _prevMicros = now;
 
-    // Read sensor data
-     sensors_event_t accel, gyro, temp;
-    _lsm.getEvent(&accel, &gyro, &temp);
-    imu::Vector<3> absAccel = imu::Vector<3>(accel.acceleration.x, accel.acceleration.y, accel.acceleration.z);
-    _gyro = imu::Vector<3>(gyro.gyro.x, gyro.gyro.y, gyro.gyro.z);
-    _gravity = _calcGrav(_accel, _gyro, deltaTime);
-    _accel = absAccel - _gravity;
-    debugf("Accel: (%.3f, %.3f, %.3f); Gyro: (%.3f, %.3f, %.3f); Grav: (%.3f, %.3f, %.3f); LinAccel: (%.3f, %.3f, %.3f);\n", absAccel.x(), absAccel.y(), absAccel.z(), _gyro.x(), _gyro.y(), _gyro.z(), _gravity.x(), _gravity.y(), _gravity.z(), _accel.x(), _accel.y(), _accel.z());
+    // Get the sensor readings.
+    sensors_event_t acceleration;
+    sensors_event_t gyroscope;
+    sensors_event_t temperature;
+    _lsm.getEvent(&acceleration, &gyroscope, &temperature);
+
+    // Calculate new values.
+    float accel[3] = { acceleration.acceleration.x, acceleration.acceleration.y, acceleration.acceleration.z };
+    for (uint8_t i = 0; i < 3; i++) {
+        accel[i] = (accel[i] - _accelCalib[i]) * _accelCalib[i + 3];
+    }
+
+    float gyro[3] = { gyroscope.gyro.x, gyroscope.gyro.y, gyroscope.gyro.z };
+    for (uint8_t i = 0; i < 3; i++) {
+        gyro[i] = gyro[i] - _gyroCalib[i];
+    }
+
+    // Update Mahony.
+    _mahonyUpdate(accel[0], accel[1], accel[2], gyro[0], gyro[1], gyro[2], deltaTime);
+
+    // Calculate gravity vector.
+    Quaternion mahonyQuaternion = quaternion_initialize(_quaternion[0], _quaternion[1], _quaternion[2], _quaternion[3]);
+    vector_ijk gravity_z = quaternion_rotate_vector({ 0.0F, 0.0F, 9.81F }, mahonyQuaternion);
+    vector_ijk gravity_y = quaternion_rotate_vector({ 0.0F, 9.81F, 0.0F }, mahonyQuaternion);
+    vector_ijk gravity_x = quaternion_rotate_vector({ 9.81F, 0.0F, 0.0F }, mahonyQuaternion);
+    vector_ijk gravity = {
+        -gravity_x.c,
+         gravity_y.c,
+        -gravity_z.c
+    };
+
+    // Calculate linear acceleration.
+    float linAccel[3] = {
+        accel[0] - gravity.a,
+        accel[1] - gravity.b,
+        accel[2] - gravity.c
+    };
+
+    // Store the result.
+    _accel = imu::Vector<3>(linAccel[0], linAccel[1], linAccel[2]);
+    _gyro = imu::Vector<3>(gyro[0], gyro[1], gyro[2]);
+    _gravity = imu::Vector<3>(gravity.a, gravity.b, gravity.c);
 
     // Calculate acceleration magnitude
     _currentAccelMag = sqrt(_accel.x()*_accel.x() + _accel.y()*_accel.y() + _accel.z()*_accel.z());
@@ -716,14 +759,20 @@ void LSM6DS3TRCIMUSensor::update() {
     }
 
     // Detect orientation
+    static IMU_Orientation prevOrientation = IMU_Orientation::ORIENTATION_UNKNOWN;
     _currentOrientation = detectOrientation();
+
+    if (_currentOrientation != prevOrientation) {
+        prevOrientation = _currentOrientation;
+        debugf("Orientation: %s\n", getOrientationString());
+    }
 
     // Update up vector using rotation matrices (if reference is set)
     if (_tumbleReferenceSet) {
         // Skip first update after reset to avoid bad deltaTime
         if (_firstUpdateAfterReset) {
             _firstUpdateAfterReset = false;
-            _prevMicros = currentMicros;  // Reset timing
+            _prevMicros = now;  // Reset timing
         }
         else if (deltaTime > 0.0 && deltaTime < 1.0) {
             updateUpVector(deltaTime);
@@ -771,7 +820,7 @@ auto LSM6DS3TRCIMUSensor::orientation() -> IMU_Orientation {
     return _currentOrientation;
 }
 
-auto LSM6DS3TRCIMUSensor::getOrientationString() -> String {
+auto LSM6DS3TRCIMUSensor::getOrientationString() -> const char * {
     switch (_currentOrientation) {
         case ORIENTATION_Z_UP:
             return "Z+ UP (Vertical - Normal)";
@@ -878,13 +927,9 @@ void LSM6DS3TRCIMUSensor::resetTumbleDetection() {
         _yUp = _yUpStart;
         _zUp = _zUpStart;
 
-        // Reset timing
-        // _prevMicros = micros();
-
         // Clear detection flags
         _tumbleDetected = false;
         _tumbleReferenceSet = true;
-        _firstUpdateAfterReset = true;  // Skip first update to avoid bad deltaTime
     }
 }
 
@@ -994,56 +1039,12 @@ auto LSM6DS3TRCIMUSensor::detectOrientation() -> IMU_Orientation {
 // ============================================
 
 void LSM6DS3TRCIMUSensor::updateUpVector(float deltaTime) {
-    // BNO055 outputs gyroscope in DEGREES per second, not radians!
-    // Convert to radians per second, then calculate rotation angles
+    float magnitude = sqrt(_gravity.x()*_gravity.x() + _gravity.y()*_gravity.y() + _gravity.z()*_gravity.z());
 
-    float xRot = _gyro.x() * DEG_TO_RAD * deltaTime;
-    float yRot = _gyro.y() * DEG_TO_RAD * deltaTime;
-    float zRot = _gyro.z() * DEG_TO_RAD * deltaTime;
-
-    // Apply rotation matrices sequentially: X, then Y, then Z
-    // This updates the current "up" vector based on the rotation
-
-    // X-axis rotation matrix
-    // Rotates around X-axis, affects Y and Z components
-    float xUp = _xUp;
-    float yUp = (_yUp * cos(xRot)) - (_zUp * sin(xRot));
-    float zUp = (_yUp * sin(xRot)) + (_zUp * cos(xRot));
-
-    _xUp = xUp;
-    _yUp = yUp;
-    _zUp = zUp;
-
-    // Y-axis rotation matrix
-    // Rotates around Y-axis, affects X and Z components
-    xUp = (_xUp * cos(yRot)) + (_zUp * sin(yRot));
-    yUp = _yUp;
-    zUp = (-_xUp * sin(yRot)) + (_zUp * cos(yRot));
-
-    _xUp = xUp;
-    _yUp = yUp;
-    _zUp = zUp;
-
-    // Z-axis rotation matrix
-    // Rotates around Z-axis, affects X and Y components
-    xUp = (_xUp * cos(zRot)) - (_yUp * sin(zRot));
-    yUp = (_xUp * sin(zRot)) + (_yUp * cos(zRot));
-    zUp = _zUp;
-
-    _xUp = xUp;
-    _yUp = yUp;
-    _zUp = zUp;
-
-    // Calculate magnitude before normalization
-    float magnitude = sqrt((_xUp * _xUp) + (_yUp * _yUp) + (_zUp * _zUp));
-
-    // CRITICAL: Renormalize the up vector to prevent drift
-    // Floating-point errors accumulate, causing magnitude to drift from 1.0
-    // This would make dot product calculations unreliable
-    if (magnitude > 0.01) {  // Avoid division by zero
-        _xUp /= magnitude;
-        _yUp /= magnitude;
-        _zUp /= magnitude;
+    if (magnitude > 0.01) {
+        _xUp = -_gravity.x() / magnitude;
+        _yUp = -_gravity.y() / magnitude;
+        _zUp = -_gravity.z() / magnitude;
     }
 }
 
@@ -1098,10 +1099,74 @@ void LSM6DS3TRCIMUSensor::printDebugInfo() {
     infoln("°");
 }
 
-auto LSM6DS3TRCIMUSensor::_calcGrav(imu::Vector<3> accel, imu::Vector<3> gyro, float deltaTime) -> imu::Vector<3> {
-    fused_vector = update_fused_vector(fused_vector, accel.x(), accel.y(), accel.z(), gyro.x(), gyro.y(), gyro.z(), deltaTime);
-    q_acc = quaternion_from_accelerometer(fused_vector.a, fused_vector.b, fused_vector.c);
-    vector_ijk gravity = vector_3d_initialize(0.0f, 0.0f, -9.81f);
-    gravity = quaternion_rotate_vector(gravity, q_acc);
-    return imu::Vector<3>(gravity.a, gravity.b, gravity.c);
+void LSM6DS3TRCIMUSensor::_mahonyUpdate(float accelX, float accelY, float accelZ, float gyroX, float gyroY, float gyroZ, float deltaTime) {
+    float recipNorm;
+    float vx, vy, vz;
+    float ex, ey, ez;  //error terms
+    float qa, qb, qc;
+    static float ix = 0.0, iy = 0.0, iz = 0.0;  //integral feedback terms
+    float tmp;
+
+    // Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation)
+    tmp = accelX * accelX + accelY * accelY + accelZ * accelZ;
+
+    // ignore accelerometer if false (tested OK, SJR)
+    if (tmp > 0.0F)
+    {
+        // Normalise accelerometer (assumed to measure the direction of gravity in body frame)
+        recipNorm = 1.0F / sqrt(tmp);
+        accelX *= recipNorm;
+        accelY *= recipNorm;
+        accelZ *= recipNorm;
+
+        // Estimated direction of gravity in the body frame (factor of two divided out)
+        vx = _quaternion[1] * _quaternion[3] - _quaternion[0] * _quaternion[2];
+        vy = _quaternion[0] * _quaternion[1] + _quaternion[2] * _quaternion[3];
+        vz = _quaternion[0] * _quaternion[0] - 0.5F + _quaternion[3] * _quaternion[3];
+
+        // Error is cross product between estimated and measured direction of gravity in body frame
+        // (half the actual magnitude)
+        ex = (accelY * vz - accelZ * vy);
+        ey = (accelZ * vx - accelX * vz);
+        ez = (accelX * vy - accelY * vx);
+
+        // Compute and apply to gyro term the integral feedback, if enabled
+        if (_ki > 0.0F) {
+            ix += _ki * ex * deltaTime;  // integral error scaled by Ki
+            iy += _ki * ey * deltaTime;
+            iz += _ki * ez * deltaTime;
+            gyroX += ix;  // apply integral feedback
+            gyroY += iy;
+            gyroZ += iz;
+        }
+
+        // Apply proportional feedback to gyro term
+        gyroX += _kp * ex;
+        gyroY += _kp * ey;
+        gyroZ += _kp * ez;
+    }
+
+    // Integrate rate of change of quaternion, given by gyro term
+    // rate of change = current orientation quaternion (qmult) gyro rate
+
+    deltaTime = 0.5F * deltaTime;
+    gyroX *= deltaTime;   // pre-multiply common factors
+    gyroY *= deltaTime;
+    gyroZ *= deltaTime;
+    qa = _quaternion[0];
+    qb = _quaternion[1];
+    qc = _quaternion[2];
+
+    //add qmult*delta_t to current orientation
+    _quaternion[0] += (-qb * gyroX - qc * gyroY - _quaternion[3] * gyroZ);
+    _quaternion[1] += (qa * gyroX + qc * gyroZ - _quaternion[3] * gyroY);
+    _quaternion[2] += (qa * gyroY - qb * gyroZ + _quaternion[3] * gyroX);
+    _quaternion[3] += (qa * gyroZ + qb * gyroY - qc * gyroX);
+
+    // Normalise quaternion
+    recipNorm = 1.0F / sqrt(_quaternion[0] * _quaternion[0] + _quaternion[1] * _quaternion[1] + _quaternion[2] * _quaternion[2] + _quaternion[3] * _quaternion[3]);
+    _quaternion[0] = _quaternion[0] * recipNorm;
+    _quaternion[1] = _quaternion[1] * recipNorm;
+    _quaternion[2] = _quaternion[2] * recipNorm;
+    _quaternion[3] = _quaternion[3] * recipNorm;
 }
