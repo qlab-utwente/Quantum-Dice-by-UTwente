@@ -25,6 +25,7 @@ void setup() {
 
     // Initialize serial for debugging
     initSerial();  // delay(1000) included
+    initBattery();
 
     // Print version and configuration info
     infoln("╔════════════════════════════════════════╗");

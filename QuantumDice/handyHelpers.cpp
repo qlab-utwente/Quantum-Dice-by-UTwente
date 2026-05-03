@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Adafruit_MAX1704X.h>
 
 #include "defines.hpp"
 #include "IMUhelpers.hpp"
@@ -198,10 +199,26 @@ auto generateDiceRollRejection() -> uint8_t {
     return (randomByte % 6) + 1;
 }
 
+static Adafruit_MAX17048 batteryChip;
+
+void initBattery() {
+    batteryChip.begin();
+    while (!batteryChip.isDeviceReady()) {
+        delay(10);
+    }
+}
+
 auto checkMinimumVoltage() -> bool {
-    double voltage = analogReadMilliVolts(hwPins.adc_pin) / 1000.0 * 2.0;  //ADC measures 50% of battery voltage by 50/50 voltage divider
-                                                                                //debugln(voltage);
+    double voltage = getBatteryVoltage();
     return (voltage < MINBATERYVOLTAGE && voltage > 0.5);  //while on USB the voltage is 0
+}
+
+auto getBatteryPercentage() -> float {
+    return batteryChip.cellPercent();
+}
+
+auto getBatteryVoltage() -> float {
+    return batteryChip.cellVoltage();
 }
 
 auto mapFloat(float x, float in_min, float in_max, float out_min, float out_max, bool clipOutput) -> float {

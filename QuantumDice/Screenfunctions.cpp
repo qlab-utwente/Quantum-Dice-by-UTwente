@@ -375,9 +375,8 @@ void voltageIndicator(uint8_t screens) {
     selectScreens(screens);
 
     // Use hwPins.adc_pin from configuration
-    double voltage = analogReadMilliVolts(hwPins.adc_pin) / 1000.0 * 2.0;
-    double percentage
-      = mapFloat((float)voltage, MINBATERYVOLTAGE, MAXBATERYVOLTAGE, 0.0, 100.0, true);
+    double voltage = getBatteryVoltage();
+    double percentage = getBatteryPercentage();
     percentage = std::min<double>(percentage, 100.0);
     dtostrf(voltage, 3, 2, (char *)bufferV);
     strcat((char *)bufferV, "V");
