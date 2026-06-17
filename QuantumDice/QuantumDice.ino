@@ -160,7 +160,5 @@ void loop() {
         lastUpdateTime = currentTime;
         button.loop();
         stateMachine.update();
-        debugf("Battery: %.1f\n", getBatteryPercentage());
-        voltageIndicator(screenselections::ALL);
     }
 }
