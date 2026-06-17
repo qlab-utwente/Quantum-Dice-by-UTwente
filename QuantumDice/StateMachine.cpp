@@ -9,6 +9,8 @@
 #include "ScreenStateDefs.hpp"
 
 #include <map>
+#include <driver/rtc_io.h>
+#include <esp_sleep.h>
 
 using message_type = enum message_type : uint8_t {
     MESSAGE_TYPE_WATCH_DOG,
@@ -781,16 +783,16 @@ void StateMachine::update() {
     }
 
     // State-independent: Handle short click to toggle color display (only in QUANTUM mode)
-    if (clicked) {
-        clicked = false;
-        if (currentState.mode == Mode::QUANTUM) {
-            showColors = !showColors;
-            debugf("Color display toggled: %s\n", showColors ? "ON" : "OFF");
-            refreshScreens(); // Refresh to show the change immediately
-        } else {
-            debugln("Short click ignored in CLASSIC mode");
-        }
-    }
+    //if (clicked) {
+    //    clicked = false;
+    //    if (currentState.mode == Mode::QUANTUM) {
+    //        showColors = !showColors;
+    //        debugf("Color display toggled: %s\n", showColors ? "ON" : "OFF");
+    //        refreshScreens(); // Refresh to show the change immediately
+    //    } else {
+    //        debugln("Short click ignored in CLASSIC mode");
+    //    }
+    //}
 
     // Periodically send watchdog to broadcast presence to nearby dice
     if (currentState.mode != Mode::CLASSIC
@@ -882,8 +884,13 @@ void StateMachine::whileQuantumIdle() {
             || currentState.entanglementState == EntanglementState::POST_ENTANGLEMENT
             || currentState.entanglementState == EntanglementState::TELEPORTED)) {
         longclicked = false;
-        debugln("Button pressed - switching to CLASSIC mode");
-        changeState(Trigger::BUTTON_PRESSED);
+        debugln("Time to sleep");
+        digitalWrite(REGULATOR_PIN, HIGH);
+        while (digitalRead(BUTTON_PIN) == LOW) {
+            delay(10);
+        }
+        //rtc_gpio_init(BUTTON_PIN);
+        esp_deep_sleep_start();
         return;
     }
 
@@ -970,8 +977,13 @@ void StateMachine::whileThrowing() {
             || currentState.entanglementState == EntanglementState::POST_ENTANGLEMENT
             || currentState.entanglementState == EntanglementState::TELEPORTED)) {
         longclicked = false;
-        debugln("Button pressed - switching to CLASSIC mode");
-        changeState(Trigger::BUTTON_PRESSED);
+        debugln("Time to sleep");
+        digitalWrite(REGULATOR_PIN, HIGH);
+        while (digitalRead(BUTTON_PIN) == LOW) {
+            delay(10);
+        }
+        //rtc_gpio_init(BUTTON_PIN);
+        esp_deep_sleep_start();
         return;
     }
 
@@ -1174,8 +1186,12 @@ void StateMachine::whileObserved() {
             || currentState.entanglementState == EntanglementState::POST_ENTANGLEMENT
             || currentState.entanglementState == EntanglementState::TELEPORTED)) {
         longclicked = false;
-        debugln("Button pressed - switching to CLASSIC mode");
-        changeState(Trigger::BUTTON_PRESSED);
+        debugln("Time to sleep");
+        digitalWrite(REGULATOR_PIN, HIGH);
+        while (digitalRead(BUTTON_PIN) == LOW) {
+            delay(10);
+        }
+        esp_deep_sleep_start();
         return;
     }
 

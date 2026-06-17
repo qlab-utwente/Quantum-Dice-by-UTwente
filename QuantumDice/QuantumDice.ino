@@ -1,6 +1,10 @@
 #warning "Compile with Pin Numbering By GPIO (legacy)"
 #warning "ESP version 3.3.2 ,board esp32/Arduino Nano ESP32 or esp32/ESP32S3 Dev Module
 
+#include <driver/gpio.h>
+#include <driver/rtc_io.h>
+#include <esp_sleep.h>
+
 #include "defines.hpp"
 #include "ScreenStateDefs.hpp"
 #include "IMUhelpers.hpp"
@@ -14,6 +18,14 @@ constexpr uint8_t SECOND = 1000;
 
 StateMachine stateMachine;
 
+void batteryIsrRising() {
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 0);
+}
+
+void batteryIsrFalling() {
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 1);
+}
+
 void setup() {
     // Make sure power switch keeps on - do this FIRST before anything else
     pinMode(REGULATOR_PIN, OUTPUT);
@@ -26,6 +38,14 @@ void setup() {
     // Initialize serial for debugging
     initSerial();  // delay(1000) included
     initBattery();
+
+    uint32_t level = gpio_get_level(GPIO_NUM_13);
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, level == 0 ? 1 : 0);
+    gpio_set_direction(GPIO_NUM_13, GPIO_MODE_INPUT);
+    rtc_gpio_pullup_dis(GPIO_NUM_13);
+    rtc_gpio_pulldown_dis(GPIO_NUM_13);
+    attachInterrupt(GPIO_NUM_13, batteryIsrRising, RISING);
+    attachInterrupt(GPIO_NUM_13, batteryIsrFalling, FALLING);
 
     // Print version and configuration info
     infoln("╔════════════════════════════════════════╗");
@@ -140,5 +160,7 @@ void loop() {
         lastUpdateTime = currentTime;
         button.loop();
         stateMachine.update();
+        debugf("Battery: %.1f\n", getBatteryPercentage());
+        voltageIndicator(screenselections::ALL);
     }
 }

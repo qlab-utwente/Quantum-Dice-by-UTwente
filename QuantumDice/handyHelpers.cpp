@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <Adafruit_MAX1704X.h>
+#include <driver/gpio.h>
+#include <driver/rtc_io.h>
+#include <esp_sleep.h>
 
 #include "defines.hpp"
 #include "IMUhelpers.hpp"
@@ -148,6 +151,10 @@ void checkTimeForDeepSleep(IMUSensor* imuSensor) {
         lastMovementTime = millis();  // Reset the timer
         debugln("Time to sleep");
         digitalWrite(REGULATOR_PIN, HIGH);
+        while (digitalRead(BUTTON_PIN) == LOW) {
+            delay(10);
+        }
+        esp_deep_sleep_start();
     }
 }
 
@@ -156,6 +163,9 @@ void initButton() {
     button.setLongClickDetectedHandler(longClickDetected);
     button.setLongClickTime(1000);
     button.setClickHandler(click);
+    rtc_gpio_pulldown_dis(BUTTON_PIN);
+    rtc_gpio_pullup_en(BUTTON_PIN);
+    esp_sleep_enable_ext0_wakeup(BUTTON_PIN, LOW);
 }
 
 void longClickDetected(Button2& btn) {
