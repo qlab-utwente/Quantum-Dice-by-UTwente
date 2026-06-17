@@ -717,7 +717,7 @@ void LSM6DS3TRCIMUSensor::update() {
     vector_ijk gravity = {
         -gravity_x.c,
          gravity_y.c,
-        -gravity_z.c
+         gravity_z.c
     };
 
     // Calculate linear acceleration.
