@@ -715,9 +715,9 @@ void LSM6DS3TRCIMUSensor::update() {
     vector_ijk gravity_y = quaternion_rotate_vector({ 0.0F, 9.81F, 0.0F }, mahonyQuaternion);
     vector_ijk gravity_x = quaternion_rotate_vector({ 9.81F, 0.0F, 0.0F }, mahonyQuaternion);
     vector_ijk gravity = {
-        -gravity_x.c,
-         gravity_y.c,
-         gravity_z.c
+        gravity_x.c,
+        gravity_y.c,
+        gravity_z.c
     };
 
     // Calculate linear acceleration.
