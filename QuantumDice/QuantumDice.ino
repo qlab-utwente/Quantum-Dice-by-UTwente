@@ -4,6 +4,8 @@
 #include <driver/gpio.h>
 #include <driver/rtc_io.h>
 #include <esp_sleep.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 #include "defines.hpp"
 #include "ScreenStateDefs.hpp"
@@ -17,6 +19,9 @@ constexpr uint16_t UPDATE_INTERVAL = 50;  //loop functions
 constexpr uint8_t SECOND = 1000;
 
 StateMachine stateMachine;
+
+constexpr TickType_t TICK_INTERVAL = pdMS_TO_TICKS(50);
+static TickType_t lastWake;
 
 void batteryIsrRising() {
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 0);
@@ -151,14 +156,13 @@ void setup() {
     infoln("╔════════════════════════════════════════╗");
     infoln("║       SETUP COMPLETE - READY!          ║");
     infoln("╚════════════════════════════════════════╝\n");
+
+    lastWake = xTaskGetTickCount();
 }
 
 void loop() {
-    static unsigned long lastUpdateTime = 0;
-    unsigned long currentTime = millis();
-    if (currentTime - lastUpdateTime >= UPDATE_INTERVAL) {
-        lastUpdateTime = currentTime;
-        button.loop();
-        stateMachine.update();
-    }
+    button.loop();
+    stateMachine.update();
+
+	vTaskDelayUntil(&lastWake, TICK_INTERVAL);
 }
