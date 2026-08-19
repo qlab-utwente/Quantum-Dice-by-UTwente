@@ -16,22 +16,22 @@
 
 // Screen selection enum (moved from conditional compilation)
 enum screenselections : uint8_t {
-    X0 = 0b000100,
-    X1 = 0b010000,
-    Y0 = 0b001000,
-    Y1 = 0b000010,
-    Z0 = 0b100000,
-    Z1 = 0b000001,
-    XX = X0 | X1,
-    YY = Y0 | Y1,
-    ZZ = Z0 | Z1,
-    XXYY = XX | YY,
-    XXZZ = XX | ZZ,
-    YYZZ = YY | ZZ,
-    ODD = X0 | Y0 | Z0,
-    EVEN = X1 | Y1 | Z1,
-    ALL = ODD | EVEN,
-    NO_ONE = 0
+    X0,
+    X1,
+    Y0,
+    Y1,
+    Z0,
+    Z1,
+    XX,
+    YY,
+    ZZ,
+    XXYY,
+    XXZZ,
+    YYZZ,
+    ODD,
+    EVEN,
+    ALL,
+    NO_ONE
 };
 
 extern screenselections selectScreen;
