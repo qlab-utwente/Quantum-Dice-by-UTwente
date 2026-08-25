@@ -1,6 +1,8 @@
 #ifndef DEFINES_H_
 #define DEFINES_H_
 
+#include <driver/gpio.h>
+
 #define VERSION "2.0.1"
 #define DEFAULT_DICE_ID "DEFAULT"
 
@@ -45,8 +47,10 @@
     0.7                      // maximum acceleration magnitude to detect
                              // nonMoving
 
-#define REGULATOR_PIN GPIO_NUM_18 // pin D9
-#define BUTTON_PIN GPIO_NUM_14
+constexpr gpio_num_t REGULATOR_PIN = GPIO_NUM_18; // pin D9
+constexpr gpio_num_t BUTTON_PIN = GPIO_NUM_14;
+constexpr gpio_num_t I2C_POWER_PIN = GPIO_NUM_10;
+constexpr gpio_num_t SCREEN_POWER_PIN = GPIO_NUM_3;
 
 #endif /* DEFINES_H_ */
 

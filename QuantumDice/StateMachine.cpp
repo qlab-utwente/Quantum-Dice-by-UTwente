@@ -886,10 +886,12 @@ void StateMachine::whileQuantumIdle() {
         longclicked = false;
         debugln("Time to sleep");
         digitalWrite(REGULATOR_PIN, HIGH);
-        while (digitalRead(BUTTON_PIN) == LOW) {
+        digitalWrite(I2C_POWER_PIN, LOW);
+        digitalWrite(SCREEN_POWER_PIN, LOW);
+        while (button.isPressed()) {
             delay(10);
+            button.loop();
         }
-        //rtc_gpio_init(BUTTON_PIN);
         esp_deep_sleep_start();
         return;
     }
@@ -979,10 +981,12 @@ void StateMachine::whileThrowing() {
         longclicked = false;
         debugln("Time to sleep");
         digitalWrite(REGULATOR_PIN, HIGH);
-        while (digitalRead(BUTTON_PIN) == LOW) {
+        digitalWrite(I2C_POWER_PIN, LOW);
+        digitalWrite(SCREEN_POWER_PIN, LOW);
+        while (button.isPressed()) {
             delay(10);
+            button.loop();
         }
-        //rtc_gpio_init(BUTTON_PIN);
         esp_deep_sleep_start();
         return;
     }
@@ -1188,8 +1192,11 @@ void StateMachine::whileObserved() {
         longclicked = false;
         debugln("Time to sleep");
         digitalWrite(REGULATOR_PIN, HIGH);
-        while (digitalRead(BUTTON_PIN) == LOW) {
+        digitalWrite(I2C_POWER_PIN, LOW);
+        digitalWrite(SCREEN_POWER_PIN, LOW);
+        while (button.isPressed()) {
             delay(10);
+            button.loop();
         }
         esp_deep_sleep_start();
         return;

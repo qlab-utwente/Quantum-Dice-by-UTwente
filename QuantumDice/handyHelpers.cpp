@@ -88,13 +88,11 @@ void checkTimeForDeepSleep(IMUSensor* imuSensor) {
     }
 
     // Use the timeout from configuration
-    if (!isMoving && (millis() - lastMovementTime > currentConfig.deepSleepTimeout)) {
-        lastMovementTime = millis();  // Reset the timer
+    if (!isMoving && !button.isPressed() && (millis() - lastMovementTime > currentConfig.deepSleepTimeout)) {
         debugln("Time to sleep");
         digitalWrite(REGULATOR_PIN, HIGH);
-        while (digitalRead(BUTTON_PIN) == LOW) {
-            delay(10);
-        }
+        digitalWrite(I2C_POWER_PIN, LOW);
+        digitalWrite(SCREEN_POWER_PIN, LOW);
         esp_deep_sleep_start();
     }
 }

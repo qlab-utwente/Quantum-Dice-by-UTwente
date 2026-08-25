@@ -32,13 +32,13 @@ void batteryIsrFalling() {
 }
 
 void setup() {
-    // Make sure power switch keeps on - do this FIRST before anything else
+    // Power pins.
     pinMode(REGULATOR_PIN, OUTPUT);
     digitalWrite(REGULATOR_PIN, LOW);
-    pinMode(GPIO_NUM_10, OUTPUT);
-    digitalWrite(GPIO_NUM_10, HIGH);
-    pinMode(GPIO_NUM_3, OUTPUT);
-    digitalWrite(GPIO_NUM_3, HIGH);
+    pinMode(I2C_POWER_PIN, OUTPUT);
+    digitalWrite(I2C_POWER_PIN, HIGH);
+    pinMode(SCREEN_POWER_PIN, OUTPUT);
+    digitalWrite(SCREEN_POWER_PIN, HIGH);
 
     // Initialize serial for debugging
     initSerial();  // delay(1000) included
