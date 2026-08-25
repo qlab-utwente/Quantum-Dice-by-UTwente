@@ -19,6 +19,7 @@ struct DiceConfig {
     float    tumbleConstant;      // Number of tumbles to detect tumbling
     uint32_t deepSleepTimeout;    // Deep sleep timeout in milliseconds
     uint8_t  checksum;            // Simple checksum for validation
+    bool     buttonPullup;
 };
 
 class DiceConfigManager {

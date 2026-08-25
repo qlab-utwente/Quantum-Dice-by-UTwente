@@ -100,13 +100,23 @@ void checkTimeForDeepSleep(IMUSensor* imuSensor) {
 }
 
 void initButton() {
-    button.begin(BUTTON_PIN);
+    if (currentConfig.buttonPullup) {
+        button.begin(BUTTON_PIN);
+
+        rtc_gpio_pulldown_dis(BUTTON_PIN);
+        rtc_gpio_pullup_en(BUTTON_PIN);
+        esp_sleep_enable_ext0_wakeup(BUTTON_PIN, LOW);
+    } else {
+        button.begin(BUTTON_PIN, INPUT_PULLDOWN, false);
+
+        rtc_gpio_pullup_dis(BUTTON_PIN);
+        rtc_gpio_pulldown_en(BUTTON_PIN);
+        esp_sleep_enable_ext0_wakeup(BUTTON_PIN, HIGH);
+    }
+
     button.setLongClickDetectedHandler(longClickDetected);
     button.setLongClickTime(1000);
     button.setClickHandler(click);
-    rtc_gpio_pulldown_dis(BUTTON_PIN);
-    rtc_gpio_pullup_en(BUTTON_PIN);
-    esp_sleep_enable_ext0_wakeup(BUTTON_PIN, LOW);
 }
 
 void longClickDetected(Button2& btn) {
