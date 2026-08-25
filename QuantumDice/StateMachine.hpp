@@ -130,6 +130,11 @@ class StateMachine {
     static auto getStateTransition(State currentState, Trigger trigger) -> StateTransition;
 
   private:
+    void updateEspNow();
+    void checkMinimumVoltage(unsigned long currentTime);
+    void checkTimeForDeepSleep();
+    void enterDeepSleep();
+
     // State handlers for each mode/throwState/entanglementState combination
     void enterClassicIdle();
     void whileClassicIdle();

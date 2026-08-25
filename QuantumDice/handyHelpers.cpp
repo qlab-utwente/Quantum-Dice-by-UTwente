@@ -74,29 +74,6 @@ void printHardwarePins() {
     infoln("==================================\n");
 }
 
-void checkTimeForDeepSleep(IMUSensor* imuSensor) {
-    static bool isMoving = false;
-    static unsigned long lastMovementTime = 0;
-
-    if (imuSensor->stable()) {
-        if (isMoving) {
-            lastMovementTime = millis();
-            isMoving = false;
-        }
-    } else {
-        isMoving = true;
-    }
-
-    // Use the timeout from configuration
-    if (!isMoving && !button.isPressed() && (millis() - lastMovementTime > currentConfig.deepSleepTimeout)) {
-        debugln("Time to sleep");
-        digitalWrite(REGULATOR_PIN, HIGH);
-        digitalWrite(I2C_POWER_PIN, LOW);
-        digitalWrite(SCREEN_POWER_PIN, LOW);
-        esp_deep_sleep_start();
-    }
-}
-
 void initButton() {
     if (currentConfig.buttonPullup) {
         button.begin(BUTTON_PIN);
@@ -165,11 +142,6 @@ void initBattery() {
     while (!batteryChip.isDeviceReady()) {
         delay(10);
     }
-}
-
-auto checkMinimumVoltage() -> bool {
-    double voltage = getBatteryVoltage();
-    return (voltage < MINBATERYVOLTAGE && voltage > 0.5);  //while on USB the voltage is 0
 }
 
 auto getBatteryPercentage() -> float {

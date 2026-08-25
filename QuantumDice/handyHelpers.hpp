@@ -38,8 +38,6 @@ void initButton();
 void initBattery();
 void longClickDetected(Button2 &btn);
 void click(Button2 &btn);
-void checkTimeForDeepSleep(IMUSensor *imuSensor);
-auto checkMinimumVoltage() -> bool;
 auto getBatteryPercentage() -> float;
 auto getBatteryVoltage() -> float;
 auto mapFloat(float x, float in_min, float in_max, float out_min, float out_max, bool clipOutput) -> float;

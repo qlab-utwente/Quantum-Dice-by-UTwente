@@ -488,8 +488,47 @@ void StateMachine::changeState(Trigger trigger) {
 void StateMachine::update() {
     static unsigned long lastUpdateTime     = 0;
     static unsigned long lastWatchdogTime   = 0;
-    static unsigned long lastBatteryWarning = 0;
+    unsigned long currentTime = millis();
 
+    this->updateEspNow();
+    _imuSensor->update();
+
+    this->checkMinimumVoltage(currentTime);
+
+    // Periodically send watchdog to broadcast presence to nearby dice
+    if (currentState.mode != Mode::CLASSIC
+        && (currentTime - lastWatchdogTime >= 500)) { // Send every 500ms
+        // Not sending in CLASSIC mode ensures we don't get contacted about entanglement
+        // and reduces power consumption and network traffic
+        sendWatchDog();
+        lastWatchdogTime = currentTime;
+    }
+
+    // State-independent: Handle color flash timeout
+    if (flashColor && (currentTime - flashColorStartTime >= currentConfig.colorFlashTimeout)) {
+        debugln("Color flash timeout - refreshing screens to show white");
+        flashColor = false;
+        refreshScreens(); // Update display to show white instead of color
+    }
+
+    if (currentTime - lastUpdateTime >= FSM_UPDATE_INTERVAL) {
+        // add functions called at state update
+        //  printDiceStateName("DiceState", diceStateSelf);
+        lastUpdateTime = currentTime;
+
+        // Call whileInState function for current state
+        auto it = stateFunctions.find(currentState);
+        if (it != stateFunctions.end()) {
+            (this->*it->second.whileInState)();
+        } else {
+            errorf("ERROR: No state function found for state: %s\n", getStateName(currentState));
+        }
+    }
+
+    this->checkTimeForDeepSleep();
+}
+
+void StateMachine::updateEspNow() {
     message data;
     uint8_t source[6];
     int32_t current_rssi;
@@ -766,65 +805,52 @@ void StateMachine::update() {
                 break;
         }
     }
+}
 
-    _imuSensor->update();
-    unsigned long currentTime = millis();
+void StateMachine::checkMinimumVoltage(unsigned long currentTime) {
+    static unsigned long lastBatteryWarning = 0;
+    double voltage = getBatteryVoltage();
+    bool voltageTooLow = (voltage < MINBATERYVOLTAGE && voltage > 0.5);  //while on USB the voltage is 0
+    bool tooLongSinceWarning = currentTime - lastBatteryWarning >= BATTERY_WARNING_INTERVAL;
 
-    // Battery monitoring
-    if (checkMinimumVoltage()) {
-        if (currentTime - lastBatteryWarning >= BATTERY_WARNING_INTERVAL) {
-            debugln("Low battery detected!");
-            lastBatteryWarning = currentTime;
+    if (voltageTooLow && tooLongSinceWarning) {
+        debugln("Low battery detected!");
+        lastBatteryWarning = currentTime;
 
-            voltageIndicator(ALL);
-            sleep(3);
-            refreshScreens();
+        voltageIndicator(ALL);
+        sleep(3);
+        refreshScreens();
+    }
+}
+
+void StateMachine::checkTimeForDeepSleep() {
+    static bool isMoving = false;
+    static unsigned long lastMovementTime = 0;
+
+    if (this->_imuSensor->stable()) {
+        if (isMoving) {
+            lastMovementTime = millis();
+            isMoving = false;
         }
+    } else {
+        isMoving = true;
     }
 
-    // State-independent: Handle short click to toggle color display (only in QUANTUM mode)
-    //if (clicked) {
-    //    clicked = false;
-    //    if (currentState.mode == Mode::QUANTUM) {
-    //        showColors = !showColors;
-    //        debugf("Color display toggled: %s\n", showColors ? "ON" : "OFF");
-    //        refreshScreens(); // Refresh to show the change immediately
-    //    } else {
-    //        debugln("Short click ignored in CLASSIC mode");
-    //    }
-    //}
-
-    // Periodically send watchdog to broadcast presence to nearby dice
-    if (currentState.mode != Mode::CLASSIC
-        && (currentTime - lastWatchdogTime >= 500)) { // Send every 500ms
-        // Not sending in CLASSIC mode ensures we don't get contacted about entanglement
-        // and reduces power consumption and network traffic
-        sendWatchDog();
-        lastWatchdogTime = currentTime;
+    // Use the timeout from configuration
+    if (!isMoving && !button.isPressed() && (millis() - lastMovementTime > currentConfig.deepSleepTimeout)) {
+        this->enterDeepSleep();
     }
+}
 
-    // State-independent: Handle color flash timeout
-    if (flashColor && (currentTime - flashColorStartTime >= currentConfig.colorFlashTimeout)) {
-        debugln("Color flash timeout - refreshing screens to show white");
-        flashColor = false;
-        refreshScreens(); // Update display to show white instead of color
+void StateMachine::enterDeepSleep() {
+    digitalWrite(REGULATOR_PIN, HIGH);
+    digitalWrite(I2C_POWER_PIN, LOW);
+    digitalWrite(SCREEN_POWER_PIN, LOW);
+    while (button.isPressed()) {
+        delay(10);
+       button.loop();
     }
-
-    if (currentTime - lastUpdateTime >= FSM_UPDATE_INTERVAL) {
-        // add functions called at state update
-        //  printDiceStateName("DiceState", diceStateSelf);
-        lastUpdateTime = currentTime;
-
-        // Call whileInState function for current state
-        auto it = stateFunctions.find(currentState);
-        if (it != stateFunctions.end()) {
-            (this->*it->second.whileInState)();
-        } else {
-            errorf("ERROR: No state function found for state: %s\n", getStateName(currentState));
-        }
-    }
-
-    checkTimeForDeepSleep(_imuSensor);
+    esp_deep_sleep_start();
 }
 
 // ============================================================================
@@ -885,15 +911,7 @@ void StateMachine::whileQuantumIdle() {
             || currentState.entanglementState == EntanglementState::TELEPORTED)) {
         longclicked = false;
         debugln("Time to sleep");
-        digitalWrite(REGULATOR_PIN, HIGH);
-        digitalWrite(I2C_POWER_PIN, LOW);
-        digitalWrite(SCREEN_POWER_PIN, LOW);
-        while (button.isPressed()) {
-            delay(10);
-            button.loop();
-        }
-        esp_deep_sleep_start();
-        return;
+        this->enterDeepSleep();
     }
 
     // Check if dice is being thrown
@@ -979,16 +997,7 @@ void StateMachine::whileThrowing() {
             || currentState.entanglementState == EntanglementState::POST_ENTANGLEMENT
             || currentState.entanglementState == EntanglementState::TELEPORTED)) {
         longclicked = false;
-        debugln("Time to sleep");
-        digitalWrite(REGULATOR_PIN, HIGH);
-        digitalWrite(I2C_POWER_PIN, LOW);
-        digitalWrite(SCREEN_POWER_PIN, LOW);
-        while (button.isPressed()) {
-            delay(10);
-            button.loop();
-        }
-        esp_deep_sleep_start();
-        return;
+        this->enterDeepSleep();
     }
 
     // Check if dice has landed and is stable
@@ -1190,16 +1199,7 @@ void StateMachine::whileObserved() {
             || currentState.entanglementState == EntanglementState::POST_ENTANGLEMENT
             || currentState.entanglementState == EntanglementState::TELEPORTED)) {
         longclicked = false;
-        debugln("Time to sleep");
-        digitalWrite(REGULATOR_PIN, HIGH);
-        digitalWrite(I2C_POWER_PIN, LOW);
-        digitalWrite(SCREEN_POWER_PIN, LOW);
-        while (button.isPressed()) {
-            delay(10);
-            button.loop();
-        }
-        esp_deep_sleep_start();
-        return;
+        this->enterDeepSleep();
     }
 
     // Check if dice is being thrown again
