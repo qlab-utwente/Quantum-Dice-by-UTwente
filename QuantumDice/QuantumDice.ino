@@ -82,11 +82,10 @@ void setup() {
     // ═══════════════════════════════════════════════════════════════════
     infoln("Step 2: Initializing hardware...\n");
 
-    // intitialise the hardware pins and display addresses
-    initHardwarePins();
+    // Print the hardware pins and display addresses
+    printHardwarePins();
 
     infof(" - Dice ID: %s\n", (char*) currentConfig.diceId.c_str());  // Use diceId from config
-    infof("Connection type isSMD: %s\n\n", currentConfig.isSMD ? "SMD" : "HDR");  // Use config instead of defines
 
     // Initialize displays - now uses hwPins from loaded configuration
     initDisplays();

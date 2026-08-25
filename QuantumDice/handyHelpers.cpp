@@ -10,7 +10,46 @@
 #include "DiceConfigManager.hpp"
 
 // Define global configuration object
-HardwarePins hwPins;
+const struct HardwarePins hwPins{
+    .tft_cs = 0xFF,
+    .tft_rst = GPIO_NUM_48,
+    .tft_dc = GPIO_NUM_47,
+
+    .screen_cs{
+        GPIO_NUM_4,
+        GPIO_NUM_5,
+        GPIO_NUM_6,
+        GPIO_NUM_7,
+        GPIO_NUM_15,
+        GPIO_NUM_16
+    },
+
+    .screenAddress{
+        // singles
+        0b00000100,  // x0
+        0b00010000,  // x1
+        0b00001000,  // y0
+        0b00000010,  // y1
+        0b00100000,  // z0
+        0b00000001,  // z1
+                     // doubles
+        0b00010100,  // xx
+        0b00001010,  // yy
+        0b00100001,  // zz
+                     // quarters
+        0b00011110,
+        0b00101011,
+        0b00110101,
+        // triples + / -
+        0b00101100,  // x0y0z0
+        0b00010011,  // x1y1z1
+                     // others
+        0b00111111,
+        0b00000000
+    },
+
+    .adc_pin = GPIO_NUM_2
+};
 
 // Existing global variables
 RTC_DATA_ATTR int bootCount = 0;
@@ -19,91 +58,10 @@ bool clicked = false;
 bool longclicked = false;
 
 /**
- * Initialize hardware pins based on configuration
- * Sets up pin assignments for NANO vs DEVKIT and SMD vs HDR
- */
-void initHardwarePins() {
-    Serial.println("Initializing hardware pins...");
-
-    // DEVKIT
-    hwPins.tft_cs = -1;
-    hwPins.tft_rst = GPIO_NUM_48;
-    hwPins.tft_dc = GPIO_NUM_47;
-    hwPins.adc_pin = GPIO_NUM_2;
-
-    // Screen CS pins for DEVKIT
-    hwPins.screen_cs[0] = GPIO_NUM_4;
-    hwPins.screen_cs[1] = GPIO_NUM_5;
-    hwPins.screen_cs[2] = GPIO_NUM_6;
-    hwPins.screen_cs[3] = GPIO_NUM_7;
-    hwPins.screen_cs[4] = GPIO_NUM_15;
-    hwPins.screen_cs[5] = GPIO_NUM_16;
-
-    // Set screen address mapping based on SMD vs HDR
-    if (currentConfig.isSMD) {
-        // SMD screen addresses
-        uint8_t smdAddresses[16] = {
-            // singles
-            0b00000100,  // x0
-            0b00010000,  // x1
-            0b00001000,  // y0
-            0b00000010,  // y1
-            0b00100000,  // z0
-            0b00000001,  // z1
-                         // doubles
-            0b00010100,  // xx
-            0b00001010,  // yy
-            0b00100001,  // zz
-                         // quarters
-            0b00011110,
-            0b00101011,
-            0b00110101,
-            // triples + / -
-            0b00101100,  // x0y0z0
-            0b00010011,  // x1y1z1
-                         // others
-            0b00111111,
-            0b00000000
-        };
-        memcpy(hwPins.screenAddress, smdAddresses, 16);
-    } else {
-        // HDR screen addresses
-        uint8_t hdrAddresses[16] = {
-            // singles
-            0b00001000,  // x0
-            0b00000010,  // x1
-            0b00000100,  // y0
-            0b00010000,  // y1
-            0b00100000,  // z0
-            0b00000001,  // z1
-                         // doubles
-            0b00001010,  // xx
-            0b00010100,  // yy
-            0b00100001,  // zz
-                         // quarters
-            0b00011110,
-            0b00101011,
-            0b00110101,
-            // triples + / -
-            0b00101100,  // x0y0z0
-            0b00010011,  // x1y1z1
-                         // others
-            0b00111111,
-            0b00000000
-        };
-        memcpy(hwPins.screenAddress, hdrAddresses, 16);
-    }
-
-    Serial.println("Hardware pins initialized successfully!");
-    printHardwarePins();
-}
-
-/**
  * Print hardware pin configuration for debugging
  */
 void printHardwarePins() {
     infoln("\n=== Hardware Pin Configuration ===");
-    infof("Screen Type: %s\n", currentConfig.isSMD ? "SMD" : "HDR");
     infoln("\nTFT Display Pins:");
     infof("  CS:  GPIO%d\n", hwPins.tft_cs);
     infof("  RST: GPIO%d\n", hwPins.tft_rst);

@@ -23,10 +23,9 @@ struct HardwarePins {
 };
 
 // Global configuration and hardware objects
-extern HardwarePins hwPins;
+extern const struct HardwarePins hwPins;
 
 // Hardware initialization
-void initHardwarePins();
 void printHardwarePins();
 
 // Existing declarations

@@ -106,8 +106,6 @@ auto DiceConfigManager::load(const String &filename) -> bool {
             _config.colorFlashTimeout = (uint16_t) strtoul(value.c_str(), nullptr, 0);
         } else if (key == "rssiLimit") {
             _config.rssiLimit = (int8_t) strtol(value.c_str(), nullptr, 0);
-        } else if (key == "isSMD") {
-            _config.isSMD = parseBool(value);
         } else if (key == "tumbleConstant") {
             _config.tumbleConstant = (float) strtod(value.c_str(), nullptr);
         } else if (key == "deepSleepTimeout") {
@@ -209,9 +207,7 @@ void DiceConfigManager::initDefaultConfig() {
     // Default RSSI
     _config.rssiLimit = -35;
 
-    // Default hardware config
-    _config.isSMD  = true;
-
+    // Default tumble constant
     _config.tumbleConstant = 45;
 
     // Default operational parameters
@@ -257,7 +253,6 @@ void printGlobalConfig() {
     infof("Entangle Colors (%d): %s\n", currentConfig.entang_colors_count, colours.c_str());
     infof("Color Flash Timeout: %d ms\n", currentConfig.colorFlashTimeout);
     infof("RSSI Limit: %d dBm\n", currentConfig.rssiLimit);
-    infof("Is SMD: %s\n", currentConfig.isSMD ? "true" : "false");
     infof("Tumble Constant: %d\n", currentConfig.tumbleConstant);
     infof("Deep Sleep Timeout: %u ms\n", currentConfig.deepSleepTimeout);
     infof("Checksum: 0x%02X\n", currentConfig.checksum);
@@ -340,7 +335,6 @@ auto ensureLittleFSAndConfig() -> bool {
         }
     }
 
-
     debugln("LittleFS mounted successfully");
     debugf("Total: %u bytes, Used: %u bytes\n", LittleFS.totalBytes(), LittleFS.usedBytes());
 
@@ -379,7 +373,6 @@ auto createDefaultConfigFile() -> bool {
     file.println("entang_colors=65504,2016,2047,63519");
     file.println("colorFlashTimeout=1000");
     file.println("rssiLimit=-35");
-    file.println("isSMD=true");
     file.println("tumbleConstant=45");
     file.println("deepSleepTimeout=300000");
     file.println("checksum=0");
