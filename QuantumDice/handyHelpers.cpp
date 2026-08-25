@@ -25,35 +25,19 @@ bool longclicked = false;
 void initHardwarePins() {
     Serial.println("Initializing hardware pins...");
 
-    // Set TFT pins based on NANO vs DEVKIT
-    if (currentConfig.isNano) {
-        hwPins.tft_cs = 21;
-        hwPins.tft_rst = 4;
-        hwPins.tft_dc = 2;
-        hwPins.adc_pin = 1;
+    // DEVKIT
+    hwPins.tft_cs = -1;
+    hwPins.tft_rst = GPIO_NUM_48;
+    hwPins.tft_dc = GPIO_NUM_47;
+    hwPins.adc_pin = GPIO_NUM_2;
 
-        // Screen CS pins for NANO
-        hwPins.screen_cs[0] = 5;
-        hwPins.screen_cs[1] = 6;
-        hwPins.screen_cs[2] = 7;
-        hwPins.screen_cs[3] = 8;
-        hwPins.screen_cs[4] = 9;
-        hwPins.screen_cs[5] = 10;
-    } else {
-        // DEVKIT
-        hwPins.tft_cs = -1;
-        hwPins.tft_rst = GPIO_NUM_48;
-        hwPins.tft_dc = GPIO_NUM_47;
-        hwPins.adc_pin = GPIO_NUM_2;
-
-        // Screen CS pins for DEVKIT
-        hwPins.screen_cs[0] = GPIO_NUM_4;
-        hwPins.screen_cs[1] = GPIO_NUM_5;
-        hwPins.screen_cs[2] = GPIO_NUM_6;
-        hwPins.screen_cs[3] = GPIO_NUM_7;
-        hwPins.screen_cs[4] = GPIO_NUM_15;
-        hwPins.screen_cs[5] = GPIO_NUM_16;
-    }
+    // Screen CS pins for DEVKIT
+    hwPins.screen_cs[0] = GPIO_NUM_4;
+    hwPins.screen_cs[1] = GPIO_NUM_5;
+    hwPins.screen_cs[2] = GPIO_NUM_6;
+    hwPins.screen_cs[3] = GPIO_NUM_7;
+    hwPins.screen_cs[4] = GPIO_NUM_15;
+    hwPins.screen_cs[5] = GPIO_NUM_16;
 
     // Set screen address mapping based on SMD vs HDR
     if (currentConfig.isSMD) {
@@ -119,7 +103,6 @@ void initHardwarePins() {
  */
 void printHardwarePins() {
     infoln("\n=== Hardware Pin Configuration ===");
-    infof("Board Type: %s\n", currentConfig.isNano ? "NANO" : "DEVKIT");
     infof("Screen Type: %s\n", currentConfig.isSMD ? "SMD" : "HDR");
     infoln("\nTFT Display Pins:");
     infof("  CS:  GPIO%d\n", hwPins.tft_cs);

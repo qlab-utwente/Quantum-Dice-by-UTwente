@@ -17,7 +17,6 @@ struct DiceConfig {
     uint16_t colorFlashTimeout;   // Color flash duration in milliseconds
     int8_t   rssiLimit;           // RSSI limit for entanglement detection
     bool     isSMD;               // true for SMD, false for HDR
-    bool     isNano;              // true for NANO, false for DEVKIT
     float    tumbleConstant;      // Number of tumbles to detect tumbling
     uint32_t deepSleepTimeout;    // Deep sleep timeout in milliseconds
     uint8_t  checksum;            // Simple checksum for validation

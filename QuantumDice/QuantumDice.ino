@@ -86,7 +86,6 @@ void setup() {
     initHardwarePins();
 
     infof(" - Dice ID: %s\n", (char*) currentConfig.diceId.c_str());  // Use diceId from config
-    infof("Board type: %s\n", currentConfig.isNano ? "NANO" : "DEVKIT");  // Use config instead of defines
     infof("Connection type isSMD: %s\n\n", currentConfig.isSMD ? "SMD" : "HDR");  // Use config instead of defines
 
     // Initialize displays - now uses hwPins from loaded configuration
@@ -106,18 +105,9 @@ void setup() {
         warnln("Failed to initialize sensor!");
         while (true);
     }
-    //if (currentConfig.isNano) {
-    //    constexpr uint8_t NANO_AXIS_REMAP_CONFIG = 0x06;
-    //    imuSensor->setAxisRemap(NANO_AXIS_REMAP_CONFIG, NANO_AXIS_REMAP_CONFIG);
-    //}
 
     imuSensor->update();
     imuSensor->resetTumbleDetection();
-
-    //while (true) {
-    //    delay(100);
-    //    imuSensor->update();
-    //}
 
     welcomeInfo(screenselections::X0);
     imuSensor->update();

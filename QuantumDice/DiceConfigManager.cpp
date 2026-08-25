@@ -108,8 +108,6 @@ auto DiceConfigManager::load(const String &filename) -> bool {
             _config.rssiLimit = (int8_t) strtol(value.c_str(), nullptr, 0);
         } else if (key == "isSMD") {
             _config.isSMD = parseBool(value);
-        } else if (key == "isNano") {
-            _config.isNano = parseBool(value);
         } else if (key == "tumbleConstant") {
             _config.tumbleConstant = (float) strtod(value.c_str(), nullptr);
         } else if (key == "deepSleepTimeout") {
@@ -213,7 +211,6 @@ void DiceConfigManager::initDefaultConfig() {
 
     // Default hardware config
     _config.isSMD  = true;
-    _config.isNano = false;
 
     _config.tumbleConstant = 45;
 
@@ -261,7 +258,6 @@ void printGlobalConfig() {
     infof("Color Flash Timeout: %d ms\n", currentConfig.colorFlashTimeout);
     infof("RSSI Limit: %d dBm\n", currentConfig.rssiLimit);
     infof("Is SMD: %s\n", currentConfig.isSMD ? "true" : "false");
-    infof("Is Nano: %s\n", currentConfig.isNano ? "true" : "false");
     infof("Tumble Constant: %d\n", currentConfig.tumbleConstant);
     infof("Deep Sleep Timeout: %u ms\n", currentConfig.deepSleepTimeout);
     infof("Checksum: 0x%02X\n", currentConfig.checksum);
@@ -384,7 +380,6 @@ auto createDefaultConfigFile() -> bool {
     file.println("colorFlashTimeout=1000");
     file.println("rssiLimit=-35");
     file.println("isSMD=true");
-    file.println("isNano=false");
     file.println("tumbleConstant=45");
     file.println("deepSleepTimeout=300000");
     file.println("checksum=0");
