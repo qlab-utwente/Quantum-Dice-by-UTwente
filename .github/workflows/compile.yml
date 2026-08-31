@@ -16,4 +16,5 @@ jobs:
 
       - name: Compile the project
         run: |
-          arduino-cli compile --jobs 0 --profile esp32s3_dev_module QuantumDice
+          cd firmware
+          sh build.sh
