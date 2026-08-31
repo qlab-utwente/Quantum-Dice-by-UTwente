@@ -81,10 +81,6 @@ void setup() {
     // Step 2: Initialize hardware
     // ═══════════════════════════════════════════════════════════════════
     infoln("Step 2: Initializing hardware...\n");
-
-    // Print the hardware pins and display addresses
-    printHardwarePins();
-
     infof(" - Dice ID: %s\n", (char*) currentConfig.diceId.c_str());  // Use diceId from config
 
     // Initialize displays - now uses hwPins from loaded configuration

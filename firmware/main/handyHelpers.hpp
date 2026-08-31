@@ -5,21 +5,6 @@
 #include <Button2.h>
 #include <cstdint>
 
-// Hardware pin assignments structure
-struct HardwarePins {
-    // Screen CS pins (6 screens)
-    uint8_t screen_cs[6];
-
-    // Screen address mapping for SMD/HDR
-    uint8_t screenAddress[16];
-};
-
-// Global configuration and hardware objects
-extern const struct HardwarePins hwPins;
-
-// Hardware initialization
-void printHardwarePins();
-
 // Existing declarations
 extern RTC_DATA_ATTR int bootCount;
 extern Button2           button;

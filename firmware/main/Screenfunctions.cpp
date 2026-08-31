@@ -9,6 +9,7 @@
 #include <Adafruit_GC9A01A.h>
 #include <algorithm>
 #include <Arduino.h>
+#include <driver/gpio.h>
 
 // Global TFT object - will be initialized dynamically
 Adafruit_GC9A01A tft(-1, -1, -1); // Temporary pins, will be reinitialized
@@ -18,25 +19,30 @@ static GFXcanvas16 backgroundCanvas(240, 240);
 static GFXcanvas16 imageCanvas(240, 240);
 static GFXcanvas16 staticCanvas(240, 100);
 
-void selectScreens(uint8_t binaryCode) {
-    // Use hwPins from handyHelpers
-    for (int i = 0; i < 6; i++) {
-        if ((hwPins.screenAddress[binaryCode] & (1 << i)) != 0) {
-            digitalWrite(hwPins.screen_cs[i], LOW); // Activate device
-        } else {
-            digitalWrite(hwPins.screen_cs[i], HIGH); // Deactivate device
-        }
-    }
+static const gpio_config_t io_config{
+	.pin_bit_mask = (1 << SCREEN_CS1) | (1 << SCREEN_CS2) | (1 << SCREEN_CS3) | (1 << SCREEN_CS4) | (1 << SCREEN_CS5) | (1 << SCREEN_CS6),
+	.mode = GPIO_MODE_OUTPUT,
+	.pull_up_en = GPIO_PULLUP_DISABLE,
+	.pull_down_en = GPIO_PULLDOWN_DISABLE,
+	.intr_type = GPIO_INTR_DISABLE
+};
+
+static void selectScreens(screenselections screens) {
+	uint8_t binaryCode = static_cast<uint8_t>(screens);
+
+	gpio_set_level(SCREEN_CS1, ((binaryCode & 0b000001) != 0) ? 0 : 1);
+	gpio_set_level(SCREEN_CS2, ((binaryCode & 0b000010) != 0) ? 0 : 1);
+	gpio_set_level(SCREEN_CS3, ((binaryCode & 0b000100) != 0) ? 0 : 1);
+	gpio_set_level(SCREEN_CS4, ((binaryCode & 0b001000) != 0) ? 0 : 1);
+	gpio_set_level(SCREEN_CS5, ((binaryCode & 0b010000) != 0) ? 0 : 1);
+	gpio_set_level(SCREEN_CS6, ((binaryCode & 0b100000) != 0) ? 0 : 1);
 }
 
 void initDisplays() {
     Serial.println("Initializing displays...");
 
     // Initialize CS pins for all screens
-    for (int i = 0; i < 6; i++) {
-        pinMode(hwPins.screen_cs[i], OUTPUT);
-        digitalWrite(hwPins.screen_cs[i], HIGH); // Start with all deactivated
-    }
+    gpio_config(&io_config);
 
     // Reinitialize TFT with correct pins from configuration
     tft = Adafruit_GC9A01A(-1, SCREEN_DC, SCREEN_RST);
@@ -59,7 +65,7 @@ void initDisplays() {
     Serial.println("Displays initialized successfully!");
 }
 
-void blankScreen(uint8_t screens) {
+void blankScreen(screenselections screens) {
     selectScreens(screens);
     tft.fillScreen(GC9A01A_BLACK);
 }
@@ -93,7 +99,7 @@ void drawDot(int x, int y, float alpha, uint16_t color, uint16_t bgColor) {
     tft.fillCircle(x, y, DOT_RADIUS, blendedColor);
 }
 
-void displayImageWithBackground(const unsigned short *image, uint8_t screens) {
+void displayImageWithBackground(const unsigned short *image, screenselections screens) {
     // Select the appropriate screens
     selectScreens(screens);
 
@@ -145,37 +151,37 @@ void displayImageWithBackground(const unsigned short *image, uint8_t screens) {
     tft.drawRGBBitmap(0, 0, backgroundCanvas.getBuffer(), WIDTH, HEIGHT);
 }
 
-void displayCircle(uint8_t screens) {
+void displayCircle(screenselections screens) {
     displayImageWithBackground(circle, screens);
     debug("Circle on screen: ");
     debugln(screens);
 }
 
-void displayCross(uint8_t screens) {
+void displayCross(screenselections screens) {
     displayImageWithBackground(cross, screens);
     debug("Cross on screen: ");
     debugln(screens);
 }
 
-void displayCrossCircle(uint8_t screens) {
+void displayCrossCircle(screenselections screens) {
     displayImageWithBackground(crossCircle, screens);
     debug("CrossCircle on screen: ");
     debugln(screens);
 }
 
-void displayEinstein(uint8_t screens) {
+void displayEinstein(screenselections screens) {
     displayImageWithBackground(God_does_not_play_dice, screens);
     debug("Einstein on screen: ");
     debugln(screens);
 }
 
-void displayEntangled(uint8_t screens) {
+void displayEntangled(screenselections screens) {
     displayImageWithBackground(entangled, screens);
     debug("entangled on screen: ");
     debugln(screens);
 }
 
-void displayLowBattery(uint8_t screens) {
+void displayLowBattery(screenselections screens) {
     selectScreens(screens);
     // Clear the screen
     tft.fillScreen(GC9A01A_BLACK);
@@ -190,31 +196,31 @@ void displayLowBattery(uint8_t screens) {
     drawStringCentered(tft, "Low Battery", (tft.height() / 2) + 9);
 }
 
-void displayNewDie(uint8_t screens) {
+void displayNewDie(screenselections screens) {
     displayImageWithBackground(new_die, screens);
     debug("Reset Ok on screen: ");
     debugln(screens);
 }
 
-void displayQLab(uint8_t screens) {
+void displayQLab(screenselections screens) {
     displayImageWithBackground(quantum_labs_twente_RGB, screens);
     debug("Qlab logo on screen: ");
     debugln(screens);
 }
 
-void displayUTlogo(uint8_t screens) {
+void displayUTlogo(screenselections screens) {
     displayImageWithBackground(UTwente_logo, screens);
     debug("UTwente logo on screen: ");
     debugln(screens);
 }
 
-void displayQRcode(uint8_t screens) {
+void displayQRcode(screenselections screens) {
     displayImageWithBackground(QRCode, screens);
     debug("QR code on screen: ");
     debugln(screens);
 }
 
-void displayN1(uint8_t screens) {
+void displayN1(screenselections screens) {
     selectScreens(screens);
     tft.fillScreen(GC9A01A_BLACK);
     int centerX = tft.width() / 2;
@@ -223,7 +229,7 @@ void displayN1(uint8_t screens) {
     drawDot(centerX, centerY);
 }
 
-void displayN2(uint8_t screens) {
+void displayN2(screenselections screens) {
     selectScreens(screens);
     tft.fillScreen(GC9A01A_BLACK);
     int centerX = tft.width() / 2;
@@ -234,7 +240,7 @@ void displayN2(uint8_t screens) {
     drawDot(centerX + offset, centerY - offset);
 }
 
-void displayN3(uint8_t screens) {
+void displayN3(screenselections screens) {
     selectScreens(screens);
     tft.fillScreen(GC9A01A_BLACK);
     int centerX = tft.width() / 2;
@@ -246,7 +252,7 @@ void displayN3(uint8_t screens) {
     drawDot(centerX + offset, centerY - offset);
 }
 
-void displayN4(uint8_t screens) {
+void displayN4(screenselections screens) {
     selectScreens(screens);
     tft.fillScreen(GC9A01A_BLACK);
     int centerX = tft.width() / 2;
@@ -259,7 +265,7 @@ void displayN4(uint8_t screens) {
     drawDot(centerX + offset, centerY + offset);
 }
 
-void displayN5(uint8_t screens) {
+void displayN5(screenselections screens) {
     selectScreens(screens);
     tft.fillScreen(GC9A01A_BLACK);
     int centerX = tft.width() / 2;
@@ -273,7 +279,7 @@ void displayN5(uint8_t screens) {
     drawDot(centerX + offset, centerY + offset);
 }
 
-void displayN6(uint8_t screens) {
+void displayN6(screenselections screens) {
     selectScreens(screens);
     tft.fillScreen(GC9A01A_BLACK);
     int centerX = tft.width() / 2;
@@ -288,7 +294,7 @@ void displayN6(uint8_t screens) {
     drawDot(centerX + offset, centerY + offset);
 }
 
-void displayMix1to6(uint8_t screens) {
+void displayMix1to6(screenselections screens) {
     selectScreens(screens);
     tft.fillScreen(GC9A01A_BLACK);
     int centerX = tft.width() / 2;
@@ -304,7 +310,7 @@ void displayMix1to6(uint8_t screens) {
     drawDot(centerX, centerY, 3 * 0.2);
 }
 
-void displayMix1to6_entangled(uint8_t screens) {
+void displayMix1to6_entangled(screenselections screens) {
     selectScreens(screens);
     tft.fillScreen(GC9A01A_BLACK);
     int centerX = tft.width() / 2;
@@ -336,7 +342,7 @@ void displayMix1to6_entangled(uint8_t screens) {
     drawDot(centerX, centerY, (3 * 0.16) + 0.2, color);
 }
 
-void printChar(uint8_t screens, char *letters, uint16_t fontcolor, uint16_t bckcolor, int x,
+void printChar(screenselections screens, char *letters, uint16_t fontcolor, uint16_t bckcolor, int x,
                int y) {
     selectScreens(screens);
     tft.fillScreen(bckcolor);
@@ -367,7 +373,7 @@ void drawStringCentered(Adafruit_GFX &gfx, const String &text, int16_t y) {
     gfx.print(text);
 }
 
-void voltageIndicator(uint8_t screens) {
+void voltageIndicator(screenselections screens) {
     char bufferV[10];
     char bufferPerc[10];
     selectScreens(screens);
@@ -416,7 +422,7 @@ void voltageIndicator(uint8_t screens) {
                       staticCanvas.height());
 }
 
-void welcomeInfo(uint8_t screens) {
+void welcomeInfo(screenselections screens) {
     char displayText1[10];
     char displayText2[20];
     selectScreens(screens);
@@ -433,7 +439,7 @@ void welcomeInfo(uint8_t screens) {
     drawStringCentered(tft, (char *)displayText2, 104);
 }
 
-void showConfigMode(uint8_t screens) {
+void showConfigMode(screenselections screens) {
     selectScreens(screens);
     // Clear the screen
     tft.fillScreen(GC9A01A_BLACK);

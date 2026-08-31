@@ -9,59 +9,11 @@
 #include "handyHelpers.hpp"
 #include "DiceConfigManager.hpp"
 
-// Define global configuration object
-const struct HardwarePins hwPins{
-    .screen_cs{
-        GPIO_NUM_4,
-        GPIO_NUM_5,
-        GPIO_NUM_6,
-        GPIO_NUM_7,
-        GPIO_NUM_15,
-        GPIO_NUM_16
-    },
-
-    .screenAddress{
-        // singles
-        0b00000100,  // x0
-        0b00010000,  // x1
-        0b00001000,  // y0
-        0b00000010,  // y1
-        0b00100000,  // z0
-        0b00000001,  // z1
-                     // doubles
-        0b00010100,  // xx
-        0b00001010,  // yy
-        0b00100001,  // zz
-                     // quarters
-        0b00011110,
-        0b00101011,
-        0b00110101,
-        // triples + / -
-        0b00101100,  // x0y0z0
-        0b00010011,  // x1y1z1
-                     // others
-        0b00111111,
-        0b00000000
-    }
-};
-
 // Existing global variables
 RTC_DATA_ATTR int bootCount = 0;
 Button2 button;
 bool clicked = false;
 bool longclicked = false;
-
-/**
- * Print hardware pin configuration for debugging
- */
-void printHardwarePins() {
-    infoln("\n=== Hardware Pin Configuration ===");
-    infoln("\nScreen CS Pins:");
-    for (int i = 0; i < 6; i++) {
-        infof("  Screen %d: GPIO%d\n", i, hwPins.screen_cs[i]);
-    }
-    infoln("==================================\n");
-}
 
 void initButton() {
     if (currentConfig.buttonPullup) {
