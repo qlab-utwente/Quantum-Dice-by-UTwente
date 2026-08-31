@@ -6,6 +6,7 @@
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Fonts/FreeSansOblique12pt7b.h>
 #include <SPI.h>
+#include <cstdint>
 
 #define HEIGHT 240
 #define WIDTH 240
@@ -13,6 +14,9 @@
 // Dot radius definition
 #define DOT_RADIUS 20
 #define DOT_OFFSET 60
+
+constexpr int8_t SCREEN_DC = GPIO_NUM_47;
+constexpr int8_t SCREEN_RST = GPIO_NUM_48;
 
 // Screen selection enum (moved from conditional compilation)
 enum screenselections : uint8_t {
@@ -33,9 +37,6 @@ enum screenselections : uint8_t {
     ALL,
     NO_ONE
 };
-
-extern screenselections selectScreen;
-extern int              dotDia;
 
 void selectScreens(uint8_t binaryCode);
 auto blendColor(uint16_t foreground, uint16_t background, float alpha) -> uint16_t;

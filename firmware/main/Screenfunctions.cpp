@@ -18,8 +18,6 @@ static GFXcanvas16 backgroundCanvas(240, 240);
 static GFXcanvas16 imageCanvas(240, 240);
 static GFXcanvas16 staticCanvas(240, 100);
 
-screenselections selectScreen;
-
 void selectScreens(uint8_t binaryCode) {
     // Use hwPins from handyHelpers
     for (int i = 0; i < 6; i++) {
@@ -41,11 +39,10 @@ void initDisplays() {
     }
 
     // Reinitialize TFT with correct pins from configuration
-    tft = Adafruit_GC9A01A(hwPins.tft_cs, hwPins.tft_dc, hwPins.tft_rst);
+    tft = Adafruit_GC9A01A(-1, SCREEN_DC, SCREEN_RST);
 
     selectScreens(ALL); // Select all screens
     delay(500);
-    //tft.begin(8*24000000); // Initialize the display
     tft.begin();
     delay(1000);
     tft.fillScreen(GC9A01A_BLACK);

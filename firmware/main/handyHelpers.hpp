@@ -7,11 +7,6 @@
 
 // Hardware pin assignments structure
 struct HardwarePins {
-    // TFT Display pins
-    uint8_t tft_cs;
-    uint8_t tft_rst;
-    uint8_t tft_dc;
-
     // Screen CS pins (6 screens)
     uint8_t screen_cs[6];
 

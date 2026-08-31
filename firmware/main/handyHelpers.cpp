@@ -11,10 +11,6 @@
 
 // Define global configuration object
 const struct HardwarePins hwPins{
-    .tft_cs = 0xFF,
-    .tft_rst = GPIO_NUM_48,
-    .tft_dc = GPIO_NUM_47,
-
     .screen_cs{
         GPIO_NUM_4,
         GPIO_NUM_5,
@@ -60,10 +56,6 @@ bool longclicked = false;
  */
 void printHardwarePins() {
     infoln("\n=== Hardware Pin Configuration ===");
-    infoln("\nTFT Display Pins:");
-    infof("  CS:  GPIO%d\n", hwPins.tft_cs);
-    infof("  RST: GPIO%d\n", hwPins.tft_rst);
-    infof("  DC:  GPIO%d\n", hwPins.tft_dc);
     infoln("\nScreen CS Pins:");
     for (int i = 0; i < 6; i++) {
         infof("  Screen %d: GPIO%d\n", i, hwPins.screen_cs[i]);
