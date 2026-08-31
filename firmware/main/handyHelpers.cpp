@@ -46,9 +46,7 @@ const struct HardwarePins hwPins{
                      // others
         0b00111111,
         0b00000000
-    },
-
-    .adc_pin = GPIO_NUM_2
+    }
 };
 
 // Existing global variables
@@ -70,7 +68,6 @@ void printHardwarePins() {
     for (int i = 0; i < 6; i++) {
         infof("  Screen %d: GPIO%d\n", i, hwPins.screen_cs[i]);
     }
-    infof("\nADC Pin: GPIO%d\n", hwPins.adc_pin);
     infoln("==================================\n");
 }
 

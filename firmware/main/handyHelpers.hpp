@@ -17,9 +17,6 @@ struct HardwarePins {
 
     // Screen address mapping for SMD/HDR
     uint8_t screenAddress[16];
-
-    // ADC pin for battery monitoring
-    uint8_t adc_pin;
 };
 
 // Global configuration and hardware objects
