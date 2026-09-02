@@ -24,130 +24,115 @@ constexpr TickType_t TICK_INTERVAL = pdMS_TO_TICKS(50);
 static TickType_t lastWake;
 
 void batteryIsrRising() {
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 0);
+	esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 0);
 }
 
 void batteryIsrFalling() {
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 1);
+	esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 1);
 }
 
 void setup() {
-    // Power pins.
-    pinMode(REGULATOR_PIN, OUTPUT);
-    digitalWrite(REGULATOR_PIN, LOW);
-    pinMode(I2C_POWER_PIN, OUTPUT);
-    digitalWrite(I2C_POWER_PIN, HIGH);
-    pinMode(SCREEN_POWER_PIN, OUTPUT);
-    digitalWrite(SCREEN_POWER_PIN, HIGH);
+	// Power pins.
+	pinMode(REGULATOR_PIN, OUTPUT);
+	digitalWrite(REGULATOR_PIN, LOW);
+	pinMode(I2C_POWER_PIN, OUTPUT);
+	digitalWrite(I2C_POWER_PIN, HIGH);
+	pinMode(SCREEN_POWER_PIN, OUTPUT);
+	digitalWrite(SCREEN_POWER_PIN, HIGH);
 
-    // Initialize serial for debugging
-    initSerial();  // delay(1000) included
-    initBattery();
+	// Initialize serial for debugging
+	initSerial();  // delay(1000) included
+	initBattery();
 
-    uint32_t level = gpio_get_level(GPIO_NUM_13);
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, level == 0 ? 1 : 0);
-    gpio_set_direction(GPIO_NUM_13, GPIO_MODE_INPUT);
-    rtc_gpio_pullup_dis(GPIO_NUM_13);
-    rtc_gpio_pulldown_dis(GPIO_NUM_13);
-    attachInterrupt(GPIO_NUM_13, batteryIsrRising, RISING);
-    attachInterrupt(GPIO_NUM_13, batteryIsrFalling, FALLING);
+	uint32_t level = gpio_get_level(GPIO_NUM_13);
+	esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, level == 0 ? 1 : 0);
+	gpio_set_direction(GPIO_NUM_13, GPIO_MODE_INPUT);
+	rtc_gpio_pullup_dis(GPIO_NUM_13);
+	rtc_gpio_pulldown_dis(GPIO_NUM_13);
+	attachInterrupt(GPIO_NUM_13, batteryIsrRising, RISING);
+	attachInterrupt(GPIO_NUM_13, batteryIsrFalling, FALLING);
 
-    // Print version and configuration info
-    infoln("╔════════════════════════════════════════╗");
-    infoln("║      QUANTUM DICE INITIALIZATION       ║");
-    infoln("╚════════════════════════════════════════╝\n");
-    infoln(__FILE__ " " __DATE__ " " __TIME__);
-    infof("FW: %s\n", VERSION);
+	// Print version and configuration info
+	infoln("╔════════════════════════════════════════╗");
+	infoln("║      QUANTUM DICE INITIALIZATION       ║");
+	infoln("╚════════════════════════════════════════╝\n");
+	infoln(__FILE__ " " __DATE__ " " __TIME__);
+	infof("FW: %s\n", VERSION);
 
-    // ═══════════════════════════════════════════════════════════════════
-    // Step 1: Initialize LittleFS and ensure config file exists
-    // ═══════════════════════════════════════════════════════════════════
-    infoln("Step 1: Initializing filesystem and configuration...\n");
+	// ═══════════════════════════════════════════════════════════════════
+	// Step 1: Initialize LittleFS and ensure config file exists
+	// ═══════════════════════════════════════════════════════════════════
+	infoln("Step 1: Initializing filesystem and configuration...\n");
 
-    if (!ensureLittleFSAndConfig()) {
-        errorln("✗ CRITICAL: Failed to initialize filesystem or config!");
-        errorln("Device cannot operate. Check serial output above.");
-        while(true) {
-            delay(SECOND);  // Halt
-        }
-    }
+	if (!ensureLittleFSAndConfig()) {
+		errorln("✗ CRITICAL: Failed to initialize filesystem or config!");
+		errorln("Device cannot operate. Check serial output above.");
+		while(true) {
+			delay(SECOND); // Halt
+		}
+	}
 
-    infoln("✓ Filesystem and configuration ready!\n");
+	infoln("✓ Filesystem and configuration ready!\n");
+	infof("Dice ID: %s\n", (char *)currentConfig.diceId.c_str());
 
-    // Print loaded configuration
-    printGlobalConfig();
+	// Print loaded configuration
+	printGlobalConfig();
 
-    // ═══════════════════════════════════════════════════════════════════
-    // Step 2: Initialize hardware
-    // ═══════════════════════════════════════════════════════════════════
-    infoln("Step 2: Initializing hardware...\n");
-    infof(" - Dice ID: %s\n", (char*) currentConfig.diceId.c_str());  // Use diceId from config
+	// ═══════════════════════════════════════════════════════════════════
+	// Step 2: Initialize displays
+	// ═══════════════════════════════════════════════════════════════════
+	infoln("Step 2: Initializing displays...\n");
 
-    // Initialize displays - now uses hwPins from loaded configuration
-    initDisplays();
+    // Initialize displays and show UTwente QLab logo.
+	initDisplays();
+	displayQLab(ALL);
 
-    // Show startup logo during setup
-    displayQLab(ALL);
+	// ═══════════════════════════════════════════════════════════════════
+	// Step 3: Initialize IMU sensor
+	// ═══════════════════════════════════════════════════════════════════
+	infoln("Step 3: Initializing IMU sensor...\n");
 
-    // ═══════════════════════════════════════════════════════════════════
-    // Step 3: Initialize IMU sensor
-    // ═══════════════════════════════════════════════════════════════════
-    infoln("Step 3: Initializing IMU sensor...\n");
+	// Initialize IMU sensor
+	IMUSensor* imuSensor = new LSM6DS3TRCIMUSensor();
+	if (!imuSensor->init()) {  // Show initialization progress
+		warnln("Failed to initialize sensor!");
+		while (true) {
+			delay(SECOND); // Halt.
+		}
+	}
 
-    // Initialize IMU sensor
-    IMUSensor* imuSensor = new LSM6DS3TRCIMUSensor();
-    if (!imuSensor->init()) {  // Show initialization progress
-        warnln("Failed to initialize sensor!");
-        while (true);
-    }
+	imuSensor->update();
+	imuSensor->resetTumbleDetection();
 
-    imuSensor->update();
-    imuSensor->resetTumbleDetection();
+	// Show welcome info.
+	welcomeInfo(screenselections::X0);
+	voltageIndicator(screenselections::X0);
+	displayQRcode(screenselections::X1);
+	displayEinstein(screenselections::ZZ);
+	displayUTlogo(screenselections::YY);
 
-    welcomeInfo(screenselections::X0);
-    imuSensor->update();
+	// ═══════════════════════════════════════════════════════════════════
+	// Step 4: Complete initialization
+	// ═══════════════════════════════════════════════════════════════════
+	infoln("Step 4: Completing initialization...\n");
 
-    voltageIndicator(screenselections::X0);
-    imuSensor->update();
+	// Initialize button
+	initButton();
 
-    displayQRcode(screenselections::X1);
-    imuSensor->update();
+	// Initialize the state machine
+	stateMachine.setImuSensor(imuSensor);
+	stateMachine.begin();
 
-    displayEinstein(screenselections::ZZ);
-    imuSensor->update();
+	infoln("╔════════════════════════════════════════╗");
+	infoln("║       SETUP COMPLETE - READY!          ║");
+	infoln("╚════════════════════════════════════════╝\n");
 
-    displayUTlogo(screenselections::YY);
-    imuSensor->update();
-
-    for (uint8_t i = 0; i < 10; i++) {
-        delay(100);
-        imuSensor->update();
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    // Step 4: Complete initialization
-    // ═══════════════════════════════════════════════════════════════════
-    infoln("Step 4: Completing initialization...\n");
-
-    // Set IMU sensor in state machine
-    stateMachine.setImuSensor(imuSensor);
-
-    // Initialize button
-    initButton();
-
-    // Initialize the state machine - this sets up ESP-NOW with config MACs
-    stateMachine.begin();
-
-    infoln("╔════════════════════════════════════════╗");
-    infoln("║       SETUP COMPLETE - READY!          ║");
-    infoln("╚════════════════════════════════════════╝\n");
-
-    lastWake = xTaskGetTickCount();
+	lastWake = xTaskGetTickCount();
 }
 
 void loop() {
-    button.loop();
-    stateMachine.update();
+	button.loop();
+	stateMachine.update();
 
 	vTaskDelayUntil(&lastWake, TICK_INTERVAL);
 }
