@@ -15,6 +15,8 @@
 #include "StateMachine.hpp"
 #include "DiceConfigManager.hpp"
 
+#include "power.h"
+
 constexpr uint16_t UPDATE_INTERVAL = 50;  //loop functions
 constexpr uint8_t SECOND = 1000;
 
@@ -32,17 +34,17 @@ void batteryIsrFalling() {
 }
 
 void setup() {
-	// Power pins.
-	pinMode(REGULATOR_PIN, OUTPUT);
-	digitalWrite(REGULATOR_PIN, LOW);
-	pinMode(I2C_POWER_PIN, OUTPUT);
-	digitalWrite(I2C_POWER_PIN, HIGH);
-	pinMode(SCREEN_POWER_PIN, OUTPUT);
-	digitalWrite(SCREEN_POWER_PIN, HIGH);
+	// Prepare the power pins.
+	// This should be done first, as the old PCBs have a SHUTDOWN pin that needs to be set to LOW.
+	power_prepare();
+
+	// Initialize the battery.
+	// Currently, the power consumption is low and smooth, which is the ideal scenario for starting
+	// the battery monitoring.
+	initBattery();
 
 	// Initialize serial for debugging
 	initSerial();  // delay(1000) included
-	initBattery();
 
 	uint32_t level = gpio_get_level(GPIO_NUM_13);
 	esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, level == 0 ? 1 : 0);
@@ -84,6 +86,7 @@ void setup() {
 	infoln("Step 2: Initializing displays...\n");
 
     // Initialize displays and show UTwente QLab logo.
+	power_on_screens();
 	initDisplays();
 	displayQLab(ALL);
 

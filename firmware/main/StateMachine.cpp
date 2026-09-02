@@ -10,7 +10,8 @@
 
 #include <map>
 #include <driver/rtc_io.h>
-#include <esp_sleep.h>
+
+#include "power.h"
 
 using message_type = enum message_type : uint8_t {
     MESSAGE_TYPE_WATCH_DOG,
@@ -838,19 +839,8 @@ void StateMachine::checkTimeForDeepSleep() {
 
     // Use the timeout from configuration
     if (!isMoving && !button.isPressed() && (millis() - lastMovementTime > currentConfig.deepSleepTimeout)) {
-        this->enterDeepSleep();
+		power_shutdown();
     }
-}
-
-void StateMachine::enterDeepSleep() {
-    digitalWrite(REGULATOR_PIN, HIGH);
-    digitalWrite(I2C_POWER_PIN, LOW);
-    digitalWrite(SCREEN_POWER_PIN, LOW);
-    while (button.isPressed()) {
-        delay(10);
-       button.loop();
-    }
-    esp_deep_sleep_start();
 }
 
 // ============================================================================
@@ -911,7 +901,7 @@ void StateMachine::whileQuantumIdle() {
             || currentState.entanglementState == EntanglementState::TELEPORTED)) {
         longclicked = false;
         debugln("Time to sleep");
-        this->enterDeepSleep();
+        power_shutdown();
     }
 
     // Check if dice is being thrown
@@ -997,7 +987,7 @@ void StateMachine::whileThrowing() {
             || currentState.entanglementState == EntanglementState::POST_ENTANGLEMENT
             || currentState.entanglementState == EntanglementState::TELEPORTED)) {
         longclicked = false;
-        this->enterDeepSleep();
+        power_shutdown();
     }
 
     // Check if dice has landed and is stable
@@ -1199,7 +1189,7 @@ void StateMachine::whileObserved() {
             || currentState.entanglementState == EntanglementState::POST_ENTANGLEMENT
             || currentState.entanglementState == EntanglementState::TELEPORTED)) {
         longclicked = false;
-        this->enterDeepSleep();
+        power_shutdown();
     }
 
     // Check if dice is being thrown again

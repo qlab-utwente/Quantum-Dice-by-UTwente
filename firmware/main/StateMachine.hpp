@@ -133,7 +133,6 @@ class StateMachine {
     void updateEspNow();
     void checkMinimumVoltage(unsigned long currentTime);
     void checkTimeForDeepSleep();
-    void enterDeepSleep();
 
     // State handlers for each mode/throwState/entanglementState combination
     void enterClassicIdle();

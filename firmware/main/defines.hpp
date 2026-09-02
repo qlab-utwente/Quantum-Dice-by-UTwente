@@ -47,10 +47,7 @@
     0.7                      // maximum acceleration magnitude to detect
                              // nonMoving
 
-constexpr gpio_num_t REGULATOR_PIN = GPIO_NUM_18; // pin D9
 constexpr gpio_num_t BUTTON_PIN = GPIO_NUM_14;
-constexpr gpio_num_t I2C_POWER_PIN = GPIO_NUM_10;
-constexpr gpio_num_t SCREEN_POWER_PIN = GPIO_NUM_3;
 
 #endif /* DEFINES_H_ */
 
