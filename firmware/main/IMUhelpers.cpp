@@ -701,6 +701,12 @@ void LSM6DS3TRCIMUSensor::update() {
         accel[i] = (accel[i] - _accelCalib[i]) * _accelCalib[i + 3];
     }
 
+	// Swap X and Z.
+	// Invert the Z-axis.
+	float temp = accel[0];
+	accel[0] = accel[2];
+	accel[2] = -temp;
+
     float gyro[3] = { gyroscope.gyro.x, gyroscope.gyro.y, gyroscope.gyro.z };
     for (uint8_t i = 0; i < 3; i++) {
         gyro[i] = gyro[i] - _gyroCalib[i];
