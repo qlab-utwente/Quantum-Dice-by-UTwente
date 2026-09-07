@@ -96,7 +96,6 @@ void callFunction(ScreenStates result);
 void checkAndCallFunctions(ScreenStates x0, ScreenStates x1, ScreenStates y0, ScreenStates y1,
                            ScreenStates z0, ScreenStates z1);
 void refreshScreens();
-auto selectOneToSix() -> DiceNumbers;
 auto selectOppositeOneToSix(DiceNumbers diceNumberTop) -> DiceNumbers;
 void printDiceStateName(const char *objectName, DiceStates diceState);
 

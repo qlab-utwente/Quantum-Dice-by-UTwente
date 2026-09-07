@@ -10,8 +10,23 @@
 
 #include <map>
 #include <driver/rtc_io.h>
+#include "esp_random.h"
 
 #include "power.h"
+
+static uint8_t generateDiceRoll() {
+	// Get a random 32-bit integer from the crypto chip
+	uint32_t randomNumber = esp_random();
+
+	// Check if we got a valid random number (0 indicates error)
+	if (randomNumber == 0) {
+		Serial.println("ERROR: Failed to get random number");
+		return 1;  // Default value in case of error
+	}
+
+	// Map to 1-6 range using modulo
+	return (randomNumber % 6) + 1;
+}
 
 using message_type = enum message_type : uint8_t {
     MESSAGE_TYPE_WATCH_DOG,
@@ -1088,7 +1103,7 @@ void StateMachine::enterObserved() {
             } else {
                 // Different basis or first roll - generate new random number
                 debugln("PURE state: generating random number");
-                diceNumberSelf = selectOneToSix();
+                diceNumberSelf = static_cast<DiceNumbers>(generateDiceRoll());
                 // Update memoization
                 lastRollBasis  = measureAxisSelf;
                 lastRollNumber = diceNumberSelf;
@@ -1098,7 +1113,7 @@ void StateMachine::enterObserved() {
         case EntanglementState::ENTANGLED:
             // We measured first - generate random and send to partner
             debugln("ENTANGLED state: we measured first");
-            diceNumberSelf = selectOneToSix();
+            diceNumberSelf = static_cast<DiceNumbers>(generateDiceRoll());
 
             // Send our measurement to partner
             sendMeasurements(this->current_peer, stateSelf, diceNumberSelf, upSideSelf,
@@ -1125,7 +1140,7 @@ void StateMachine::enterObserved() {
             } else {
                 // Different measurement basis - random value
                 debugln("Different axis from partner - random value");
-                diceNumberSelf = selectOneToSix();
+                diceNumberSelf = static_cast<DiceNumbers>(generateDiceRoll());
             }
 
             // Update memoization
@@ -1150,7 +1165,7 @@ void StateMachine::enterObserved() {
             } else {
                 // Different measurement basis - random value (collapses teleported state)
                 debugln("Different axis from teleported state - random value");
-                diceNumberSelf = selectOneToSix();
+                diceNumberSelf = static_cast<DiceNumbers>(generateDiceRoll());
             }
 
             // Update memoization
@@ -1166,7 +1181,7 @@ void StateMachine::enterObserved() {
 
         case EntanglementState::ENTANGLE_REQUESTED:
             // Shouldn't happen, but treat as PURE
-            diceNumberSelf = selectOneToSix();
+            diceNumberSelf = static_cast<DiceNumbers>(generateDiceRoll());
             break;
     }
 

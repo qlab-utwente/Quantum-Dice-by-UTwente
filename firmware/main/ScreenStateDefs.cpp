@@ -235,16 +235,6 @@ void refreshScreens() {
     }
 }
 
-auto selectOneToSix() -> DiceNumbers {
-    uint8_t randomNumber = generateDiceRoll();
-    debugf("Select one to six. Randomnumber: %d\n", randomNumber);
-    if (randomNumber >= DICE_MIN && randomNumber <= DICE_MAX) {
-        return static_cast<DiceNumbers>(randomNumber);
-    }
-    warnln("Random number out of range, returning ONE");
-    return DiceNumbers::ONE;
-}
-
 auto selectOppositeOneToSix(DiceNumbers diceNumberTop) -> DiceNumbers {
     if (diceNumberTop == DiceNumbers::NONE) {
         warnln("selectOppositeOneToSix called with NONE, returning ONE");
