@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Adafruit_MAX1704X.h>
+#include <Button2.h>
 #include <driver/gpio.h>
 #include <driver/rtc_io.h>
 #include <esp_sleep.h>
@@ -12,8 +13,16 @@
 // Existing global variables
 RTC_DATA_ATTR int bootCount = 0;
 Button2 button;
-bool clicked = false;
-bool longclicked = false;
+volatile bool clicked = false;
+volatile bool longclicked = false;
+
+static void longClickDetected(Button2& btn) {
+	longclicked = true;
+}
+
+static void click(Button2& btn) {
+	clicked = true;
+}
 
 void initButton() {
     if (currentConfig.buttonPullup) {
@@ -33,16 +42,6 @@ void initButton() {
     button.setLongClickDetectedHandler(longClickDetected);
     button.setLongClickTime(1000);
     button.setClickHandler(click);
-}
-
-void longClickDetected(Button2& btn) {
-    debugln("long pressed");
-    longclicked = true;
-}
-
-void click(Button2& btn) {
-    debugln("short pressed");
-    clicked = true;
 }
 
 auto generateDiceRoll() -> uint8_t {
