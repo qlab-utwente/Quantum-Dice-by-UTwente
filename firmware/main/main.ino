@@ -25,14 +25,6 @@ StateMachine stateMachine;
 constexpr TickType_t TICK_INTERVAL = pdMS_TO_TICKS(50);
 static TickType_t lastWake;
 
-void batteryIsrRising() {
-	esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 0);
-}
-
-void batteryIsrFalling() {
-	esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 1);
-}
-
 void setup() {
 	// Prepare the power pins.
 	// This should be done first, as the old PCBs have a SHUTDOWN pin that needs to be set to LOW.
@@ -45,14 +37,6 @@ void setup() {
 
 	// Initialize serial for debugging
 	initSerial();  // delay(1000) included
-
-	uint32_t level = gpio_get_level(GPIO_NUM_13);
-	esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, level == 0 ? 1 : 0);
-	gpio_set_direction(GPIO_NUM_13, GPIO_MODE_INPUT);
-	rtc_gpio_pullup_dis(GPIO_NUM_13);
-	rtc_gpio_pulldown_dis(GPIO_NUM_13);
-	attachInterrupt(GPIO_NUM_13, batteryIsrRising, RISING);
-	attachInterrupt(GPIO_NUM_13, batteryIsrFalling, FALLING);
 
 	// Print version and configuration info
 	infoln("╔════════════════════════════════════════╗");
