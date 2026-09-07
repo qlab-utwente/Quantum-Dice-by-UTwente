@@ -107,8 +107,3 @@ auto mapFloat(float x, float in_min, float in_max, float out_min, float out_max,
 auto withinBounds(float val, float minimum, float maximum) -> bool {
     return ((minimum <= val) && (val <= maximum));
 }
-
-void initSerial() {
-    Serial.begin(115200);
-    delay(1000);
-}

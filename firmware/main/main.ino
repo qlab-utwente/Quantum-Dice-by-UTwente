@@ -35,8 +35,9 @@ void setup() {
 	// the battery monitoring.
 	initBattery();
 
-	// Initialize serial for debugging
-	initSerial();  // delay(1000) included
+	// Initialize serial for debugging.
+	// It is not necessary to wait for Serial to start as we are using USB CDC.
+	Serial.begin(115200);
 
 	// Print version and configuration info
 	infoln("╔════════════════════════════════════════╗");
