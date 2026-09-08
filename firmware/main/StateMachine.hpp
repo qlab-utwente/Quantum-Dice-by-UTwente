@@ -8,13 +8,9 @@
 #include <map>
 #include <optional>
 
-#define FSM_UPDATE_INTERVAL 0  // Update interval in milliseconds
 #define MAC_ADDRESS_LENGTH 6
 
 enum class DiceStates : uint8_t;
-enum class DiceNumbers : uint8_t;
-enum class MeasuredAxises : uint8_t;
-enum class UpSide : uint8_t;
 
 class StateMachine; // Forward declaration
 
@@ -23,26 +19,57 @@ constexpr unsigned int MAXENTANGLEDWAITTIME
 constexpr unsigned int BATTERY_WARNING_INTERVAL
   = 120000; // ms-en max time in entangled state, before return to initSingle state
 
+enum class DiceNumbers : uint8_t {
+	NONE,
+	ONE,
+	TWO,
+	THREE,
+	FOUR,
+	FIVE,
+	SIX
+};
+
+enum class MeasuredAxises : uint8_t {
+	UNDEFINED,
+	XAXIS,
+	YAXIS,
+	ZAXIS,
+	ALL,
+	NA // not applicable
+};
+
+enum class UpSide : uint8_t {
+	NONE,
+	X0,
+	X1,
+	Y0,
+	Y1,
+	Z0,
+	Z1,
+	ANY,
+	NA
+};
+
 enum class Mode : uint8_t {
-    CLASSIC,
-    QUANTUM,
+	CLASSIC,
+	QUANTUM,
 };
 
 enum class ThrowState : uint8_t {
-    IDLE,
-    THROWING,
-    OBSERVED,
+	IDLE,
+	THROWING,
+	OBSERVED,
 };
 
 enum class EntanglementState : uint8_t {
-    PURE,
-    ENTANGLE_REQUESTED,
-    ENTANGLED,
-    POST_ENTANGLEMENT, // State after entanglement, indicating that the entanglement partner has
-                       // been rolled and that we need to roll opposite if in the same measurement
-                       // basis
-    TELEPORTED,        // State after receiving a teleported observed state - must show that value
-                       // if measured on same axis, otherwise random
+	PURE,
+	ENTANGLE_REQUESTED,
+	ENTANGLED,
+	POST_ENTANGLEMENT,	// State after entanglement, indicating that the entanglement partner has
+						// been rolled and that we need to roll opposite if in the same measurement
+						// basis
+	TELEPORTED,	// State after receiving a teleported observed state - must show that value
+				// if measured on same axis, otherwise random
 };
 
 struct State {
@@ -108,7 +135,6 @@ struct StateTransition {
     Trigger trigger;
 };
 
-void setInitialState();
 void printStateName(const char *objectName, State state);
 
 class StateMachine {
@@ -118,21 +144,41 @@ class StateMachine {
     void changeState(Trigger trigger);
     void update();
 
-    void setImuSensor(IMUSensor *imuSensor) {
-        _imuSensor = imuSensor;
-    }
+	inline void setImuSensor(IMUSensor *imuSensor) __attribute__((always_inline)) {
+		_imuSensor = imuSensor;
+	}
 
-    [[nodiscard]]
-    auto getCurrentState() const -> State {
-        return currentState;
-    }
+	[[nodiscard]] inline State getCurrentState() const __attribute__((always_inline)) {
+		return this->currentState;
+	}
 
-    static auto getStateTransition(State currentState, Trigger trigger) -> StateTransition;
+	[[nodiscard]] inline DiceNumbers getDiceNumberSelf() const __attribute__((always_inline)) {
+		return this->selfDiceNumber;
+	}
+
+	[[nodiscard]] inline MeasuredAxises getMeasurementAxisSelf() const __attribute__((always_inline)) {
+		return this->selfMeasurementAxis;
+	}
+
+	[[nodiscard]] inline UpSide getUpSideSelf() const __attribute__((always_inline)) {
+		return this->selfUpSide;
+	}
+
+	[[nodiscard]] inline uint16_t getEntanglementColor() const __attribute__((always_inline)) {
+		return this->entanglement_color;
+	}
+
+	[[nodiscard]] inline bool isColorFlash() const __attribute__((always_inline)) {
+		return this->colorFlash;
+	}
+
+    static auto getStateTransition(State state, Trigger trigger) -> StateTransition;
 
   private:
     void updateEspNow();
     void checkMinimumVoltage(unsigned long currentTime);
     void checkTimeForDeepSleep();
+	void checkCloseBy();
 
     // State handlers for each mode/throwState/entanglementState combination
     void enterClassicIdle();
@@ -151,7 +197,7 @@ class StateMachine {
     void whileLowBattery();
 
     // Communication functions
-    static void sendWatchDog();
+    void sendWatchDog();
     static void sendMeasurements(uint8_t *target, State state, DiceNumbers diceNumber,
                                  UpSide upSide, MeasuredAxises measureAxis);
     static void sendEntangleRequest(uint8_t *target);
@@ -164,37 +210,47 @@ class StateMachine {
                                     uint8_t *entangled_peer, uint16_t color);
     static void sendTeleportPartner(uint8_t *target_n, uint8_t *new_partner_b);
 
-    IMUSensor *_imuSensor;
-    State      currentState;
-    uint8_t    current_peer[MAC_ADDRESS_LENGTH];
-    uint8_t    next_peer[MAC_ADDRESS_LENGTH];
+	IMUSensor *_imuSensor;
+	State currentState;
 
-    unsigned long stateEntryTime;
+	uint8_t current_peer[MAC_ADDRESS_LENGTH];
+	uint8_t next_peer[MAC_ADDRESS_LENGTH];
+	uint8_t new_peer[MAC_ADDRESS_LENGTH];
+	int32_t new_peer_rssi;
 
-    // EntangStateMachine entangStateMachine;
+	unsigned long stateEntryTime;
 
-    struct StateFunction {
-        void (StateMachine::*onEntry)();
-        void (StateMachine::*whileInState)();
-    };
+	struct StateFunction {
+		void (StateMachine::*onEntry)();
+		void (StateMachine::*whileInState)();
+	};
 
-    static const std::map<State, StateFunction>  stateFunctions;
-    static const std::array<StateTransition, 37> stateTransitions;
+	static const std::map<State, StateFunction>  stateFunctions;
+	static const std::array<StateTransition, 37> stateTransitions;
 
-    // Partner's measurement info (for post-entanglement state)
-    MeasuredAxises partnerMeasurementAxis;
-    DiceNumbers    partnerDiceNumber;
+	// Self measurement info.
+	DiceNumbers selfDiceNumber;
+	MeasuredAxises selfMeasurementAxis;
+	UpSide selfUpSide;
 
-    // Teleported measurement info (for teleported state)
-    MeasuredAxises teleportedMeasurementAxis;
-    DiceNumbers    teleportedDiceNumber;
+	// Partner's measurement info (for post-entanglement state)
+	MeasuredAxises partnerMeasurementAxis;
+	DiceNumbers partnerDiceNumber;
 
-    // Current entanglement color (RGB565)
-    uint16_t entanglement_color;
+	// Teleported measurement info (for teleported state)
+	MeasuredAxises teleportedMeasurementAxis;
+	DiceNumbers teleportedDiceNumber;
 
-    // Memoization for basis and roll results
-    MeasuredAxises lastRollBasis;
-    DiceNumbers    lastRollNumber;
+	// Current entanglement color (RGB565)
+	uint16_t entanglement_color;
+
+	// Memorization for basis and roll results.
+	MeasuredAxises lastRollBasis;
+	DiceNumbers lastRollNumber;
+
+	// Entanglement color flash.
+	bool colorFlash;
+	uint64_t colorFlashStartTime;
 };
 
 #endif // STATEMACHINE_H

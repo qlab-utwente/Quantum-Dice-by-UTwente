@@ -5,11 +5,14 @@
 #include "handyHelpers.hpp"
 #include "ImageLibrary/ImageLibrary.hpp"
 #include "ScreenStateDefs.hpp"
+#include "StateMachine.hpp"
 
 #include <Adafruit_GC9A01A.h>
 #include <algorithm>
 #include <Arduino.h>
 #include <driver/gpio.h>
+
+extern StateMachine stateMachine;
 
 // Global TFT object - will be initialized dynamically
 Adafruit_GC9A01A tft(-1, -1, -1); // Temporary pins, will be reinitialized
@@ -315,23 +318,10 @@ void displayMix1to6_entangled(screenselections screens) {
     tft.fillScreen(GC9A01A_BLACK);
     int centerX = tft.width() / 2;
     int centerY = tft.height() / 2;
-    int offset  = DOT_OFFSET;
+    int offset = DOT_OFFSET;
 
-    // Determine color to show
-    uint16_t color;
-    if (showColors) {
-        // Show colors enabled - always show the entanglement color
-        color = entanglement_color_self;
-    } else {
-        // Show colors disabled - check if we're in flash mode
-        if (flashColor) {
-            // Flash active - show actual color
-            color = entanglement_color_self;
-        } else {
-            // Flash inactive - show white
-            color = 0xFFFF;
-        }
-    }
+	// Determine color to show
+	uint16_t color = stateMachine.isColorFlash() ? stateMachine.getEntanglementColor() : 0xFFFF;
 
     drawDot(centerX - offset, centerY - offset, (3 * 0.16) + 0.2, color);
     drawDot(centerX + offset, centerY - offset, (5 * 0.16) + 0.2, color);
