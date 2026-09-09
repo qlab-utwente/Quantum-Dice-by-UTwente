@@ -11,6 +11,5 @@ profiles:
       - Adafruit GC9A01A (1.1.1)
       - Adafruit BusIO (1.17.4)
       - Adafruit MAX1704X (1.0.3)
-      - Button2 (2.5.0)
 
 default_profile: esp32s3_dev_module

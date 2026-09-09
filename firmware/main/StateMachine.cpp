@@ -12,6 +12,7 @@
 #include <driver/rtc_io.h>
 #include "esp_random.h"
 
+#include "button.h"
 #include "power.h"
 
 static uint8_t generateDiceRoll() {
@@ -494,8 +495,7 @@ void StateMachine::update() {
 	unsigned long currentTime = millis();
 
 	// If the button is held for a long time, then we must shut down.
-	if (longclicked) {
-		longclicked = false;
+	if (button_poll_press_long()) {
 		power_shutdown();
 	}
 
@@ -826,7 +826,7 @@ void StateMachine::checkTimeForDeepSleep() {
 	}
 
 	// Use the timeout from configuration
-	if (!isMoving && !button.isPressed() && (millis() - lastMovementTime > currentConfig.deepSleepTimeout)) {
+	if (!isMoving && !button_is_pressed() && (millis() - lastMovementTime > currentConfig.deepSleepTimeout)) {
 		power_shutdown();
 	}
 }
@@ -898,8 +898,7 @@ void StateMachine::enterClassicIdle() {
 
 void StateMachine::whileClassicIdle() {
 	// Check for button press to switch to quantum mode
-	if (clicked) {
-		clicked = false;
+	if (button_poll_press_short()) {
 		debugln("Button pressed - switching to QUANTUM mode");
 		changeState(Trigger::BUTTON_PRESSED);
 	}

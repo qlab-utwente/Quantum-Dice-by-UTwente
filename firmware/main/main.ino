@@ -15,6 +15,7 @@
 #include "StateMachine.hpp"
 #include "DiceConfigManager.hpp"
 
+#include "button.h"
 #include "power.h"
 
 constexpr uint16_t UPDATE_INTERVAL = 50;  //loop functions
@@ -105,7 +106,7 @@ void setup() {
 	infoln("Step 4: Completing initialization...\n");
 
 	// Initialize button
-	initButton();
+	button_start(currentConfig.buttonPullup);
 
 	// Initialize the state machine
 	stateMachine.setImuSensor(imuSensor);
@@ -119,8 +120,6 @@ void setup() {
 }
 
 void loop() {
-	button.loop();
 	stateMachine.update();
-
 	vTaskDelayUntil(&lastWake, TICK_INTERVAL);
 }

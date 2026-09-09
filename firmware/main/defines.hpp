@@ -1,8 +1,6 @@
 #ifndef DEFINES_H_
 #define DEFINES_H_
 
-#include <driver/gpio.h>
-
 #define VERSION "2.0.1"
 #define DEFAULT_DICE_ID "DEFAULT"
 
@@ -46,8 +44,6 @@
 #define MOVINGTHRESHOLD \
     0.7                      // maximum acceleration magnitude to detect
                              // nonMoving
-
-constexpr gpio_num_t BUTTON_PIN = GPIO_NUM_14;
 
 #endif /* DEFINES_H_ */
 
