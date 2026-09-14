@@ -132,7 +132,7 @@ Both the itial setup and future updates wil take approximitely 5 minutes per dic
 **What you're doing:** Creating a file that tells your dice how to behave.
 
 1. **Download the example configuration file:**  
-   [TEST1_config.txt](TEST1_config.txt) *(right-click and "Save Link As...")*
+   [TEST1_config.txt](firmware/example_configs/TEST1_config.txt) *(right-click and "Save Link As...")*
 
 2. **Open the file** your text editor
 

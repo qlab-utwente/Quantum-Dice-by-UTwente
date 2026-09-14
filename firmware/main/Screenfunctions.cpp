@@ -1,0 +1,445 @@
+#include "Screenfunctions.hpp"
+
+#include "defines.hpp"
+#include "DiceConfigManager.hpp"
+#include "handyHelpers.hpp"
+#include "ImageLibrary/ImageLibrary.hpp"
+#include "ScreenStateDefs.hpp"
+#include "StateMachine.hpp"
+
+#include <Adafruit_GC9A01A.h>
+#include <algorithm>
+#include <Arduino.h>
+#include <driver/gpio.h>
+
+extern StateMachine stateMachine;
+
+// Global TFT object - will be initialized dynamically
+Adafruit_GC9A01A tft(-1, -1, -1); // Temporary pins, will be reinitialized
+
+// Global canvas declarations
+static GFXcanvas16 backgroundCanvas(240, 240);
+static GFXcanvas16 imageCanvas(240, 240);
+static GFXcanvas16 staticCanvas(240, 100);
+
+static const gpio_config_t io_config{
+	.pin_bit_mask = (1 << SCREEN_CS1) | (1 << SCREEN_CS2) | (1 << SCREEN_CS3) | (1 << SCREEN_CS4) | (1 << SCREEN_CS5) | (1 << SCREEN_CS6),
+	.mode = GPIO_MODE_OUTPUT,
+	.pull_up_en = GPIO_PULLUP_DISABLE,
+	.pull_down_en = GPIO_PULLDOWN_DISABLE,
+	.intr_type = GPIO_INTR_DISABLE
+};
+
+static void selectScreens(screenselections screens) {
+	uint8_t binaryCode = static_cast<uint8_t>(screens);
+
+	gpio_set_level(SCREEN_CS1, ((binaryCode & 0b000001) != 0) ? 0 : 1);
+	gpio_set_level(SCREEN_CS2, ((binaryCode & 0b000010) != 0) ? 0 : 1);
+	gpio_set_level(SCREEN_CS3, ((binaryCode & 0b000100) != 0) ? 0 : 1);
+	gpio_set_level(SCREEN_CS4, ((binaryCode & 0b001000) != 0) ? 0 : 1);
+	gpio_set_level(SCREEN_CS5, ((binaryCode & 0b010000) != 0) ? 0 : 1);
+	gpio_set_level(SCREEN_CS6, ((binaryCode & 0b100000) != 0) ? 0 : 1);
+}
+
+void initDisplays() {
+    Serial.println("Initializing displays...");
+
+    // Initialize CS pins for all screens
+    gpio_config(&io_config);
+
+    // Reinitialize TFT with correct pins from configuration
+    tft = Adafruit_GC9A01A(-1, SCREEN_DC, SCREEN_RST);
+
+    selectScreens(ALL); // Select all screens
+    delay(500);
+    tft.begin();
+    delay(1000);
+    tft.fillScreen(GC9A01A_BLACK);
+
+    selectScreens(XXYY);
+    tft.setRotation(1);
+
+    selectScreens(ZZ);
+    tft.setRotation(2);
+
+    selectScreens(NO_ONE); // Deactivate all screens
+    delay(100);
+
+    Serial.println("Displays initialized successfully!");
+}
+
+void blankScreen(screenselections screens) {
+    selectScreens(screens);
+    tft.fillScreen(GC9A01A_BLACK);
+}
+
+// Function to blend colors with transparency
+auto blendColor(uint16_t foreground, uint16_t background, float alpha) -> uint16_t {
+    // Constrain alpha between 0 and 1
+    alpha = constrain(alpha, 0.0, 1.0);
+
+    // Extract color components
+    uint8_t fR = (foreground >> 11) & 0x1F;
+    uint8_t fG = (foreground >> 5) & 0x3F;
+    uint8_t fB = foreground & 0x1F;
+
+    uint8_t bR = (background >> 11) & 0x1F;
+    uint8_t bG = (background >> 5) & 0x3F;
+    uint8_t bB = background & 0x1F;
+
+    // Blend color components
+    uint8_t rR = ((fR * alpha) + (bR * (1 - alpha)));
+    uint8_t rG = ((fG * alpha) + (bG * (1 - alpha)));
+    uint8_t rB = ((fB * alpha) + (bB * (1 - alpha)));
+
+    // Reconstruct 16-bit color
+    return ((rR & 0x1F) << 11) | ((rG & 0x3F) << 5) | (rB & 0x1F);
+}
+
+// Function to draw dot on dice with transparency
+void drawDot(int x, int y, float alpha, uint16_t color, uint16_t bgColor) {
+    uint16_t blendedColor = blendColor(color, bgColor, alpha);
+    tft.fillCircle(x, y, DOT_RADIUS, blendedColor);
+}
+
+void displayImageWithBackground(const unsigned short *image, screenselections screens) {
+    // Select the appropriate screens
+    selectScreens(screens);
+
+    // Choose background color based on screen - use config values
+    uint16_t backgroundColor = 0;
+    switch (screens) {
+        case XX: backgroundColor = currentConfig.x_background; break;
+        case YY: backgroundColor = currentConfig.y_background; break;
+        case ZZ: backgroundColor = currentConfig.z_background; break;
+        default: backgroundColor = 0x0000; // Black
+    }
+
+    // Fill background canvas with selected color
+    backgroundCanvas.fillScreen(backgroundColor);
+
+    // Clear image canvas
+    imageCanvas.fillScreen(0x0000); // Transparent black
+
+    // Draw image on image canvas
+    for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            // Calculate pixel index
+            uint32_t pixelIndex = (y * WIDTH) + x;
+
+            // Read pixel color from PROGMEM
+            uint16_t pixelColor = pgm_read_word(&image[pixelIndex]);
+
+            // Draw non-transparent pixels
+            if (pixelColor != 0x0000) {
+                imageCanvas.drawPixel(x, y, pixelColor);
+            }
+        }
+    }
+
+    // Overlay image canvas onto background canvas
+    for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            // Get pixel from image canvas
+            uint16_t imagePixel = imageCanvas.getPixel(x, y);
+
+            // If pixel is not transparent, draw it on background canvas
+            if (imagePixel != 0x0000) {
+                backgroundCanvas.drawPixel(x, y, imagePixel);
+            }
+        }
+    }
+
+    // Push final canvas to display
+    tft.drawRGBBitmap(0, 0, backgroundCanvas.getBuffer(), WIDTH, HEIGHT);
+}
+
+void displayCircle(screenselections screens) {
+    displayImageWithBackground(circle, screens);
+    debug("Circle on screen: ");
+    debugln(screens);
+}
+
+void displayCross(screenselections screens) {
+    displayImageWithBackground(cross, screens);
+    debug("Cross on screen: ");
+    debugln(screens);
+}
+
+void displayCrossCircle(screenselections screens) {
+    displayImageWithBackground(crossCircle, screens);
+    debug("CrossCircle on screen: ");
+    debugln(screens);
+}
+
+void displayEinstein(screenselections screens) {
+    displayImageWithBackground(God_does_not_play_dice, screens);
+    debug("Einstein on screen: ");
+    debugln(screens);
+}
+
+void displayEntangled(screenselections screens) {
+    displayImageWithBackground(entangled, screens);
+    debug("entangled on screen: ");
+    debugln(screens);
+}
+
+void displayLowBattery(screenselections screens) {
+    selectScreens(screens);
+    // Clear the screen
+    tft.fillScreen(GC9A01A_BLACK);
+
+    // Set text color
+    tft.setTextColor(GC9A01A_RED);
+
+    // First line configuration
+    tft.setFont(&FreeSansBold18pt7b);
+    tft.setTextSize(1);
+
+    drawStringCentered(tft, "Low Battery", (tft.height() / 2) + 9);
+}
+
+void displayNewDie(screenselections screens) {
+    displayImageWithBackground(new_die, screens);
+    debug("Reset Ok on screen: ");
+    debugln(screens);
+}
+
+void displayQLab(screenselections screens) {
+    displayImageWithBackground(quantum_labs_twente_RGB, screens);
+    debug("Qlab logo on screen: ");
+    debugln(screens);
+}
+
+void displayUTlogo(screenselections screens) {
+    displayImageWithBackground(UTwente_logo, screens);
+    debug("UTwente logo on screen: ");
+    debugln(screens);
+}
+
+void displayQRcode(screenselections screens) {
+    displayImageWithBackground(QRCode, screens);
+    debug("QR code on screen: ");
+    debugln(screens);
+}
+
+void displayN1(screenselections screens) {
+    selectScreens(screens);
+    tft.fillScreen(GC9A01A_BLACK);
+    int centerX = tft.width() / 2;
+    int centerY = tft.height() / 2;
+
+    drawDot(centerX, centerY);
+}
+
+void displayN2(screenselections screens) {
+    selectScreens(screens);
+    tft.fillScreen(GC9A01A_BLACK);
+    int centerX = tft.width() / 2;
+    int centerY = tft.height() / 2;
+    int offset  = DOT_OFFSET;
+
+    drawDot(centerX - offset, centerY + offset);
+    drawDot(centerX + offset, centerY - offset);
+}
+
+void displayN3(screenselections screens) {
+    selectScreens(screens);
+    tft.fillScreen(GC9A01A_BLACK);
+    int centerX = tft.width() / 2;
+    int centerY = tft.height() / 2;
+    int offset  = DOT_OFFSET;
+
+    drawDot(centerX - offset, centerY + offset);
+    drawDot(centerX, centerY);
+    drawDot(centerX + offset, centerY - offset);
+}
+
+void displayN4(screenselections screens) {
+    selectScreens(screens);
+    tft.fillScreen(GC9A01A_BLACK);
+    int centerX = tft.width() / 2;
+    int centerY = tft.height() / 2;
+    int offset  = DOT_OFFSET;
+
+    drawDot(centerX - offset, centerY - offset);
+    drawDot(centerX + offset, centerY - offset);
+    drawDot(centerX - offset, centerY + offset);
+    drawDot(centerX + offset, centerY + offset);
+}
+
+void displayN5(screenselections screens) {
+    selectScreens(screens);
+    tft.fillScreen(GC9A01A_BLACK);
+    int centerX = tft.width() / 2;
+    int centerY = tft.height() / 2;
+    int offset  = DOT_OFFSET;
+
+    drawDot(centerX - offset, centerY - offset);
+    drawDot(centerX + offset, centerY - offset);
+    drawDot(centerX, centerY, 1.0);
+    drawDot(centerX - offset, centerY + offset);
+    drawDot(centerX + offset, centerY + offset);
+}
+
+void displayN6(screenselections screens) {
+    selectScreens(screens);
+    tft.fillScreen(GC9A01A_BLACK);
+    int centerX = tft.width() / 2;
+    int centerY = tft.height() / 2;
+    int offset  = DOT_OFFSET;
+
+    drawDot(centerX - offset, centerY - offset);
+    drawDot(centerX + offset, centerY - offset);
+    drawDot(centerX - offset, centerY);
+    drawDot(centerX + offset, centerY);
+    drawDot(centerX - offset, centerY + offset);
+    drawDot(centerX + offset, centerY + offset);
+}
+
+void displayMix1to6(screenselections screens) {
+    selectScreens(screens);
+    tft.fillScreen(GC9A01A_BLACK);
+    int centerX = tft.width() / 2;
+    int centerY = tft.height() / 2;
+    int offset  = DOT_OFFSET;
+
+    drawDot(centerX - offset, centerY - offset, (3 * 0.16) + 0.2);
+    drawDot(centerX + offset, centerY - offset, (5 * 0.16) + 0.2);
+    drawDot(centerX - offset, centerY, (1 * 0.16) + 0.2);
+    drawDot(centerX + offset, centerY, 1 * 0.2);
+    drawDot(centerX - offset, centerY + offset, (5 * 0.16) + 0.2);
+    drawDot(centerX + offset, centerY + offset, (3 * 0.16) + 0.2);
+    drawDot(centerX, centerY, 3 * 0.2);
+}
+
+void displayMix1to6_entangled(screenselections screens) {
+    selectScreens(screens);
+    tft.fillScreen(GC9A01A_BLACK);
+    int centerX = tft.width() / 2;
+    int centerY = tft.height() / 2;
+    int offset = DOT_OFFSET;
+
+	// Determine color to show
+	uint16_t color = stateMachine.isColorFlash() ? stateMachine.getEntanglementColor() : 0xFFFF;
+
+    drawDot(centerX - offset, centerY - offset, (3 * 0.16) + 0.2, color);
+    drawDot(centerX + offset, centerY - offset, (5 * 0.16) + 0.2, color);
+    drawDot(centerX - offset, centerY, (1 * 0.16) + 0.2, color);
+    drawDot(centerX + offset, centerY, (1 * 0.16) + 0.2, color);
+    drawDot(centerX - offset, centerY + offset, (5 * 0.16) + 0.2, color);
+    drawDot(centerX + offset, centerY + offset, (3 * 0.16) + 0.2, color);
+    drawDot(centerX, centerY, (3 * 0.16) + 0.2, color);
+}
+
+void printChar(screenselections screens, char *letters, uint16_t fontcolor, uint16_t bckcolor, int x,
+               int y) {
+    selectScreens(screens);
+    tft.fillScreen(bckcolor);
+    tft.setTextColor(fontcolor);
+    tft.setFont(&FreeSansBold18pt7b);
+    tft.setTextSize(1);
+    tft.setCursor(x, y);
+    tft.print(letters);
+}
+
+void drawStringCentered(Adafruit_GFX &gfx, const String &text, int16_t y) {
+    // Variables to store text bounds
+    int16_t  x1 = 0;
+    int16_t  y1 = 0;
+    uint16_t w  = 0;
+    uint16_t h  = 0;
+
+    // Get the text bounds
+    gfx.getTextBounds(text, 0, y, &x1, &y1, &w, &h);
+
+    // Calculate centered x-position
+    int16_t x = (gfx.width() - w) / 2;
+
+    // Set cursor
+    gfx.setCursor(x, y);
+
+    // Draw the text
+    gfx.print(text);
+}
+
+void voltageIndicator(screenselections screens) {
+    char bufferV[10];
+    char bufferPerc[10];
+    selectScreens(screens);
+
+    // Use hwPins.adc_pin from configuration
+    double voltage = getBatteryVoltage();
+    double percentage = getBatteryPercentage();
+    percentage = std::min<double>(percentage, 100.0);
+    dtostrf(voltage, 3, 2, (char *)bufferV);
+    strcat((char *)bufferV, "V");
+    dtostrf(percentage, 3, 0, (char *)bufferPerc);
+    strcat((char *)bufferPerc, "%");
+
+    // Clear the canvas
+    staticCanvas.fillScreen(GC9A01A_BLACK);
+
+    // Set text properties
+    (percentage > 20) ? staticCanvas.setTextColor(GC9A01A_WHITE)
+                      : staticCanvas.setTextColor(GC9A01A_RED);
+    staticCanvas.setTextSize(1);
+    staticCanvas.setFont(&FreeSans18pt7b);
+
+    // Draw centered text
+    int16_t  x1 = 0;
+    int16_t  y1 = 0;
+    uint16_t w  = 0;
+    uint16_t h  = 0;
+
+    // Center voltage text
+    staticCanvas.getTextBounds((char *)bufferV, 0, 0, &x1, &y1, &w, &h);
+    int16_t x = (staticCanvas.width() - w) / 2;
+    staticCanvas.setCursor(x, 30);
+    staticCanvas.print((char *)bufferV);
+
+    // Center percentage text
+    staticCanvas.getTextBounds((char *)bufferPerc, 0, 0, &x1, &y1, &w, &h);
+    x = (staticCanvas.width() - w) / 2;
+    staticCanvas.setCursor(x, 70);
+    staticCanvas.print((char *)bufferPerc);
+
+    // Draw a horizontal line
+    staticCanvas.drawFastHLine(0, 40, 5, GC9A01A_RED);
+
+    // Draw the canvas to the TFT
+    tft.drawRGBBitmap(0, 140, staticCanvas.getBuffer(), staticCanvas.width(),
+                      staticCanvas.height());
+}
+
+void welcomeInfo(screenselections screens) {
+    char displayText1[10];
+    char displayText2[20];
+    selectScreens(screens);
+    tft.fillScreen(GC9A01A_BLACK);
+    tft.setTextSize(1);
+    tft.setFont(&FreeSans18pt7b);
+
+    strcpy((char *)displayText1, "FW");
+    strcat((char *)displayText1, VERSION);
+    drawStringCentered(tft, (char *)displayText1, 62);
+
+    // Use DICE_ID from config
+    strcpy((char *)displayText2, (char *)currentConfig.diceId.c_str());
+    drawStringCentered(tft, (char *)displayText2, 104);
+}
+
+void showConfigMode(screenselections screens) {
+    selectScreens(screens);
+    // Clear the screen
+    tft.fillScreen(GC9A01A_BLACK);
+
+    // Set text color
+    tft.setTextColor(GC9A01A_RED);
+
+    // First line configuration
+    tft.setFont(&FreeSansBold18pt7b);
+    tft.setTextSize(1);
+
+    drawStringCentered(tft, "Setup Mode", (tft.height() / 2) + 9);
+}
