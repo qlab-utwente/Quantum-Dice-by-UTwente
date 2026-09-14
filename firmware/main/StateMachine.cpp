@@ -3,7 +3,6 @@
 #include "defines.hpp"
 #include "DiceConfigManager.hpp"
 #include "EspNowSensor.hpp"
-#include "handyHelpers.hpp"
 #include "IMUhelpers.hpp"
 #include "Screenfunctions.hpp"
 #include "ScreenStateDefs.hpp"
@@ -12,6 +11,7 @@
 #include <driver/rtc_io.h>
 #include "esp_random.h"
 
+#include "Battery.hpp"
 #include "button.h"
 #include "power.h"
 
@@ -502,8 +502,8 @@ void StateMachine::update() {
 	// Check whether the dice has been inactive for long enough to go to sleep.
 	this->checkTimeForDeepSleep();
 
-	// Check the minimum voltage, should we give a warning to the users.
-	this->checkMinimumVoltage(currentTime);
+	// Check the battery state.
+	this->checkBattery();
 
 	// Poll the received messages from the ESP-NOW and update the IMU sensor.
 	this->updateEspNow();
@@ -796,14 +796,19 @@ void StateMachine::updateEspNow() {
     }
 }
 
-void StateMachine::checkMinimumVoltage(unsigned long currentTime) {
-	static unsigned long lastBatteryWarning = 0;
-	double voltage = getBatteryVoltage();
-	bool voltageTooLow = (voltage < MINBATERYVOLTAGE && voltage > 0.5);  //while on USB the voltage is 0
-	bool tooLongSinceWarning = currentTime - lastBatteryWarning >= BATTERY_WARNING_INTERVAL;
+void StateMachine::checkBattery() {
+	static uint64_t lastBatteryWarning = 0;
+	uint64_t currentTime = millis();
 
-	if (voltageTooLow && tooLongSinceWarning) {
-		debugln("Low battery detected!");
+	// Get the state of charge, check whether it is too low.
+	float stateOfCharge = Battery.getStateOfCharge();
+	bool tooLowStateOfCharge = stateOfCharge < StateMachine::BATTERY_MINIMUM_CHARGE;
+	bool tooLongSinceWarning = (currentTime - lastBatteryWarning) >= BATTERY_WARNING_INTERVAL;
+
+	// If the state of charge is too low and it has been a while since the last warning, then we
+	// should issue another warning.
+	if (tooLowStateOfCharge && tooLongSinceWarning) {
+		infoln("Low battery detected!");
 		lastBatteryWarning = currentTime;
 
 		voltageIndicator(ALL);

@@ -1,7 +1,6 @@
 #include "ScreenStateDefs.hpp"
 
 #include "defines.hpp"
-#include "handyHelpers.hpp"
 #include "ScreenDeterminator.hpp" // Use new dynamic screen determination
 #include "Screenfunctions.hpp"
 #include "StateMachine.hpp"

@@ -11,10 +11,10 @@
 #include "ScreenStateDefs.hpp"
 #include "IMUhelpers.hpp"
 #include "Screenfunctions.hpp"
-#include "handyHelpers.hpp"
 #include "StateMachine.hpp"
 #include "DiceConfigManager.hpp"
 
+#include "Battery.hpp"
 #include "button.h"
 #include "power.h"
 
@@ -31,10 +31,8 @@ void setup() {
 	// This should be done first, as the old PCBs have a SHUTDOWN pin that needs to be set to LOW.
 	power_prepare();
 
-	// Initialize the battery.
-	// Currently, the power consumption is low and smooth, which is the ideal scenario for starting
-	// the battery monitoring.
-	initBattery();
+	// Start the battery monitoring.
+	Battery.begin();
 
 	// Initialize serial for debugging.
 	// It is not necessary to wait for Serial to start as we are using USB CDC.

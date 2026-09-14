@@ -176,7 +176,7 @@ class StateMachine {
 
   private:
     void updateEspNow();
-    void checkMinimumVoltage(unsigned long currentTime);
+    void checkBattery();
     void checkTimeForDeepSleep();
 	void checkCloseBy();
 
@@ -209,6 +209,8 @@ class StateMachine {
                                     UpSide upSide, MeasuredAxises measureAxis,
                                     uint8_t *entangled_peer, uint16_t color);
     static void sendTeleportPartner(uint8_t *target_n, uint8_t *new_partner_b);
+
+	static constexpr float BATTERY_MINIMUM_CHARGE = 20.0f;
 
 	IMUSensor *_imuSensor;
 	State currentState;
