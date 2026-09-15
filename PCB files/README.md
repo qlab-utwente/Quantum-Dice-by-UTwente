@@ -1,11 +1,11 @@
 # Power Board and Processor Board Information
 
-
-In this directory you find the files needed to order your Printed Circuit Boards (PCB) for the ProcessorPCB (left) and the PowerPCB (right).
+In this directory you find the files needed to order your Printed Circuit Boards (PCB) for the ESP32 ProcessorPCB.
 
 ![alt text](<../images/board layout.png>)
 
 Per board the following files are available:
+
 - Gerber files in ZIP format
 - Bill of Material (BOM) list
 - Pick and place file
@@ -16,7 +16,7 @@ Per board the following files are available:
 
 The Gerber files can be used to fabricate the PCBs. This can be done by [JLCPCB.com](https://www.jlcpcb.com) or [PCBway.com](https://www.pcbway.com) or equivalent.
 
-Important to notice is that the ProcessorPCB is a 4-layer board and the PowerPCB is a 2-layer board.
+Important to notice is that the ProcessorPCB is a 6-layer board
 
 ---
 
@@ -32,7 +32,7 @@ After uploading the Gerber files in JLCPCB (default settings are OK), select PCB
 
 ![PCB Assembly Form](../images/PCB%20Assembly%20form.png)
 
-- Select *Assemble top side*
+- Select *Assemble both side*
 - Select *Standard*
 - Select *Confirm Parts Placement* (From my own experience JLCPCB can make mistakes with the orientation of components. With this option you will be asked to verify component orientation)
 
@@ -42,29 +42,10 @@ The orientation is indicated in Magenta (right PCB):
 
 ![QD PCB Layout](../images/QD%20PCB%20layout.png)
 
-### PowerPCB
-
-![PCB Assembly Form PowerPCB](../images/PCB%20Assembly%20form%20PowerPCB.png)
-
-- Select *Assemble top side*
-- Select *Economic*
-- Select *Confirm Parts Placement* (From my own experience JLCPCB can make mistakes with the orientation of components. With this option you will be asked to verify component orientation)
-
-Next upload BOM and Pick and Place file.
-
-The orientation of D1 and D2 can go wrong (opposite mount). See detail:
-
-![alt text](<../images/PCB Assembly PowerPCB detail.png>)
-
-### Soldering push button
-
-On both PCB's a **Tactile Pushbutton 4pin 6*6*6 mm** (See BOM list) must be soldered on the *Bottom Side* of the PCB. The height of the button must be 6 mm!
-
-![alt text](../images/tactile-pushbutton-switch-momentary-4pin-6x6x6mm-1500x1500w.jpg)
-
 ## Final Notes
 
 After assembly, carefully inspect both boards for:
+
 - Correct component orientation
 - Proper soldering quality
 - No bridged connections
