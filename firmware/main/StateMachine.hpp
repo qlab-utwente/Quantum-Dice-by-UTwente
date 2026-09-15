@@ -1,8 +1,6 @@
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
 
-#include "IMUhelpers.hpp"
-
 #include <Arduino.h>
 #include <cstdint>
 #include <map>
@@ -144,10 +142,6 @@ class StateMachine {
     void changeState(Trigger trigger);
     void update();
 
-	inline void setImuSensor(IMUSensor *imuSensor) __attribute__((always_inline)) {
-		_imuSensor = imuSensor;
-	}
-
 	[[nodiscard]] inline State getCurrentState() const __attribute__((always_inline)) {
 		return this->currentState;
 	}
@@ -212,7 +206,6 @@ class StateMachine {
 
 	static constexpr float BATTERY_MINIMUM_CHARGE = 20.0f;
 
-	IMUSensor *_imuSensor;
 	State currentState;
 
 	uint8_t current_peer[MAC_ADDRESS_LENGTH];
