@@ -2,7 +2,6 @@
 
 #include "defines.hpp"
 #include "DiceConfigManager.hpp"
-#include "handyHelpers.hpp"
 #include "ImageLibrary/ImageLibrary.hpp"
 #include "ScreenStateDefs.hpp"
 #include "StateMachine.hpp"
@@ -11,6 +10,8 @@
 #include <algorithm>
 #include <Arduino.h>
 #include <driver/gpio.h>
+
+#include "Battery.hpp"
 
 extern StateMachine stateMachine;
 
@@ -364,24 +365,24 @@ void drawStringCentered(Adafruit_GFX &gfx, const String &text, int16_t y) {
 }
 
 void voltageIndicator(screenselections screens) {
-    char bufferV[10];
-    char bufferPerc[10];
-    selectScreens(screens);
+	char bufferV[10];
+	char bufferPerc[10];
+	selectScreens(screens);
 
-    // Use hwPins.adc_pin from configuration
-    double voltage = getBatteryVoltage();
-    double percentage = getBatteryPercentage();
-    percentage = std::min<double>(percentage, 100.0);
-    dtostrf(voltage, 3, 2, (char *)bufferV);
+	float batteryStateOfCharge = Battery.getStateOfCharge();
+	float batteryVoltage = Battery.getVoltage();
+	float batteryChargeRate = Battery.getChargeRate();
+
+    dtostrf(batteryVoltage, 3, 2, (char *)bufferV);
     strcat((char *)bufferV, "V");
-    dtostrf(percentage, 3, 0, (char *)bufferPerc);
+    dtostrf(batteryStateOfCharge, 3, 0, (char *)bufferPerc);
     strcat((char *)bufferPerc, "%");
 
     // Clear the canvas
     staticCanvas.fillScreen(GC9A01A_BLACK);
 
     // Set text properties
-    (percentage > 20) ? staticCanvas.setTextColor(GC9A01A_WHITE)
+    (batteryStateOfCharge > 20.0f) ? staticCanvas.setTextColor(GC9A01A_WHITE)
                       : staticCanvas.setTextColor(GC9A01A_RED);
     staticCanvas.setTextSize(1);
     staticCanvas.setFont(&FreeSans18pt7b);

@@ -9,13 +9,13 @@
 
 #include "defines.hpp"
 #include "ScreenStateDefs.hpp"
-#include "IMUhelpers.hpp"
 #include "Screenfunctions.hpp"
-#include "handyHelpers.hpp"
 #include "StateMachine.hpp"
 #include "DiceConfigManager.hpp"
 
+#include "Battery.hpp"
 #include "button.h"
+#include "IMU.hpp"
 #include "power.h"
 
 constexpr uint16_t UPDATE_INTERVAL = 50;  //loop functions
@@ -31,10 +31,8 @@ void setup() {
 	// This should be done first, as the old PCBs have a SHUTDOWN pin that needs to be set to LOW.
 	power_prepare();
 
-	// Initialize the battery.
-	// Currently, the power consumption is low and smooth, which is the ideal scenario for starting
-	// the battery monitoring.
-	initBattery();
+	// Start the battery monitoring.
+	Battery.begin();
 
 	// Initialize serial for debugging.
 	// It is not necessary to wait for Serial to start as we are using USB CDC.
@@ -82,16 +80,9 @@ void setup() {
 	infoln("Step 3: Initializing IMU sensor...\n");
 
 	// Initialize IMU sensor
-	IMUSensor* imuSensor = new LSM6DS3TRCIMUSensor();
-	if (!imuSensor->init()) {  // Show initialization progress
-		warnln("Failed to initialize sensor!");
-		while (true) {
-			delay(SECOND); // Halt.
-		}
-	}
-
-	imuSensor->update();
-	imuSensor->resetTumbleDetection();
+	IMU.init();
+	IMU.update();
+	IMU.resetTumbleDetection();
 
 	// Show welcome info.
 	welcomeInfo(screenselections::X0);
@@ -109,7 +100,6 @@ void setup() {
 	button_start(currentConfig.buttonPullup);
 
 	// Initialize the state machine
-	stateMachine.setImuSensor(imuSensor);
 	stateMachine.begin();
 
 	infoln("╔════════════════════════════════════════╗");
@@ -120,6 +110,7 @@ void setup() {
 }
 
 void loop() {
+	IMU.update();
 	stateMachine.update();
 	vTaskDelayUntil(&lastWake, TICK_INTERVAL);
 }

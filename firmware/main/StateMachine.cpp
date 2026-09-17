@@ -3,8 +3,6 @@
 #include "defines.hpp"
 #include "DiceConfigManager.hpp"
 #include "EspNowSensor.hpp"
-#include "handyHelpers.hpp"
-#include "IMUhelpers.hpp"
 #include "Screenfunctions.hpp"
 #include "ScreenStateDefs.hpp"
 
@@ -12,7 +10,9 @@
 #include <driver/rtc_io.h>
 #include "esp_random.h"
 
+#include "Battery.hpp"
 #include "button.h"
+#include "IMU.hpp"
 #include "power.h"
 
 static uint8_t generateDiceRoll() {
@@ -404,8 +404,7 @@ auto StateMachine::getStateTransition(State state, Trigger trigger) -> StateTran
 
 // declaration of instance
 StateMachine::StateMachine()
-	: _imuSensor(nullptr),
-	  currentState{
+	: currentState{
 		.mode = Mode::CLASSIC,
 		.throwState = ThrowState::IDLE,
 		.entanglementState = EntanglementState::PURE
@@ -502,12 +501,11 @@ void StateMachine::update() {
 	// Check whether the dice has been inactive for long enough to go to sleep.
 	this->checkTimeForDeepSleep();
 
-	// Check the minimum voltage, should we give a warning to the users.
-	this->checkMinimumVoltage(currentTime);
+	// Check the battery state.
+	this->checkBattery();
 
-	// Poll the received messages from the ESP-NOW and update the IMU sensor.
+	// Poll the received messages from the ESP-NOW.
 	this->updateEspNow();
-	_imuSensor->update();
 
 	// Periodically send watchdog to broadcast presence to nearby dice
 	if (this->currentState.mode != Mode::CLASSIC
@@ -796,14 +794,19 @@ void StateMachine::updateEspNow() {
     }
 }
 
-void StateMachine::checkMinimumVoltage(unsigned long currentTime) {
-	static unsigned long lastBatteryWarning = 0;
-	double voltage = getBatteryVoltage();
-	bool voltageTooLow = (voltage < MINBATERYVOLTAGE && voltage > 0.5);  //while on USB the voltage is 0
-	bool tooLongSinceWarning = currentTime - lastBatteryWarning >= BATTERY_WARNING_INTERVAL;
+void StateMachine::checkBattery() {
+	static uint64_t lastBatteryWarning = 0;
+	uint64_t currentTime = millis();
 
-	if (voltageTooLow && tooLongSinceWarning) {
-		debugln("Low battery detected!");
+	// Get the state of charge, check whether it is too low.
+	float stateOfCharge = Battery.getStateOfCharge();
+	bool tooLowStateOfCharge = stateOfCharge < StateMachine::BATTERY_MINIMUM_CHARGE;
+	bool tooLongSinceWarning = (currentTime - lastBatteryWarning) >= BATTERY_WARNING_INTERVAL;
+
+	// If the state of charge is too low and it has been a while since the last warning, then we
+	// should issue another warning.
+	if (tooLowStateOfCharge && tooLongSinceWarning) {
+		infoln("Low battery detected!");
 		lastBatteryWarning = currentTime;
 
 		voltageIndicator(ALL);
@@ -816,7 +819,7 @@ void StateMachine::checkTimeForDeepSleep() {
 	static bool isMoving = false;
 	static unsigned long lastMovementTime = 0;
 
-	if (this->_imuSensor->stable()) {
+	if (IMU.stable()) {
 		if (isMoving) {
 			lastMovementTime = millis();
 			isMoving = false;
@@ -911,7 +914,7 @@ void StateMachine::enterQuantumIdle() {
 	stateEntryTime = millis();
 
 	// Reset tumble detection for next throw
-	_imuSensor->resetTumbleDetection();
+	IMU.resetTumbleDetection();
 
 	sendWatchDog();
 	refreshScreens();
@@ -919,7 +922,7 @@ void StateMachine::enterQuantumIdle() {
 
 void StateMachine::whileQuantumIdle() {
 	// Check if dice is being thrown
-	if (_imuSensor->tumbled()) {
+	if (IMU.tumbled()) {
 		debugln("Tumble detected - starting throw");
 		changeState(Trigger::START_ROLLING);
 		return;
@@ -948,7 +951,7 @@ void StateMachine::enterThrowing() {
 
 void StateMachine::whileThrowing() {
 	// Check if dice has landed and is stable
-	if (_imuSensor->stable() && _imuSensor->on_table()) {
+	if (IMU.stable() && IMU.onTable()) {
 		debugln("Dice stable and on table - moving to OBSERVED");
 		changeState(Trigger::STOP_ROLLING);
 		return;
@@ -962,54 +965,54 @@ void StateMachine::enterObserved() {
 	stateEntryTime = millis();
 
 	// Check if dice is still moving (measurement failure)
-	if (_imuSensor->moving()) {
+	if (IMU.moving()) {
 		debugln("Dice still moving - measurement failed");
 		changeState(Trigger::MEASURE_FAIL);
 		return;
 	}
 
 	// Determine which axis is facing up
-	IMU_Orientation orient = _imuSensor->orientation();
+	IMUOrientation orient = IMU.getOrientation();
 
 	switch (orient) {
-		case IMU_Orientation::ORIENTATION_Z_UP:
+		case IMUOrientation::Z_POS:
 			this->selfMeasurementAxis = MeasuredAxises::ZAXIS;
 			this->selfUpSide = UpSide::Z0;
 			debugln("Measured: Z+ axis");
 			break;
 
-		case IMU_Orientation::ORIENTATION_Z_DOWN:
+		case IMUOrientation::Z_NEG:
 			this->selfMeasurementAxis = MeasuredAxises::ZAXIS;
 			this->selfUpSide = UpSide::Z1;
 			debugln("Measured: Z- axis");
 			break;
 
-		case IMU_Orientation::ORIENTATION_X_UP:
+		case IMUOrientation::X_POS:
 			this->selfMeasurementAxis = MeasuredAxises::XAXIS;
 			this->selfUpSide = UpSide::X1; // Inverted: X_UP maps to X1
 			debugln("Measured: X+ axis");
 			break;
 
-		case IMU_Orientation::ORIENTATION_X_DOWN:
+		case IMUOrientation::X_NEG:
 			this->selfMeasurementAxis = MeasuredAxises::XAXIS;
 			this->selfUpSide = UpSide::X0; // Inverted: X_DOWN maps to X0
 			debugln("Measured: X- axis");
 			break;
 
-		case IMU_Orientation::ORIENTATION_Y_UP:
+		case IMUOrientation::Y_POS:
 			this->selfMeasurementAxis = MeasuredAxises::YAXIS;
 			this->selfUpSide = UpSide::Y0;
 			debugln("Measured: Y+ axis");
 			break;
 
-		case IMU_Orientation::ORIENTATION_Y_DOWN:
+		case IMUOrientation::Y_NEG:
 			this->selfMeasurementAxis = MeasuredAxises::YAXIS;
 			this->selfUpSide = UpSide::Y1;
 			debugln("Measured: Y- axis");
 			break;
 
-		case IMU_Orientation::ORIENTATION_TILTED: [[fallthrough]]
-		case IMU_Orientation::ORIENTATION_UNKNOWN:
+		case IMUOrientation::TILTED: [[fallthrough]]
+		case IMUOrientation::UNKNOWN:
 			debugln("No clear axis - measurement failed");
 			changeState(Trigger::MEASURE_FAIL);
 			return;
@@ -1112,7 +1115,7 @@ void StateMachine::enterObserved() {
 	}
 
 	// Reset tumble detection so we're ready for the next throw
-	_imuSensor->resetTumbleDetection();
+	IMU.resetTumbleDetection();
 
 	refreshScreens();
 	sendWatchDog();
@@ -1120,7 +1123,7 @@ void StateMachine::enterObserved() {
 
 void StateMachine::whileObserved() {
 	// Check if dice is being thrown again
-	if (_imuSensor->tumbled()) {
+	if (IMU.tumbled()) {
 		debugln("Tumble detected - starting new throw");
 		changeState(Trigger::START_ROLLING);
 		return;
