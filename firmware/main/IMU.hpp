@@ -51,9 +51,6 @@ public:
 		this->_flatGravityMax = flatGravityMax;
 		this->_flatOtherAxisMax = flatOtherAxisMax;
 	}
-	void setAxisRemap(uint8_t config, uint8_t sign);
-	void getAxisRemap(uint8_t *config, uint8_t *sign) const;
-	void applyAxisRemap();
 	IMUOrientation detectOrientation() const;
 
 	IMUClass(const IMUClass &) = delete;
@@ -84,13 +81,10 @@ private:
 	bool _isMoving = false;
 	bool _tumbled = false, _tumbleReferenceSet = false;
 	bool _isBNO055 = false;
-	uint8_t _axisRemapConfig = 0x06, _axisRemapSign = 0x01;
 
 	void updateCalibration(sensors_event_t *accel, sensors_event_t *gyro);
 	void updateMahony(sensors_event_t *accel, sensors_event_t *gyro, float deltaTime);
 	void calculateGravity(float *x, float *y, float *z);
-	void writeRegisterBNO(uint8_t registerAddr, uint8_t value);
-	uint8_t readRegisterBNO(uint8_t registerAddr) const;
 };
 
 #define IMU IMUClass::getSingleton()

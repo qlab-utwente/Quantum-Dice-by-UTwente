@@ -989,13 +989,13 @@ void StateMachine::enterObserved() {
 
 		case IMUOrientation::X_POS:
 			this->selfMeasurementAxis = MeasuredAxises::XAXIS;
-			this->selfUpSide = UpSide::X1; // Inverted: X_UP maps to X1
+			this->selfUpSide = UpSide::X0;
 			debugln("Measured: X+ axis");
 			break;
 
 		case IMUOrientation::X_NEG:
 			this->selfMeasurementAxis = MeasuredAxises::XAXIS;
-			this->selfUpSide = UpSide::X0; // Inverted: X_DOWN maps to X0
+			this->selfUpSide = UpSide::X1;
 			debugln("Measured: X- axis");
 			break;
 
