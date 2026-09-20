@@ -1,8 +1,9 @@
 #include "IMU.hpp"
-#include "utility/imumaths.h"
-#include "sensor_processing_lib.h"
 #include "defines.hpp"
 #include "Wire.h"
+
+#include "quaternion.h"
+#include "vector_3d.h"
 
 IMUClass &IMUClass::getSingleton() {
 	static IMUClass instance;

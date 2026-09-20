@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <cmath>
 
-#include "defines.hpp"
 #include "Adafruit_BNO055.h"
 #include "Adafruit_LSM6DS3.h"
 
