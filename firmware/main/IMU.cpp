@@ -1,8 +1,9 @@
 #include "IMU.hpp"
-#include "utility/imumaths.h"
-#include "sensor_processing_lib.h"
 #include "defines.hpp"
 #include "Wire.h"
+
+#include "quaternion.h"
+#include "vector_3d.h"
 
 IMUClass &IMUClass::getSingleton() {
 	static IMUClass instance;
@@ -15,7 +16,6 @@ void IMUClass::init() {
 		if (this->_bno.begin(OPERATION_MODE_ACCGYRO)) {
 			this->_isBNO055 = true;
 			this->_bno.setExtCrystalUse(true);
-			this->applyAxisRemap();
 			break;
 		}
 
@@ -35,17 +35,16 @@ void IMUClass::init() {
 			this->_bno.getEvent(&gyro, Adafruit_BNO055::VECTOR_GYROSCOPE);
 		} else {
 			this->_lsm.getEvent(&accel, &gyro, &temp);
-
-			// Swap X and Z axis.
-			// Invert the Z axis.
-			float temp = accel.acceleration.x;
-			accel.acceleration.x = accel.acceleration.z;
-			accel.acceleration.z = -temp;
-
-			temp = gyro.gyro.x;
-			gyro.gyro.x = gyro.gyro.z;
-			gyro.gyro.z = -temp;
 		}
+
+		// Swap X and Z axis.
+		float _temp = accel.acceleration.x;
+		accel.acceleration.x = accel.acceleration.z;
+		accel.acceleration.z = _temp;
+
+		_temp = gyro.gyro.x;
+		gyro.gyro.x = gyro.gyro.z;
+		gyro.gyro.z = _temp;
 
 		// Are the readings sensible?
 		float accMag = sqrtf(accel.acceleration.x * accel.acceleration.x + accel.acceleration.y * accel.acceleration.y + accel.acceleration.z * accel.acceleration.z);
@@ -65,22 +64,21 @@ void IMUClass::update() {
 	sensors_event_t accel, gyro, temp;
 
 	// Read the data from the chips.
-	if (this->_isBNO055) {
-		this->_bno.getEvent(&accel, Adafruit_BNO055::VECTOR_ACCELEROMETER);
-		this->_bno.getEvent(&gyro, Adafruit_BNO055::VECTOR_GYROSCOPE);
-	} else {
-		this->_lsm.getEvent(&accel, &gyro, &temp);
+		if (this->_isBNO055) {
+			this->_bno.getEvent(&accel, Adafruit_BNO055::VECTOR_ACCELEROMETER);
+			this->_bno.getEvent(&gyro, Adafruit_BNO055::VECTOR_GYROSCOPE);
+		} else {
+			this->_lsm.getEvent(&accel, &gyro, &temp);
+		}
 
 		// Swap X and Z axis.
-		// Invert the Z axis.
-		float temp = accel.acceleration.x;
-		accel.acceleration.x = accel.acceleration.z;
-		accel.acceleration.z = -temp;
+		float _temp = accel.acceleration.x;
+		accel.acceleration.x = -accel.acceleration.z;
+		accel.acceleration.z = -_temp;
 
-		temp = gyro.gyro.x;
-		gyro.gyro.x = gyro.gyro.z;
-		gyro.gyro.z = -temp;
-	}
+		_temp = gyro.gyro.x;
+		gyro.gyro.x = -gyro.gyro.z;
+		gyro.gyro.z = -_temp;
 
 	// Update the calibration values with this data.
 	this->updateCalibration(&accel, &gyro);
@@ -92,18 +90,6 @@ void IMUClass::update() {
 	gyro.gyro.x -= this->_biasGyroX;
 	gyro.gyro.y -= this->_biasGyroY;
 	gyro.gyro.z -= this->_biasGyroZ;
-	debugf(
-		"ACC: (%.2f, %.2f, %.2f)\n",
-		accel.acceleration.x,
-		accel.acceleration.y,
-		accel.acceleration.z
-	);
-	debugf(
-		"GYRO: (%.2f, %.2f, %.2f)\n",
-		gyro.gyro.x,
-		gyro.gyro.y,
-		gyro.gyro.z
-	);
 
 	// Update the mahony fusion.
 	this->updateMahony(&accel, &gyro, deltaTime);
@@ -111,12 +97,6 @@ void IMUClass::update() {
 	// Calculate the gravity vector.
 	float gravityX = NAN, gravityY = NAN, gravityZ = NAN;
 	this->calculateGravity(&gravityX, &gravityY, &gravityZ);
-	debugf(
-		"GRAVITY: (%.2f, %.2f, %.2f)\n",
-		gravityX,
-		gravityY,
-		gravityZ
-	);
 
 	// Calculate linear acceleration.
 	float linAccelX = accel.acceleration.x - gravityX;
@@ -266,41 +246,6 @@ float IMUClass::getTumbleAngle() const {
 	// Convert to angle in degrees
 	float angleRadians = acosf(dotProduct);
 	return angleRadians * 57.2958f; // 180 / PI
-}
-
-void IMUClass::setAxisRemap(uint8_t config, uint8_t sign) {
-	this->_axisRemapConfig = config;
-	this->_axisRemapSign = sign;
-	this->applyAxisRemap();
-}
-
-void IMUClass::getAxisRemap(uint8_t *config, uint8_t *sign) const {
-	*config = this->_axisRemapConfig;
-	*sign = this->_axisRemapSign;
-}
-
-void IMUClass::applyAxisRemap() {
-	constexpr uint8_t BNO055_OPR_MODE_ADDR = 0x3D;
-	constexpr uint8_t BNO055_AXIS_MAP_CONFIG_ADDR = 0x41;
-	constexpr uint8_t BNO055_AXIS_MAP_SIGN_ADDR = 0x42;
-
-	if (this->_isBNO055) {
-		// Must be in CONFIG mode to change axis remap
-		this->writeRegisterBNO(BNO055_OPR_MODE_ADDR, OPERATION_MODE_CONFIG);
-		delay(25);
-
-		// Write custom axis remap configuration
-		this->writeRegisterBNO(BNO055_AXIS_MAP_CONFIG_ADDR, _axisRemapConfig);
-		delay(10);
-
-		// Write custom axis sign configuration
-		this->writeRegisterBNO(BNO055_AXIS_MAP_SIGN_ADDR, _axisRemapSign);
-		delay(10);
-
-		// Switch to NDOF mode (all sensors + fusion)
-		this->writeRegisterBNO(BNO055_OPR_MODE_ADDR, OPERATION_MODE_ACCGYRO);
-		delay(25);
-	}
 }
 
 IMUOrientation IMUClass::detectOrientation() const {
@@ -462,20 +407,4 @@ void IMUClass::calculateGravity(float *x, float *y, float *z) {
 	*x = gravityX.c;
 	*y = gravityY.c;
 	*z = gravityZ.c;
-}
-
-void IMUClass::writeRegisterBNO(uint8_t registerAddr, uint8_t value) {
-	Wire.beginTransmission(0x28);
-	Wire.write(registerAddr);
-	Wire.write(value);
-	Wire.endTransmission();
-	delay(2);
-}
-
-uint8_t IMUClass::readRegisterBNO(uint8_t registerAddr) const {
-	Wire.beginTransmission(0x28);
-	Wire.write(registerAddr);
-	Wire.endTransmission();
-	Wire.requestFrom(0x28, 1);
-	return Wire.read();
 }
