@@ -65,19 +65,3 @@ vector_ijk quaternion_rotate_vector(vector_ijk v, Quaternion q)
     vector_ijk rotated = vector_3d_initialize(quaternion_rotated_vector.b,quaternion_rotated_vector.c,quaternion_rotated_vector.d);
     return rotated;
 }
-
-euler_angles quaternion_to_euler_angles(Quaternion q)
-{
-    euler_angles result;
-    double q0 = q.a;
-    double q1 = q.b;
-    double q2 = q.c;
-    double q3 = q.d;
-    result.roll = atan2(2*(q0*q1 + q2*q3),1 - 2*(q1*q1 + q2*q2))*180/3.14;
-    result.pitch = asin(2*(q0*q2 - q3*q1))*180/3.14;
-    if (q.d==0)
-        result.yaw = 0.0;
-    else
-        result.yaw = atan2(2*(q0*q3 + q1*q2),1 - 2*(q2*q2 + q3*q3))*180/3.14;
-    return result;
-}
