@@ -4,7 +4,7 @@ In this directory you find the files needed to order your Printed Circuit Boards
 
 Since version 4 of the PCB all electronics are assembled on a double sided single PCB. The related 3D printfiles are version 3.x.
 
-![alt text](..\images/PCBv4.2_Top_Bottom_view.png)
+![alt text](../images/PCBv42_Top_Bottom_view.png)
 
 Per board the following files are available:
 
