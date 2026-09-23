@@ -37,11 +37,8 @@ public:
 	inline float gravityX() const __attribute__((always_inline)) { return this->_gravityX; }
 	inline float gravityY() const __attribute__((always_inline)) { return this->_gravityY; }
 	inline float gravityZ() const __attribute__((always_inline)) { return this->_gravityZ; }
-	void getCalibration(uint8_t *system, uint8_t *gyro, uint8_t *accel, uint8_t *mag);
-	bool isCalibrated();
 	void resetTumbleDetection();
 	inline bool tumbled() const __attribute__((always_inline)) { return this->_tumbled; }
-	float getTumbleAngle() const;
 	inline void setMotionThreshold(float motionThreshold) __attribute__((always_inline)) { this->_motionThreshold = motionThreshold; }
 	inline void setStableThreshold(float stableThreshold) __attribute__((always_inline)) { this->_stableThreshold = stableThreshold; }
 	inline void setStableCountRequired(int stableCountRequired) __attribute__((always_inline)) { this->_stableCountRequired = stableCountRequired; }

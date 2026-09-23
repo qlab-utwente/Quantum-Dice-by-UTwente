@@ -189,22 +189,6 @@ const char *IMUClass::getOrientationString() const {
 	}
 }
 
-void IMUClass::getCalibration(uint8_t *system, uint8_t *gyro, uint8_t *accel, uint8_t *mag) {
-	if (this->_isBNO055) {
-		this->_bno.getCalibration(system, gyro, accel, mag);
-	}
-}
-
-bool IMUClass::isCalibrated() {
-	if (this->_isBNO055) {
-		uint8_t system, gyro, accel, mag;
-		this->getCalibration(&system, &gyro, &accel, &mag);
-		return (system >= 2 && gyro >= 2 && accel >= 2 && mag >= 2);
-	} else {
-		return true;
-	}
-}
-
 void IMUClass::resetTumbleDetection() {
 	float _gravityMag = sqrtf(this->_gravityX * this->_gravityX + this->_gravityY * this->_gravityY + this->_gravityZ * this->_gravityZ);
 
@@ -231,21 +215,6 @@ void IMUClass::resetTumbleDetection() {
 		this->_tumbled = false;
 		this->_tumbleReferenceSet = false;
 	}
-}
-
-float IMUClass::getTumbleAngle() const {
-	if (!this->_tumbleReferenceSet) {
-		return 0.0f;  // No reference set
-	}
-
-	// Calculate dot product between current and initial up vectors
-	float upMag = sqrtf(this->_upX * this->_upX + this->_upY * this->_upY + this->_upZ * this->_upZ);
-	float upStartMag = sqrtf(this->_upStartX * this->_upStartX + this->_upStartY * this->_upStartY + this->_upStartZ * this->_upStartZ);
-	float dotProduct = (this->_upX * this->_upStartX + this->_upY * this->_upStartY + this->_upZ * this->_upStartZ) / (upMag * upStartMag);
-
-	// Convert to angle in degrees
-	float angleRadians = acosf(dotProduct);
-	return angleRadians * 57.2958f; // 180 / PI
 }
 
 IMUOrientation IMUClass::detectOrientation() const {
