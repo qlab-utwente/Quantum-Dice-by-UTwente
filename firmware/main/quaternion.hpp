@@ -1,12 +1,8 @@
 // From: https://github.com/rbv188/IMU-algorithm/tree/master
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef QUATERNION_INCLUDED
 #define QUATERNION_INCLUDED
 
-#include "vector_3d.h"
+#include "Vector3.hpp"
 
 typedef struct Quaternion {
 
@@ -23,11 +19,7 @@ Quaternion quaternion_initialize(float a, float b, float c, float d);
 Quaternion quaternion_product(Quaternion q1, Quaternion q2);
 Quaternion quaternion_conjugate(Quaternion q);
 Quaternion quaternion_normalize(Quaternion q);
-Quaternion quaternion_between_vectors(vector_ijk v1, vector_ijk v2);
-vector_ijk quaternion_rotate_vector(vector_ijk v, Quaternion q);
+Quaternion quaternion_between_vectors(Vector3 v1, Vector3 v2);
+Vector3 quaternion_rotate_vector(Vector3 v, Quaternion q);
 
-#endif
-
-#ifdef __cplusplus
-}
 #endif

@@ -2,8 +2,8 @@
 #include "defines.hpp"
 #include "Wire.h"
 
-#include "quaternion.h"
-#include "vector_3d.h"
+#include "quaternion.hpp"
+#include "Vector3.hpp"
 
 IMUClass &IMUClass::getSingleton() {
 	static IMUClass instance;
@@ -247,12 +247,12 @@ IMUOrientation IMUClass::detectOrientation() const {
 
 void IMUClass::updateCalibration(sensors_event_t *accel, sensors_event_t *gyro) {
 	constexpr size_t SAMPLE_COUNT = 21;
-	static vector_ijk gyroSamples[SAMPLE_COUNT];
+	static Vector3 gyroSamples[SAMPLE_COUNT];
 	static size_t writeIndex = 0;
 	static bool filledOnce = false;
 
 	//
-	gyroSamples[writeIndex] = { gyro->gyro.x, gyro->gyro.y, gyro->gyro.z };
+	gyroSamples[writeIndex] = Vector3(gyro->gyro.x, gyro->gyro.y, gyro->gyro.z);
 	writeIndex++;
 	if (writeIndex >= SAMPLE_COUNT) {
 		writeIndex = 0;
@@ -262,30 +262,30 @@ void IMUClass::updateCalibration(sensors_event_t *accel, sensors_event_t *gyro) 
 	//
 	if (filledOnce) {
 		// Calculate average.
-		vector_ijk average = { 0.0F, 0.0F, 0.0F };
+		Vector3 average;
 		for (size_t index = 0; index < SAMPLE_COUNT; index++) {
-			average = vector_3d_sum(average, gyroSamples[index]);
+			average += gyroSamples[index];
 		}
-		average = vector_3d_scale(average, 1.0F / static_cast<float>(SAMPLE_COUNT));
+		average *=(1.0F / static_cast<float>(SAMPLE_COUNT));
 
 		// Calculate variance.
-		vector_ijk variance = { 0.0F, 0.0F, 0.0F };
+		Vector3 variance;
 		for (size_t index = 0; index < SAMPLE_COUNT; index++) {
-			vector_ijk difference = vector_3d_difference(average, gyroSamples[index]);
-			variance = vector_3d_sum(variance, {
-				difference.a * difference.a,
-				difference.b * difference.b,
-				difference.c * difference.c
-			});
+			Vector3 difference = average - gyroSamples[index];
+			variance += Vector3(
+				difference.x * difference.x,
+				difference.y * difference.y,
+				difference.z * difference.z
+			);
 		}
-		variance = vector_3d_scale(variance, 1.0F / static_cast<float>(SAMPLE_COUNT - 1));
-		float combined_variance = sqrtf(variance.a * variance.a + variance.b * variance.b + variance.c * variance.c);
+		variance *= (1.0F / static_cast<float>(SAMPLE_COUNT - 1));
+		float combined_variance = variance.magnitude();
 
 		//
 		if (combined_variance < 1E-5F) {
-			_biasGyroX = average.a;
-			_biasGyroY = average.b;
-			_biasGyroZ = average.c;
+			_biasGyroX = average.x;
+			_biasGyroY = average.y;
+			_biasGyroZ = average.z;
 		}
 	}
 }
@@ -358,7 +358,7 @@ void IMUClass::updateMahony(sensors_event_t *accel, sensors_event_t *gyro, float
     _quaternion[3] += (qa * gyroZ + qb * gyroY - qc * gyroX);
 
     // Normalise quaternion
-    recipNorm = 1.0F / sqrt(_quaternion[0] * _quaternion[0] + _quaternion[1] * _quaternion[1] + _quaternion[2] * _quaternion[2] + _quaternion[3] * _quaternion[3]);
+    recipNorm = 1.0F / sqrtf(_quaternion[0] * _quaternion[0] + _quaternion[1] * _quaternion[1] + _quaternion[2] * _quaternion[2] + _quaternion[3] * _quaternion[3]);
     _quaternion[0] = _quaternion[0] * recipNorm;
     _quaternion[1] = _quaternion[1] * recipNorm;
     _quaternion[2] = _quaternion[2] * recipNorm;
@@ -366,14 +366,14 @@ void IMUClass::updateMahony(sensors_event_t *accel, sensors_event_t *gyro, float
 }
 
 void IMUClass::calculateGravity(float *x, float *y, float *z) {
-	constexpr float GRAVITY = 9.81f;
+	constexpr float GRAVITY = 9.81F;
 
 	Quaternion mahonyQuaternion = quaternion_initialize(this->_quaternion[0], this->_quaternion[1], this->_quaternion[2], this->_quaternion[3]);
-	vector_ijk gravityZ = quaternion_rotate_vector({ 0.0f, 0.0f, GRAVITY }, mahonyQuaternion);
-	vector_ijk gravityY = quaternion_rotate_vector({ 0.0f, GRAVITY, 0.0f }, mahonyQuaternion);
-	vector_ijk gravityX = quaternion_rotate_vector({ GRAVITY, 0.0f, 0.0f }, mahonyQuaternion);
+	Vector3 gravityZ = quaternion_rotate_vector(Vector3(0.0F, 0.0F, GRAVITY), mahonyQuaternion);
+	Vector3 gravityY = quaternion_rotate_vector(Vector3(0.0F, GRAVITY, 0.0F), mahonyQuaternion);
+	Vector3 gravityX = quaternion_rotate_vector(Vector3(GRAVITY, 0.0F, 0.0F), mahonyQuaternion);
 
-	*x = gravityX.c;
-	*y = gravityY.c;
-	*z = gravityZ.c;
+	*x = gravityX.z;
+	*y = gravityY.z;
+	*z = gravityZ.z;
 }
