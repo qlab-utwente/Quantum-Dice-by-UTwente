@@ -2,7 +2,7 @@
 #include "defines.hpp"
 #include "Wire.h"
 
-#include "quaternion.hpp"
+#include "Quaternion.hpp"
 #include "Vector3.hpp"
 
 IMUClass &IMUClass::getSingleton() {
@@ -368,10 +368,10 @@ void IMUClass::updateMahony(sensors_event_t *accel, sensors_event_t *gyro, float
 void IMUClass::calculateGravity(float *x, float *y, float *z) {
 	constexpr float GRAVITY = 9.81F;
 
-	Quaternion mahonyQuaternion = quaternion_initialize(this->_quaternion[0], this->_quaternion[1], this->_quaternion[2], this->_quaternion[3]);
-	Vector3 gravityZ = quaternion_rotate_vector(Vector3(0.0F, 0.0F, GRAVITY), mahonyQuaternion);
-	Vector3 gravityY = quaternion_rotate_vector(Vector3(0.0F, GRAVITY, 0.0F), mahonyQuaternion);
-	Vector3 gravityX = quaternion_rotate_vector(Vector3(GRAVITY, 0.0F, 0.0F), mahonyQuaternion);
+	Quaternion mahonyQuaternion = Quaternion(this->_quaternion[0], this->_quaternion[1], this->_quaternion[2], this->_quaternion[3]);
+	Vector3 gravityZ = mahonyQuaternion.rotateVector(Vector3(0.0F, 0.0F, GRAVITY));
+	Vector3 gravityY = mahonyQuaternion.rotateVector(Vector3(0.0F, GRAVITY, 0.0F));
+	Vector3 gravityX = mahonyQuaternion.rotateVector(Vector3(GRAVITY, 0.0F, 0.0F));
 
 	*x = gravityX.z;
 	*y = gravityY.z;
