@@ -82,7 +82,7 @@ public:
 	 * @param quaternion The quaternion to add to this quaternion.
 	 * @return The resulting quaternion from adding another quaternion to this quaternion.
 	 */
-	constexpr Quaternion operator+(const Quaternion &quaternion) const noexcept {
+	[[nodiscard]] constexpr Quaternion operator+(const Quaternion &quaternion) const noexcept {
 		return Quaternion(
 			this->a + quaternion.a,
 			this->b + quaternion.b,
@@ -111,7 +111,7 @@ public:
 	 * @param quaternion The quaternion to subtract from this quaternion.
 	 * @return The resulting quaternion from subtracting another quaternion from this quaternion.
 	 */
-	constexpr Quaternion operator-(const Quaternion &quaternion) const noexcept {
+	[[nodiscard]] constexpr Quaternion operator-(const Quaternion &quaternion) const noexcept {
 		return Quaternion(
 			this->a - quaternion.a,
 			this->b - quaternion.b,
@@ -140,7 +140,7 @@ public:
 	 * @param quaternion The quaternion to calculate the Hamilton product with.
 	 * @return The resulting quaternion from the Hamilton product of this quaternion and another quaternion.
 	 */
-	constexpr Quaternion operator*(const Quaternion &quaternion) const noexcept {
+	[[nodiscard]] constexpr Quaternion operator*(const Quaternion &quaternion) const noexcept {
 		return Quaternion(
 			(this->a * quaternion.a) - (this->b * quaternion.b) - (this->c * quaternion.c) - (this->d * quaternion.d),
 			(this->a * quaternion.b) + (this->b * quaternion.a) + (this->c * quaternion.d) - (this->d * quaternion.c),
@@ -165,7 +165,7 @@ public:
 	 * @param scalar The scalar to multiply with all the elements.
 	 * @return The resulting quaternion from multiplying a scalar with all the elements of this quaternion.
 	 */
-	constexpr Quaternion operator*(const float scalar) const noexcept {
+	[[nodiscard]] constexpr Quaternion operator*(const float scalar) const noexcept {
 		return Quaternion(
 			this->a * scalar,
 			this->b * scalar,
@@ -194,7 +194,7 @@ public:
 	 * @param quaternion The quaternion to compare with this quaternion.
 	 * @return true, if the other quaternion is equal to this quaternion. false, otherwise.
 	 */
-	constexpr bool operator==(const Quaternion &quaternion) const noexcept {
+	[[nodiscard]] constexpr bool operator==(const Quaternion &quaternion) const noexcept {
 		return (this->a == quaternion.a) && (this->b == quaternion.b) && (this->c == quaternion.c) && (this->d == quaternion.d);
 	}
 
@@ -204,7 +204,7 @@ public:
 	 * @param quaternion The quaternion to compare with this quaternion.
 	 * @return true, if the other quaternion is not equal to this quaternion. false, otherwise.
 	 */
-	constexpr bool operator!=(const Quaternion &quaternion) const noexcept {
+	[[nodiscard]] constexpr bool operator!=(const Quaternion &quaternion) const noexcept {
 		return (this->a != quaternion.a) || (this->b != quaternion.b) || (this->c != quaternion.c) || (this->d != quaternion.d);
 	}
 
@@ -213,7 +213,7 @@ public:
 	 *
 	 * @return The scalar part of the quaternion.
 	 */
-	constexpr float scalar() const noexcept {
+	[[nodiscard]] constexpr float scalar() const noexcept {
 		return this->a;
 	}
 
@@ -222,7 +222,7 @@ public:
 	 *
 	 * @return The vector part of the quaternion.
 	 */
-	constexpr Vector3 vector() const noexcept {
+	[[nodiscard]] constexpr Vector3 vector() const noexcept {
 		return Vector3(this->b, this->c, this->d);
 	}
 
@@ -231,7 +231,7 @@ public:
 	 *
 	 * @return The conjugate of this quaternion.
 	 */
-	constexpr Quaternion conjugate() const noexcept {
+	[[nodiscard]] constexpr Quaternion conjugate() const noexcept {
 		return Quaternion(
 			this->a,
 			-this->b,
@@ -245,7 +245,7 @@ public:
 	 *
 	 * @return The magnitude/length of this quaternion.
 	 */
-	inline float magnitude() const noexcept {
+	[[nodiscard]] inline float magnitude() const noexcept {
 		return sqrtf(this->a * this->a + this->b * this->b + this->c * this->c + this->d * this->d);
 	}
 
@@ -254,7 +254,7 @@ public:
 	 *
 	 * @return This quaternion normalized.
 	 */
-	inline Quaternion normalize() const noexcept {
+	[[nodiscard]] inline Quaternion normalize() const noexcept {
 		const float scalar = 1.0F / this->magnitude();
 		return (*this * scalar);
 	}
@@ -265,7 +265,7 @@ public:
 	 * @param vector the vector to rotate.
 	 * @return The rotated vector.
 	 */
-	constexpr Vector3 rotateVector(const Vector3 &vector) const noexcept {
+	[[nodiscard]] constexpr Vector3 rotateVector(const Vector3 &vector) const noexcept {
 		const Quaternion vectorQuaternion = Quaternion(vector);
 		return (*this * vectorQuaternion * this->conjugate()).vector();
 	}

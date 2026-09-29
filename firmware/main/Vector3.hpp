@@ -54,7 +54,7 @@ public:
 	 * @param vector The vector to add to this vector.
 	 * @return The resulting vector from adding another vector to this vector.
 	 */
-	constexpr Vector3 operator+(const Vector3 &vector) const noexcept {
+	[[nodiscard]] constexpr Vector3 operator+(const Vector3 &vector) const noexcept {
 		return Vector3(
 			this->x + vector.x,
 			this->y + vector.y,
@@ -81,7 +81,7 @@ public:
 	 * @param vector The vector to subtract from this vector.
 	 * @return The resulting vector from subtracting another vector from this vector.
 	 */
-	constexpr Vector3 operator-(const Vector3 &vector) const noexcept {
+	[[nodiscard]] constexpr Vector3 operator-(const Vector3 &vector) const noexcept {
 		return Vector3(
 			this->x - vector.x,
 			this->y - vector.y,
@@ -108,7 +108,7 @@ public:
 	 * @param scalar The scalar to multiply with all the elements.
 	 * @return The resulting vector from multiplying a scalar with all elements of this vector.
 	 */
-	constexpr Vector3 operator*(const float scalar) const noexcept {
+	[[nodiscard]] constexpr Vector3 operator*(const float scalar) const noexcept {
 		return Vector3(
 			this->x * scalar,
 			this->y * scalar,
@@ -135,7 +135,7 @@ public:
 	 * @param vector The vector to compare with this vector.
 	 * @return true, if the other vector is equal to this vector. false, otherwise.
 	 */
-	constexpr bool operator==(const Vector3 &vector) const noexcept {
+	[[nodiscard]] constexpr bool operator==(const Vector3 &vector) const noexcept {
 		return (this->x == vector.x) && (this->y == vector.y) && (this->z == vector.z);
 	}
 
@@ -145,7 +145,7 @@ public:
 	 * @param vector The vector to compare with this vector.
 	 * @return true, if the other vector is not equal to this vector. false, otherwise.
 	 */
-	constexpr bool operator!=(const Vector3 &vector) const noexcept {
+	[[nodiscard]] constexpr bool operator!=(const Vector3 &vector) const noexcept {
 		return (this->x != vector.x) || (this->y != vector.y) || (this->z != vector.z);
 	}
 
@@ -155,7 +155,7 @@ public:
 	 * @param vector The vector to calculate the dot product with.
 	 * @return The dot product between this vector and another vector.
 	 */
-	constexpr float dotProduct(const Vector3 &vector) const noexcept {
+	[[nodiscard]] constexpr float dotProduct(const Vector3 &vector) const noexcept {
 		return this->x * vector.x + this->y * vector.y + this->z * vector.z;
 	}
 
@@ -165,7 +165,7 @@ public:
 	 * @param vector The vector to calculate the cross product with.
 	 * @return The cross product between this vector and another vector.
 	 */
-	constexpr Vector3 crossProduct(const Vector3 &vector) const noexcept {
+	[[nodiscard]] constexpr Vector3 crossProduct(const Vector3 &vector) const noexcept {
 		return Vector3(
 			this->y * vector.z - this->z * vector.y,
 			this->z * vector.x - this->x * vector.z,
@@ -178,7 +178,7 @@ public:
 	 *
 	 * @return The magnitude/length of this vector.
 	 */
-	inline float magnitude() const noexcept {
+	[[nodiscard]] inline float magnitude() const noexcept {
 		return sqrtf(this->dotProduct(*this));
 	}
 
@@ -187,7 +187,7 @@ public:
 	 *
 	 * @return This vector normalized.
 	 */
-	inline Vector3 normalize() const noexcept {
+	[[nodiscard]] inline Vector3 normalize() const noexcept {
 		const float scalar = 1.0F / this->magnitude();
 		return (*this * scalar);
 	}
@@ -197,7 +197,7 @@ public:
 	 *
 	 * @return This vector negated.
 	 */
-	constexpr Vector3 negate() const noexcept {
+	[[nodiscard]] constexpr Vector3 negate() const noexcept {
 		return Vector3(
 			-this->x,
 			-this->y,
