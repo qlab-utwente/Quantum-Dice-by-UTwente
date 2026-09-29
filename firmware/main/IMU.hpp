@@ -7,26 +7,108 @@
 #include "Adafruit_BNO055.h"
 #include "Adafruit_LSM6DS3.h"
 
-enum class IMUOrientation {
+/**
+ * An enum that represents the axes of the IMU.
+ */
+enum class IMUAxis : uint8_t {
+	/**
+	 * The axis is unknown.
+	 */
 	UNKNOWN,
+
+	/**
+	 * No axis.
+	 */
+	NONE,
+
+	/**
+	 * The X axis.
+	 */
+	X_AXIS,
+
+	/**
+	 * The Y axis.
+	 */
+	Y_AXIS,
+
+	/**
+	 * The Z axis.
+	 */
+	Z_AXIS
+};
+
+/**
+ * An enum that represents several orientations of the IMU where a face of the die is pointing up.
+ */
+enum class IMUOrientation : uint8_t {
+	/**
+	 * The orientation is unknown.
+	 */
+	UNKNOWN,
+
+	/**
+	 * The die is tilted.
+	 *
+	 * No face of the die is pointing up.
+	 */
 	TILTED,
+
+	/**
+	 * The Z+ face of the die is pointing up.
+	 */
 	Z_POS,
+
+	/**
+	 * The Z- face of the die is pointing up.
+	 */
 	Z_NEG,
+
+	/**
+	 * The Y+ face of the die is pointing up.
+	 */
 	Y_POS,
+
+	/**
+	 * The Y- face of the die is pointing up.
+	 */
 	Y_NEG,
+
+	/**
+	 * The X+ face of the die is pointing up.
+	 */
 	X_POS,
+
+	/**
+	 * The X- face of the die is pointing up.
+	 */
 	X_NEG
 };
 
 class IMUClass {
 public:
+	/**
+	 * Returns the axis the die is currently aligned with.
+	 *
+	 * @return The axis the die is currently aligned with.
+	 */
+	constexpr IMUAxis getAxis() const noexcept {
+		return this->axis;
+	}
+
+	/**
+	 * Returns the current orientation of the die.
+	 *
+	 * @return The current orientation of the die.
+	 */
+	constexpr IMUOrientation getOrientation() const noexcept {
+		return this->orientation;
+	}
+
 	void init();
 	void update();
 	inline bool moving() const __attribute__((always_inline)) { return this->_isMoving; }
 	inline bool stable() const __attribute__((always_inline)) { return !this->_isMoving && (this->_stableCounter >= this->_stableCountRequired); }
-	inline bool onTable() const __attribute__((always_inline)) { return this->_orientation != IMUOrientation::UNKNOWN && this->_orientation != IMUOrientation::TILTED; }
-	inline IMUOrientation getOrientation() const __attribute__((always_inline)) { return this->_orientation; }
-	const char *getOrientationString() const;
+	inline bool onTable() const __attribute__((always_inline)) { return this->orientation != IMUOrientation::UNKNOWN && this->orientation != IMUOrientation::TILTED; }
 	inline float gyroX() const __attribute__((always_inline)) { return this->_gyroX; }
 	inline float gyroY() const __attribute__((always_inline)) { return this->_gyroY; }
 	inline float gyroZ() const __attribute__((always_inline)) { return this->_gyroZ; }
@@ -48,7 +130,6 @@ public:
 		this->_flatGravityMax = flatGravityMax;
 		this->_flatOtherAxisMax = flatOtherAxisMax;
 	}
-	IMUOrientation detectOrientation() const;
 
 	IMUClass(const IMUClass &) = delete;
 	IMUClass &operator=(const IMUClass &) = delete;
@@ -73,7 +154,8 @@ private:
 	float _motionThreshold = 1.0f, _stableThreshold = 0.5f, _tumbleThreshold = 0.707f;
 	float _flatGravityMin = 9.2f, _flatGravityMax = 10.5f, _flatOtherAxisMax = 3.5f;
 	float _quaternion[4] = { 1.0f, 0.0f, 0.0f, 0.0f };
-	IMUOrientation _orientation = IMUOrientation::UNKNOWN;
+	IMUOrientation orientation = IMUOrientation::UNKNOWN;
+	IMUAxis axis = IMUAxis::UNKNOWN;
 	int _stableCounter = 0, _stableCountRequired = 10;
 	bool _isMoving = false;
 	bool _tumbled = false, _tumbleReferenceSet = false;
@@ -83,6 +165,20 @@ private:
 	void updateMahony(sensors_event_t *accel, sensors_event_t *gyro, float deltaTime);
 	void calculateGravity(float *x, float *y, float *z);
 };
+
+/**
+ * Returns a string representation of the given IMU axis.
+ *
+ * @return A string representation of the given IMU axis.
+ */
+const char *toString(const IMUAxis axis) noexcept;
+
+/**
+ * Returns a string representation of the given IMU orientation.
+ *
+ * @return A string representation of the given IMU orientation.
+ */
+const char *toString(const IMUOrientation orientation) noexcept;
 
 #define IMU IMUClass::getSingleton()
 

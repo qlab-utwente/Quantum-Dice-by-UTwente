@@ -142,12 +142,48 @@ void IMUClass::update() {
 		}
 	}
 
+	// Update axis.
+	static IMUAxis lastAxis = IMUAxis::UNKNOWN;
+	if (abs(this->_gravityX) > this->_flatGravityMin && abs(this->_gravityX) < this->_flatGravityMax && abs(this->_gravityY) < this->_flatOtherAxisMax && abs(this->_gravityZ) < this->_flatOtherAxisMax) {
+		this->axis = IMUAxis::X_AXIS;
+	} else if (abs(this->_gravityY) > this->_flatGravityMin && abs(this->_gravityY) < this->_flatGravityMax && abs(this->_gravityX) < this->_flatOtherAxisMax && abs(this->_gravityZ) < this->_flatOtherAxisMax) {
+		this->axis = IMUAxis::Y_AXIS;
+	} else if (abs(this->_gravityZ) > this->_flatGravityMin && abs(this->_gravityZ) < this->_flatGravityMax && abs(this->_gravityX) < this->_flatOtherAxisMax && abs(this->_gravityY) < this->_flatOtherAxisMax) {
+		this->axis = IMUAxis::Z_AXIS;
+	} else {
+		this->axis = IMUAxis::NONE;
+	}
+	if (this->axis != lastAxis) {
+		lastAxis = this->axis;
+		debugf("IMU New Axis: %s\n", toString(lastAxis));
+	}
+
 	// Update orientation.
 	static IMUOrientation lastOrientation = IMUOrientation::UNKNOWN;
-	this->_orientation = this->detectOrientation();
-	if (this->_orientation != lastOrientation) {
-		lastOrientation = this->_orientation;
-		debugf("NEW ORIENTATION: %s\n", this->getOrientationString());
+	switch (this->axis) {
+		case IMUAxis::X_AXIS:
+			this->orientation = (this->_gravityX < 0.0F) ? IMUOrientation::X_POS : IMUOrientation::X_NEG;
+			break;
+
+		case IMUAxis::Y_AXIS:
+			this->orientation = (this->_gravityY < 0.0F) ? IMUOrientation::Y_POS : IMUOrientation::Y_NEG;
+			break;
+
+		case IMUAxis::Z_AXIS:
+			this->orientation = (this->_gravityZ < 0.0F) ? IMUOrientation::Z_POS : IMUOrientation::Z_NEG;
+			break;
+
+		case IMUAxis::NONE:
+			this->orientation = IMUOrientation::TILTED;
+			break;
+
+		default:
+			this->orientation = IMUOrientation::UNKNOWN;
+			break;
+	}
+	if (this->orientation != lastOrientation) {
+		lastOrientation = this->orientation;
+		debugf("IMU New Orientation: %s\n", toString(lastOrientation));
 	}
 
 	// Update up vector.
@@ -173,19 +209,6 @@ void IMUClass::update() {
 		if (dotProduct < this->_tumbleThreshold) {
 			this->_tumbled = true;
 		}
-	}
-}
-
-const char *IMUClass::getOrientationString() const {
-	switch (this->_orientation) {
-		case IMUOrientation::TILTED: return "TILTED (not aligned)";
-		case IMUOrientation::Z_POS: return "Z+ UP (Vertical - Normal)";
-		case IMUOrientation::Z_NEG: return "Z- UP (Vertical - Inverted)";
-		case IMUOrientation::Y_POS: return "Y+ UP";
-		case IMUOrientation::Y_NEG: return "Y- UP";
-		case IMUOrientation::X_POS: return "X+ UP";
-		case IMUOrientation::X_NEG: return "X- UP";
-		default: return "UNKNOWN";
 	}
 }
 
@@ -215,34 +238,6 @@ void IMUClass::resetTumbleDetection() {
 		this->_tumbled = false;
 		this->_tumbleReferenceSet = false;
 	}
-}
-
-IMUOrientation IMUClass::detectOrientation() const {
-	// Note: Accelerometer reads NEGATIVE when axis points UP (gravity pulls down)
-	// and POSITIVE when axis points DOWN (accelerating toward ground)
-	//
-	// Check which axis is aligned with gravity
-	bool xAligned = (abs(this->_gravityX) > this->_flatGravityMin && abs(this->_gravityX) < this->_flatGravityMax);
-	bool yAligned = (abs(this->_gravityY) > this->_flatGravityMin && abs(this->_gravityY) < this->_flatGravityMax);
-	bool zAligned = (abs(this->_gravityZ) > this->_flatGravityMin && abs(this->_gravityZ) < this->_flatGravityMax);
-
-    // Z-axis aligned (physical X+ up = normal vertical)
-    if (zAligned && abs(this->_gravityX) < this->_flatOtherAxisMax && abs(this->_gravityY) < this->_flatOtherAxisMax) {
-        return (this->_gravityZ < 0) ? IMUOrientation::Z_POS : IMUOrientation::Z_NEG;
-    }
-
-    // X-axis aligned (tilted toward physical Z direction)
-    if (xAligned && abs(this->_gravityY) < this->_flatOtherAxisMax && abs(this->_gravityZ) < this->_flatOtherAxisMax) {
-        return (this->_gravityX < 0) ? IMUOrientation::X_POS : IMUOrientation::X_NEG;
-    }
-
-    // Y-axis aligned (tilted sideways)
-    if (yAligned && abs(this->_gravityX) < this->_flatOtherAxisMax && abs(this->_gravityZ) < this->_flatOtherAxisMax) {
-        return (this->_gravityY < 0) ? IMUOrientation::Y_POS : IMUOrientation::Y_NEG;
-    }
-
-    // Not aligned with any axis
-    return IMUOrientation::TILTED;
 }
 
 void IMUClass::updateCalibration(sensors_event_t *accel, sensors_event_t *gyro) {
@@ -376,4 +371,27 @@ void IMUClass::calculateGravity(float *x, float *y, float *z) {
 	*x = gravityX.z;
 	*y = gravityY.z;
 	*z = gravityZ.z;
+}
+
+const char *toString(const IMUAxis axis) noexcept {
+	switch (axis) {
+		case IMUAxis::UNKNOWN: return "UNKNOWN";
+		case IMUAxis::NONE: return "NONE";
+		case IMUAxis::X_AXIS: return "X-AXIS";
+		case IMUAxis::Y_AXIS: return "Y-AXIS";
+		case IMUAxis::Z_AXIS: return "Z-AXIS";
+	}
+}
+
+const char *toString(const IMUOrientation orientation) noexcept {
+	switch (orientation) {
+		case IMUOrientation::UNKNOWN: return "UNKNOWN";
+		case IMUOrientation::TILTED: return "TILTED";
+		case IMUOrientation::Z_POS: return "Z+ UP";
+		case IMUOrientation::Z_NEG: return "Z- UP";
+		case IMUOrientation::Y_POS: return "Y+ UP";
+		case IMUOrientation::Y_NEG: return "Y- UP";
+		case IMUOrientation::X_POS: return "X+ UP";
+		case IMUOrientation::X_NEG: return "X- UP";
+	}
 }
