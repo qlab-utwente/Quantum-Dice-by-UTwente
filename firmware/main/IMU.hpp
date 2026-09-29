@@ -8,6 +8,26 @@
 #include "Adafruit_LSM6DS3.h"
 
 /**
+ * An enum that represents the chip of the IMU.
+ */
+enum class IMUChip : uint8_t {
+	/**
+	 * The chip is unknown.
+	 */
+	UNKNOWN,
+
+	/**
+	 * The chip is the BNO055.
+	 */
+	BNO055,
+
+	/**
+	 * The chip is the LSM6DS3.
+	 */
+	LSM6DS3
+};
+
+/**
  * An enum that represents the axes of the IMU.
  */
 enum class IMUAxis : uint8_t {
@@ -87,6 +107,15 @@ enum class IMUOrientation : uint8_t {
 class IMUClass {
 public:
 	/**
+	 * Returns the IMU chip present.
+	 *
+	 * @return The IMU chip present.
+	 */
+	constexpr IMUChip getChip() const noexcept {
+		return this->chip;
+	}
+
+	/**
 	 * Returns the axis the die is currently aligned with.
 	 *
 	 * @return The axis the die is currently aligned with.
@@ -156,15 +185,22 @@ private:
 	float _quaternion[4] = { 1.0f, 0.0f, 0.0f, 0.0f };
 	IMUOrientation orientation = IMUOrientation::UNKNOWN;
 	IMUAxis axis = IMUAxis::UNKNOWN;
+	IMUChip chip = IMUChip::UNKNOWN;
 	int _stableCounter = 0, _stableCountRequired = 10;
 	bool _isMoving = false;
 	bool _tumbled = false, _tumbleReferenceSet = false;
-	bool _isBNO055 = false;
 
 	void updateCalibration(sensors_event_t *accel, sensors_event_t *gyro);
 	void updateMahony(sensors_event_t *accel, sensors_event_t *gyro, float deltaTime);
 	void calculateGravity(float *x, float *y, float *z);
 };
+
+/**
+ * Returns a string representation of the given IMU chip.
+ *
+ * @return A string representation of the given IMU chip.
+ */
+const char *toString(const IMUChip chip) noexcept;
 
 /**
  * Returns a string representation of the given IMU axis.

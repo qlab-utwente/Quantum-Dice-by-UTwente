@@ -14,23 +14,24 @@ void IMUClass::init() {
 	// Try to start both, continue when one responds.
 	while (true) {
 		if (this->_bno.begin(OPERATION_MODE_ACCGYRO)) {
-			this->_isBNO055 = true;
 			this->_bno.setExtCrystalUse(true);
+			this->chip = IMUChip::BNO055;
 			break;
 		}
 
 		if (this->_lsm.begin_I2C()) {
-			this->_isBNO055 = false;
+			this->chip = IMUChip::LSM6DS3;
 			break;
 		}
 	}
+	debugf("IMU Chip detected: %s\n", toString(this->chip));
 
 	// Wait until sensible reading.
 	while (true) {
 		sensors_event_t accel, gyro, temp;
 
 		// Read the data from the chips.
-		if (this->_isBNO055) {
+		if (this->chip == IMUChip::BNO055) {
 			this->_bno.getEvent(&accel, Adafruit_BNO055::VECTOR_ACCELEROMETER);
 			this->_bno.getEvent(&gyro, Adafruit_BNO055::VECTOR_GYROSCOPE);
 		} else {
@@ -64,7 +65,7 @@ void IMUClass::update() {
 	sensors_event_t accel, gyro, temp;
 
 	// Read the data from the chips.
-		if (this->_isBNO055) {
+		if (this->chip == IMUChip::BNO055) {
 			this->_bno.getEvent(&accel, Adafruit_BNO055::VECTOR_ACCELEROMETER);
 			this->_bno.getEvent(&gyro, Adafruit_BNO055::VECTOR_GYROSCOPE);
 		} else {
@@ -371,6 +372,14 @@ void IMUClass::calculateGravity(float *x, float *y, float *z) {
 	*x = gravityX.z;
 	*y = gravityY.z;
 	*z = gravityZ.z;
+}
+
+const char *toString(const IMUChip chip) noexcept {
+	switch (chip) {
+		case IMUChip::UNKNOWN: return "UNKNOWN";
+		case IMUChip::BNO055: return "BNO055";
+		case IMUChip::LSM6DS3: return "LSM6DS3";
+	}
 }
 
 const char *toString(const IMUAxis axis) noexcept {
