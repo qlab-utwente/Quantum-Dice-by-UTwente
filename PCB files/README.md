@@ -2,7 +2,9 @@
 
 In this directory you find the files needed to order your Printed Circuit Boards (PCB) for the ESP32 ProcessorPCB.
 
-![alt text](<../images/board layout.png>)
+Since version 4 of the PCB all electronics are assembled on a double sided single PCB. The related 3D printfiles are version 3.x.
+
+![alt text](../images/PCBv42_Top_Bottom_view.png)
 
 Per board the following files are available:
 
@@ -28,9 +30,7 @@ JLCPCB offers a service to assemble the PCB after PCB fabrication called **PCB A
 
 After uploading the Gerber files in JLCPCB (default settings are OK), select PCB Assembly.
 
-### ProcessorPCB
-
-![PCB Assembly Form](../images/PCB%20Assembly%20form.png)
+![alt text](../images/Ordering_JLCPCB.png)
 
 - Select *Assemble both side*
 - Select *Standard*
@@ -38,9 +38,8 @@ After uploading the Gerber files in JLCPCB (default settings are OK), select PCB
 
 Next upload BOM and Pick and Place file.
 
-The orientation is indicated in Magenta (right PCB):
-
-![QD PCB Layout](../images/QD%20PCB%20layout.png)
+The correct orientation is indicated in Magenta
+![alt text](..\images/PCBv4.2_Top_Bottom_view.png)
 
 ## Final Notes
 
@@ -53,6 +52,11 @@ After assembly, carefully inspect both boards for:
 Once you receive your assembled PCBs, verify all components against the BOM before powering up the boards for the first time.
 
 For questions or issues during the ordering process, refer to the manufacturer's documentation or contact their support team.
+
+---
+
+**Next steps**
+Connect the battery, the USB-cable and the displays on the board and upload the firmware (see construction manual).
 
 ---
 
