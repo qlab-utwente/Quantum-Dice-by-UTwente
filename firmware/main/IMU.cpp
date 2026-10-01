@@ -2,8 +2,8 @@
 #include "defines.hpp"
 #include "Wire.h"
 
-#include "quaternion.h"
-#include "vector_3d.h"
+#include "Quaternion.hpp"
+#include "Vector3.hpp"
 
 IMUClass &IMUClass::getSingleton() {
 	static IMUClass instance;
@@ -14,23 +14,24 @@ void IMUClass::init() {
 	// Try to start both, continue when one responds.
 	while (true) {
 		if (this->_bno.begin(OPERATION_MODE_ACCGYRO)) {
-			this->_isBNO055 = true;
 			this->_bno.setExtCrystalUse(true);
+			this->chip = IMUChip::BNO055;
 			break;
 		}
 
 		if (this->_lsm.begin_I2C()) {
-			this->_isBNO055 = false;
+			this->chip = IMUChip::LSM6DS3;
 			break;
 		}
 	}
+	debugf("IMU Chip detected: %s\n", toString(this->chip));
 
 	// Wait until sensible reading.
 	while (true) {
 		sensors_event_t accel, gyro, temp;
 
 		// Read the data from the chips.
-		if (this->_isBNO055) {
+		if (this->chip == IMUChip::BNO055) {
 			this->_bno.getEvent(&accel, Adafruit_BNO055::VECTOR_ACCELEROMETER);
 			this->_bno.getEvent(&gyro, Adafruit_BNO055::VECTOR_GYROSCOPE);
 		} else {
@@ -64,7 +65,7 @@ void IMUClass::update() {
 	sensors_event_t accel, gyro, temp;
 
 	// Read the data from the chips.
-		if (this->_isBNO055) {
+		if (this->chip == IMUChip::BNO055) {
 			this->_bno.getEvent(&accel, Adafruit_BNO055::VECTOR_ACCELEROMETER);
 			this->_bno.getEvent(&gyro, Adafruit_BNO055::VECTOR_GYROSCOPE);
 		} else {
@@ -142,12 +143,48 @@ void IMUClass::update() {
 		}
 	}
 
+	// Update axis.
+	static IMUAxis lastAxis = IMUAxis::UNKNOWN;
+	if (abs(this->_gravityX) > this->_flatGravityMin && abs(this->_gravityX) < this->_flatGravityMax && abs(this->_gravityY) < this->_flatOtherAxisMax && abs(this->_gravityZ) < this->_flatOtherAxisMax) {
+		this->axis = IMUAxis::X_AXIS;
+	} else if (abs(this->_gravityY) > this->_flatGravityMin && abs(this->_gravityY) < this->_flatGravityMax && abs(this->_gravityX) < this->_flatOtherAxisMax && abs(this->_gravityZ) < this->_flatOtherAxisMax) {
+		this->axis = IMUAxis::Y_AXIS;
+	} else if (abs(this->_gravityZ) > this->_flatGravityMin && abs(this->_gravityZ) < this->_flatGravityMax && abs(this->_gravityX) < this->_flatOtherAxisMax && abs(this->_gravityY) < this->_flatOtherAxisMax) {
+		this->axis = IMUAxis::Z_AXIS;
+	} else {
+		this->axis = IMUAxis::NONE;
+	}
+	if (this->axis != lastAxis) {
+		lastAxis = this->axis;
+		debugf("IMU New Axis: %s\n", toString(lastAxis));
+	}
+
 	// Update orientation.
 	static IMUOrientation lastOrientation = IMUOrientation::UNKNOWN;
-	this->_orientation = this->detectOrientation();
-	if (this->_orientation != lastOrientation) {
-		lastOrientation = this->_orientation;
-		debugf("NEW ORIENTATION: %s\n", this->getOrientationString());
+	switch (this->axis) {
+		case IMUAxis::X_AXIS:
+			this->orientation = (this->_gravityX < 0.0F) ? IMUOrientation::X_POS : IMUOrientation::X_NEG;
+			break;
+
+		case IMUAxis::Y_AXIS:
+			this->orientation = (this->_gravityY < 0.0F) ? IMUOrientation::Y_POS : IMUOrientation::Y_NEG;
+			break;
+
+		case IMUAxis::Z_AXIS:
+			this->orientation = (this->_gravityZ < 0.0F) ? IMUOrientation::Z_POS : IMUOrientation::Z_NEG;
+			break;
+
+		case IMUAxis::NONE:
+			this->orientation = IMUOrientation::TILTED;
+			break;
+
+		default:
+			this->orientation = IMUOrientation::UNKNOWN;
+			break;
+	}
+	if (this->orientation != lastOrientation) {
+		lastOrientation = this->orientation;
+		debugf("IMU New Orientation: %s\n", toString(lastOrientation));
 	}
 
 	// Update up vector.
@@ -173,35 +210,6 @@ void IMUClass::update() {
 		if (dotProduct < this->_tumbleThreshold) {
 			this->_tumbled = true;
 		}
-	}
-}
-
-const char *IMUClass::getOrientationString() const {
-	switch (this->_orientation) {
-		case IMUOrientation::TILTED: return "TILTED (not aligned)";
-		case IMUOrientation::Z_POS: return "Z+ UP (Vertical - Normal)";
-		case IMUOrientation::Z_NEG: return "Z- UP (Vertical - Inverted)";
-		case IMUOrientation::Y_POS: return "Y+ UP";
-		case IMUOrientation::Y_NEG: return "Y- UP";
-		case IMUOrientation::X_POS: return "X+ UP";
-		case IMUOrientation::X_NEG: return "X- UP";
-		default: return "UNKNOWN";
-	}
-}
-
-void IMUClass::getCalibration(uint8_t *system, uint8_t *gyro, uint8_t *accel, uint8_t *mag) {
-	if (this->_isBNO055) {
-		this->_bno.getCalibration(system, gyro, accel, mag);
-	}
-}
-
-bool IMUClass::isCalibrated() {
-	if (this->_isBNO055) {
-		uint8_t system, gyro, accel, mag;
-		this->getCalibration(&system, &gyro, &accel, &mag);
-		return (system >= 2 && gyro >= 2 && accel >= 2 && mag >= 2);
-	} else {
-		return true;
 	}
 }
 
@@ -233,57 +241,14 @@ void IMUClass::resetTumbleDetection() {
 	}
 }
 
-float IMUClass::getTumbleAngle() const {
-	if (!this->_tumbleReferenceSet) {
-		return 0.0f;  // No reference set
-	}
-
-	// Calculate dot product between current and initial up vectors
-	float upMag = sqrtf(this->_upX * this->_upX + this->_upY * this->_upY + this->_upZ * this->_upZ);
-	float upStartMag = sqrtf(this->_upStartX * this->_upStartX + this->_upStartY * this->_upStartY + this->_upStartZ * this->_upStartZ);
-	float dotProduct = (this->_upX * this->_upStartX + this->_upY * this->_upStartY + this->_upZ * this->_upStartZ) / (upMag * upStartMag);
-
-	// Convert to angle in degrees
-	float angleRadians = acosf(dotProduct);
-	return angleRadians * 57.2958f; // 180 / PI
-}
-
-IMUOrientation IMUClass::detectOrientation() const {
-	// Note: Accelerometer reads NEGATIVE when axis points UP (gravity pulls down)
-	// and POSITIVE when axis points DOWN (accelerating toward ground)
-	//
-	// Check which axis is aligned with gravity
-	bool xAligned = (abs(this->_gravityX) > this->_flatGravityMin && abs(this->_gravityX) < this->_flatGravityMax);
-	bool yAligned = (abs(this->_gravityY) > this->_flatGravityMin && abs(this->_gravityY) < this->_flatGravityMax);
-	bool zAligned = (abs(this->_gravityZ) > this->_flatGravityMin && abs(this->_gravityZ) < this->_flatGravityMax);
-
-    // Z-axis aligned (physical X+ up = normal vertical)
-    if (zAligned && abs(this->_gravityX) < this->_flatOtherAxisMax && abs(this->_gravityY) < this->_flatOtherAxisMax) {
-        return (this->_gravityZ < 0) ? IMUOrientation::Z_POS : IMUOrientation::Z_NEG;
-    }
-
-    // X-axis aligned (tilted toward physical Z direction)
-    if (xAligned && abs(this->_gravityY) < this->_flatOtherAxisMax && abs(this->_gravityZ) < this->_flatOtherAxisMax) {
-        return (this->_gravityX < 0) ? IMUOrientation::X_POS : IMUOrientation::X_NEG;
-    }
-
-    // Y-axis aligned (tilted sideways)
-    if (yAligned && abs(this->_gravityX) < this->_flatOtherAxisMax && abs(this->_gravityZ) < this->_flatOtherAxisMax) {
-        return (this->_gravityY < 0) ? IMUOrientation::Y_POS : IMUOrientation::Y_NEG;
-    }
-
-    // Not aligned with any axis
-    return IMUOrientation::TILTED;
-}
-
 void IMUClass::updateCalibration(sensors_event_t *accel, sensors_event_t *gyro) {
 	constexpr size_t SAMPLE_COUNT = 21;
-	static vector_ijk gyroSamples[SAMPLE_COUNT];
+	static Vector3 gyroSamples[SAMPLE_COUNT];
 	static size_t writeIndex = 0;
 	static bool filledOnce = false;
 
 	//
-	gyroSamples[writeIndex] = { gyro->gyro.x, gyro->gyro.y, gyro->gyro.z };
+	gyroSamples[writeIndex] = Vector3(gyro->gyro.x, gyro->gyro.y, gyro->gyro.z);
 	writeIndex++;
 	if (writeIndex >= SAMPLE_COUNT) {
 		writeIndex = 0;
@@ -293,30 +258,30 @@ void IMUClass::updateCalibration(sensors_event_t *accel, sensors_event_t *gyro) 
 	//
 	if (filledOnce) {
 		// Calculate average.
-		vector_ijk average = { 0.0F, 0.0F, 0.0F };
+		Vector3 average;
 		for (size_t index = 0; index < SAMPLE_COUNT; index++) {
-			average = vector_3d_sum(average, gyroSamples[index]);
+			average += gyroSamples[index];
 		}
-		average = vector_3d_scale(average, 1.0F / static_cast<float>(SAMPLE_COUNT));
+		average *=(1.0F / static_cast<float>(SAMPLE_COUNT));
 
 		// Calculate variance.
-		vector_ijk variance = { 0.0F, 0.0F, 0.0F };
+		Vector3 variance;
 		for (size_t index = 0; index < SAMPLE_COUNT; index++) {
-			vector_ijk difference = vector_3d_difference(average, gyroSamples[index]);
-			variance = vector_3d_sum(variance, {
-				difference.a * difference.a,
-				difference.b * difference.b,
-				difference.c * difference.c
-			});
+			Vector3 difference = average - gyroSamples[index];
+			variance += Vector3(
+				difference.x * difference.x,
+				difference.y * difference.y,
+				difference.z * difference.z
+			);
 		}
-		variance = vector_3d_scale(variance, 1.0F / static_cast<float>(SAMPLE_COUNT - 1));
-		float combined_variance = sqrtf(variance.a * variance.a + variance.b * variance.b + variance.c * variance.c);
+		variance *= (1.0F / static_cast<float>(SAMPLE_COUNT - 1));
+		float combined_variance = variance.magnitude();
 
 		//
 		if (combined_variance < 1E-5F) {
-			_biasGyroX = average.a;
-			_biasGyroY = average.b;
-			_biasGyroZ = average.c;
+			_biasGyroX = average.x;
+			_biasGyroY = average.y;
+			_biasGyroZ = average.z;
 		}
 	}
 }
@@ -389,7 +354,7 @@ void IMUClass::updateMahony(sensors_event_t *accel, sensors_event_t *gyro, float
     _quaternion[3] += (qa * gyroZ + qb * gyroY - qc * gyroX);
 
     // Normalise quaternion
-    recipNorm = 1.0F / sqrt(_quaternion[0] * _quaternion[0] + _quaternion[1] * _quaternion[1] + _quaternion[2] * _quaternion[2] + _quaternion[3] * _quaternion[3]);
+    recipNorm = 1.0F / sqrtf(_quaternion[0] * _quaternion[0] + _quaternion[1] * _quaternion[1] + _quaternion[2] * _quaternion[2] + _quaternion[3] * _quaternion[3]);
     _quaternion[0] = _quaternion[0] * recipNorm;
     _quaternion[1] = _quaternion[1] * recipNorm;
     _quaternion[2] = _quaternion[2] * recipNorm;
@@ -397,14 +362,45 @@ void IMUClass::updateMahony(sensors_event_t *accel, sensors_event_t *gyro, float
 }
 
 void IMUClass::calculateGravity(float *x, float *y, float *z) {
-	constexpr float GRAVITY = 9.81f;
+	constexpr float GRAVITY = 9.81F;
 
-	Quaternion mahonyQuaternion = quaternion_initialize(this->_quaternion[0], this->_quaternion[1], this->_quaternion[2], this->_quaternion[3]);
-	vector_ijk gravityZ = quaternion_rotate_vector({ 0.0f, 0.0f, GRAVITY }, mahonyQuaternion);
-	vector_ijk gravityY = quaternion_rotate_vector({ 0.0f, GRAVITY, 0.0f }, mahonyQuaternion);
-	vector_ijk gravityX = quaternion_rotate_vector({ GRAVITY, 0.0f, 0.0f }, mahonyQuaternion);
+	Quaternion mahonyQuaternion = Quaternion(this->_quaternion[0], this->_quaternion[1], this->_quaternion[2], this->_quaternion[3]);
+	Vector3 gravityZ = mahonyQuaternion.rotateVector(Vector3(0.0F, 0.0F, GRAVITY));
+	Vector3 gravityY = mahonyQuaternion.rotateVector(Vector3(0.0F, GRAVITY, 0.0F));
+	Vector3 gravityX = mahonyQuaternion.rotateVector(Vector3(GRAVITY, 0.0F, 0.0F));
 
-	*x = gravityX.c;
-	*y = gravityY.c;
-	*z = gravityZ.c;
+	*x = gravityX.z;
+	*y = gravityY.z;
+	*z = gravityZ.z;
+}
+
+const char *toString(const IMUChip chip) noexcept {
+	switch (chip) {
+		case IMUChip::UNKNOWN: return "UNKNOWN";
+		case IMUChip::BNO055: return "BNO055";
+		case IMUChip::LSM6DS3: return "LSM6DS3";
+	}
+}
+
+const char *toString(const IMUAxis axis) noexcept {
+	switch (axis) {
+		case IMUAxis::UNKNOWN: return "UNKNOWN";
+		case IMUAxis::NONE: return "NONE";
+		case IMUAxis::X_AXIS: return "X-AXIS";
+		case IMUAxis::Y_AXIS: return "Y-AXIS";
+		case IMUAxis::Z_AXIS: return "Z-AXIS";
+	}
+}
+
+const char *toString(const IMUOrientation orientation) noexcept {
+	switch (orientation) {
+		case IMUOrientation::UNKNOWN: return "UNKNOWN";
+		case IMUOrientation::TILTED: return "TILTED";
+		case IMUOrientation::Z_POS: return "Z+ UP";
+		case IMUOrientation::Z_NEG: return "Z- UP";
+		case IMUOrientation::Y_POS: return "Y+ UP";
+		case IMUOrientation::Y_NEG: return "Y- UP";
+		case IMUOrientation::X_POS: return "X+ UP";
+		case IMUOrientation::X_NEG: return "X- UP";
+	}
 }

@@ -267,7 +267,7 @@ void printGlobalConfig() {
 // AUTO-INITIALIZATION AND VALIDATION FUNCTIONS
 // ============================================================================
 
-auto findConfigFile(String &foundPath, size_t maxLen) -> bool {
+auto findConfigFile(String &foundPath) -> bool {
     File root = LittleFS.open("/");
     if (!root) {
         errorln("Failed to open root directory");
@@ -344,8 +344,7 @@ auto ensureLittleFSAndConfig() -> bool {
 
     // Step 2: Check if any config file exists
     String foundConfigPath = "";
-
-    findConfigFile(foundConfigPath, 256);
+    findConfigFile(foundConfigPath);
 
     // Step 3: If no config exists, create a default one
     if (foundConfigPath == "") {
