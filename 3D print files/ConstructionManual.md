@@ -1,471 +1,423 @@
 ## 1. Introduction
-
-This construction manual provides all the information required to build your own set of **Quantum Dice**. It includes component sourcing, 3D printing, and step-by-step assembly instructions.
+This construction manual provides all the information required to build your own set of **Quantum Dice (Series 4)**. It covers component sourcing, 3D printing, preparation of the electronics, firmware installation, and step-by-step assembly.
 
 The Quantum Dice were developed by the **University of Twente**. All designs are freely available under the **CC BY licence**.
 
 For further information, visit [Quantum Dice by University of Twente](https://www.utwente.nl/en/mesaplus/education/quantum-dice/) or read the pre-print of our article on [arXiv](https://arxiv.org/abs/2510.04931).
 
----
+This manual describes **Series 4** of the Quantum Dice. Information and design files for previous versions are available in the corresponding archive folders.
 
-## 2. General description of the Quantum Dice
+> **Note:** The University of Twente can provide ready-to-use PCBs. All other components, including the 3D-printed parts, displays, batteries, and cables, can either be sourced independently or, where available, obtained through the University of Twente.
 
-The Quantum Dice are designed to make abstract quantum-mechanical concepts such as **Quantum Superposition**, **Entanglement**, and **Quantum Key Distribution** more tangible.
+## 2. General Description of the Quantum Dice
 
-The dice are used in pairs. Both share identical software and 3D-printed parts.
+The **Quantum Dice** are designed to make abstract quantum-mechanical concepts such as **quantum superposition**, **entanglement**, and **quantum key distribution** more tangible.
 
-Each Quantum Die consists of a **3D-printed frame** with electronic displays on all six sides. The displays are driven by a **microcontroller unit (MCU)** – an **ESP32-S3** module equipped with an orientation sensor. Power is supplied by a rechargeable battery.
+The Quantum Dice are used in pairs and are identical in both hardware and software. When switched on together, the dice automatically connect and communicate with each other.
 
-The base of the Quantum Die is a **black frame** holding six **TFT displays**, each mounted in a *display cup*.  
-The display cup colour indicates its orientation axis:
+### 2.1 Main Components
 
-- Front / Rear → **x-axis** → yellow  
-- Top / Bottom → **z-axis** → blue  
-- Left / Right → **y-axis** → red  
+Each Quantum Die consists of a **3D-printed Main Frame** with a **TFT display** on each of its six sides. The displays are mounted in coloured **Display Cups**.
+
+The colour of each Display Cup indicates its orientation axis:
+
+- **Front / Back**: x-axis, yellow
+- **Left / Right**: y-axis, red
+- **Top / Bottom**: z-axis, blue
 
 ![alt text](<../images/Exploded view Quantum Dice 3.png>)
 
-All electronics, including the ESP32-S3 module is soldered to a **Printed Circuit Board (PCB)** referred to as the **ProcessorPCB**.  
+Inside the die, a rechargeable **LiPo battery** supplies power to the electronics. The displays, communication, orientation sensing, and other functions are controlled by an **ESP32-S3 microcontroller** mounted on the PCB.
+
+### 2.2 PCB
+
+All electronics are integrated on a single double-sided **Printed Circuit Board (PCB)**.
+
 ![alt text](../images/PCBv42_Top_Bottom_view.png)
 
-This board also carries:
+The PCB includes:
 
-- connectors for the six displays  
-- an **Inertial Measurement Unit (IMU)** to detect physical orientation and motion
-- a **push-button**  
-- Power and battery charging management
-- A USB connector is present for software management and charging of the battery
+- the **ESP32-S3 microcontroller**
+- connectors for all six TFT displays
+- an **Inertial Measurement Unit (IMU)** to detect the orientation and movement of the die
+- a **push button**
+- power and battery charging management
+- a **USB-C connection** for firmware management and battery charging
 
-The ProcessorPCB is mounted on the **rear (yellow) display cup**.
+The PCB controls the six displays, monitors and manages the power supply, detects the orientation and movement of the die, and provides the communication required for the Quantum Dice to operate.
 
----
+The PCB is mounted on the yellow **Display Cup with flexible button tab**. The battery is mounted on the opposite yellow Display Cup.
 
-## 3. Sourcing of Materials
+More information about obtaining the PCB, either as a ready-to-use board from the **University of Twente** or by ordering and assembling it yourself, is provided in Section 3.2.
 
-All parts required to construct the Quantum Dice are listed in the **Bill of Materials (BOM)**.  
-The BOM can be found here: [BOM](<Bill of Material quantum dice.xlsx>).
 
-It is an Excel sheet containing all components and quantities. At the top of the sheet, you can specify the number of die you wish to build. The total quantities will update automatically.
+## 3. Parts and Sourcing
 
----
+All parts required to construct the Quantum Dice are listed in the **Bill of Materials (BOM)**.
 
-### 3.1 Quantum Dice Versions
+The BOM can be found here: [Bill of Materials](<Bill of Material quantum dice.xlsx>).
 
-Latest version is version 4. Information of previous versions can be found in the archive folders.
+In the BOM, you can specify the number of Quantum Dice you wish to build. The required quantities of all components are then calculated automatically.
 
----
+### 3.1 3D-Printed Parts
 
-### 3.2 Sourcing Electronic Components
+The required 3D-printed parts can either be **obtained from the University of Twente** or printed independently using the provided 3D-print files.
 
-#### ProcessorPCB
+The current design is **Series 4**. Design files for previous versions are available in the corresponding archive folders.
 
-The  **ProcessorPCB** can be obtained directly from the University of Twente:  
-[Quantum Dice by University of Twente](https://www.utwente.nl/en/mesaplus/education/quantum-dice/).
+All required STL files and additional information for 3D printing are included with the Quantum Dice design files. Detailed information about materials, print settings, and the individual components is provided in Chapter 4.
 
-The ProcessorPCB is supplied pre-configured with the latest firmware, including **IMU calibration** and **functional testing**.  
+### 3.2 PCB
 
-A set of **connection cables**, **screws**, and **bolts** is included.
+The **PCB** can either be obtained as a ready-to-use board from the **University of Twente** or ordered and assembled independently.
 
-Alternatively, if you have experience with microcontroller software and PCB design, you can order the PCBs yourself and flash the software manually.
+A PCB supplied by the University of Twente comes with the latest firmware installed and has been tested and calibrated. The required connection cables, screws, and other mounting hardware are also supplied with the board.
+
+[Quantum Dice by University of Twente](https://www.utwente.nl/en/mesaplus/education/quantum-dice/)
+
+If you have experience with PCB fabrication and microcontroller software, you can also order and assemble the PCB yourself using the provided production files.
 
 - [PCB fabrication files](<../PCB files>)
-- Firmware sources (Arduino) can be found [here](../firmware)
+- [Firmware source files](../firmware)
+- [Firmware installation instructions](link)
 
----
+> **Note:** If you order and assemble the PCB yourself, the firmware must be installed and the required configuration and calibration completed before the Quantum Die can be tested.
 
-#### Displays and Battery
+### 3.3 TFT Displays
 
-The links to obtain the TFT displays are included in the **BOM file**.
+Each Quantum Die requires **six TFT displays**. The recommended display type and links to suppliers are included in the **BOM**.
 
-Links for sourcing **LiPo batteries** are also included, although availability may vary.  
-If a listed supplier is unavailable, equivalent alternatives can be used.
+The displays require some preparation before they can be installed in the Display Cups. This is described in Chapter 6.
+
+### 3.4 Battery
+
+Each Quantum Die requires one rechargeable **3.7 V LiPo battery**. Links to suitable batteries are included in the BOM. Availability may vary, so equivalent batteries from other suppliers can also be used.
+
+The battery should meet the following specifications:
+
+- **Type:** 3.7 V LiPo
+- **Capacity:** > 1000 mAh
+- **Maximum height/width:** 50 mm
+- **Maximum thickness:** 18 mm
+- **Connector:** JST-PH, 2-pin, 2.0 mm pitch
+
+LiPo battery dimensions are commonly indicated by a six-digit size code. For example, in **xx3048**, `xx` indicates the battery thickness, `30` indicates a width of 30 mm, and `48` indicates a height of 48 mm.
 
 ![alt text](<../images/123048 battery.jpg>)
 
-**Battery specifications:**
+### 3.5 Cables and Other Components
 
-- **Type:** 3.7 V LiPo  
-- **Protection:** Built-in protection circuit (hidden under the black tape in the image above)  
-- **Capacity:** ~ 1700 mAh  
-- **Dimensions:** Maximum height 48 mm, width 35 mm. Thickness typically 9–12 mm (depending on capacity)  
-- **LiPo Code:** e.g. *903048* → 9 mm thick, 30 mm wide, 48 mm high  
-- **Connector:** JST-PH 2.0
+The Quantum Die uses two main types of cables:
 
----
+- **6 FPC cables** to connect the six TFT displays to the PCB
+- **1 USB-C extension cable** to make the PCB's USB-C connection accessible from outside the Quantum Die for firmware management and battery charging
 
-#### Flat cable and wire set
+Additional cables and mounting components, including the battery cable, screws, and other fasteners, are listed in the BOM.
 
-The following cables are required, as illustrated in the figure below:
+Use the BOM as the reference for the required quantities and specifications before starting the assembly.
 
-TO BE ADDED
-2 types of wiring are used:
 
-- 6 flat cable to connect displays to the **ProcessorPCB**
-- USB-C cable to bring the USB-C connector outside the Quantumd Dice for software and charging.
+## 4. 3D Printing
 
----
+If you obtain the 3D-printed parts from the **University of Twente**, you can skip this chapter and continue with Chapter 5.
 
-## 4. Sourcing 3D-Printed Parts
+If you print the parts yourself, we recommend using **TPU for the Main Frame** and **PLA or PETG for the Display Cups and Backplanes**.
 
-### 4.1 Printing with TPU
+### 4.1 Recommended Materials
 
-Printing **TPU (Thermoplastic Polyurethane)** requires special care.
+The **Main Frame** is printed in one piece and is designed to be made from flexible **TPU**. The flexibility of the frame helps protect the displays and electronics from impacts when the die is rolled.
 
-1. **Dry the filament** before use to avoid stringing.  
-2. **Reduce printing speed**, particularly on fast printers like the Prusa Core One or Bambu Lab models.  
-3. TPU **cannot be used** with Bambu Lab’s **AMS system** or Prusa’s **MMU3** because these systems push filament into the print head. TPU must instead be **pulled** due to its elasticity.
+A TPU hardness of **95A or 40D** is recommended.
 
-A hardness of **95A** or **40D** is recommended.
+The remaining components, including the **Display Cups** and **Backplanes**, can be printed in **PLA or PETG**.
 
-**Examples of TPU suppliers:**
+It is also possible to print the Main Frame in PLA or PETG instead of TPU. However, these materials are rigid and provide less protection against impacts. If you use a rigid Main Frame, we recommend rolling the Quantum Dice on a **soft surface**, such as a yoga mat or foam pad.
 
-- [TPU 95A HF](https://eu.store.bambulab.com/products/tpu-95a-hf) – available in multiple colours.  
-- [Fiberlogy Fiberflex-40D](https://www.3djake.nl/fiberlogy/fiberflex-40d) – limited colour options; system preset available for Prusa3D (reduce print speed to ~60%).
+### 4.2 Printing with TPU
 
-For more details on TPU printing:
+Printing TPU requires some additional care:
+
+1. **Dry the filament before printing** to reduce stringing and improve print quality.
+2. **Use a reduced printing speed**, particularly when using fast printers such as the Prusa Core One or Bambu Lab models.
+3. TPU should not be used with filament systems that require the flexible filament to be pushed over a long distance, such as the **Bambu Lab AMS** or **Prusa MMU3**. Feed the TPU directly into the print head instead.
+
+Examples of suitable TPU filaments include:
+
+- [Bambu Lab TPU 95A HF](https://eu.store.bambulab.com/products/tpu-95a-hf)
+- [Fiberlogy Fiberflex-40D](https://www.3djake.nl/fiberlogy/fiberflex-40d)
+
+For additional information about printing TPU:
 
 - [Bambu Lab TPU Printing Guide](https://wiki.bambulab.com/en/knowledge-sharing/tpu-printing-guide)
-- [How to Improve TPU Print Quality on Bambu Lab X1 Carbon (YouTube)](https://youtu.be/yN3RximKNiE?si=DYWy9xm7ewkI_fWw)
+- [How to Improve TPU Print Quality on Bambu Lab X1 Carbon](https://youtu.be/yN3RximKNiE?si=DYWy9xm7ewkI_fWw)
 
-If printing TPU yourself is not practical, you can **outsource the job**.  
-Several companies offer TPU printing services. The **price** mainly depends on the **printing method**:
+### 4.3 3D-Printed Components
 
-- **Fused Deposition Modelling (FDM):** cheaper  
-- **Selective Laser Sintering (SLS):** higher quality but more expensive  
+For each Quantum Die, the following parts are required:
 
-Recommended supplier (based on experience):  
-[JLC3D FDM Printing](https://jlc3dp.com/3d-printing/fused-deposition-modeling) – good quality at reasonable cost.
+- 1 × black **Main Frame**
+- 2 × red **Display Cups**
+- 2 × blue **Display Cups**
+- 1 × yellow **Display Cup with flexible button tab**
+- 1 × yellow **Display Cup with USB-C port opening**
+- 1 × yellow **PCB Display Backplane**
+- 1 × yellow **Battery Display Backplane**
 
----
+The two yellow Display Cups differ from the red and blue Display Cups. One yellow cup is used to mount the **PCB**, while the other is used to mount the **battery** and provide access to the **USB-C connector**.
 
-### 4.2 3D-Printed Components
+Support is required for printing the Display Cups and the Main Frame.
 
-All 3D models are supplied in **STL format**.  
-Filenames include the **colour**, **material**, and a **version number**.
+### 4.4 Print Files
 
-Each Quantum Die consists of the following printed components:
+All 3D models are supplied in **STL format**. The filenames include the part name, recommended material, colour, and version number.
 
-#### Display Cups (for mounting TFT displays)
+For convenience, **3MF build plates** containing the required parts are also provided. These files were prepared using **PrusaSlicer**, but can also be imported into **Bambu Studio**.
 
-- Three colour variants for the X, Y, and Z axes.
-- The **yellow display cups** (front and rear) differ from the others, as they are designed to hold the **ProcessorPCB** and the **battery**. 2 additional parts must be printed to support the mounting. The front Display cups has an integrated button and the rear Display Cup holds the USB-C connector.
-- **Support** is required for printing these parts.
+Depending on the printer and build plate size, some rearrangement of the parts may be required.
 
-#### TPU frame part (black)
+For additional information about the print files, orientation, and support settings, see the [3D print files README](README.md).
 
-The frame is printed in one piece using TPU. Support is required. Due to the complexity of TPU printing it is recommended to outsource the printing. See [3D print files README](README.md) for more information
+### 4.5 Outsourcing 3D Printing
 
-#### Selecting Parts
+If printing TPU yourself is not practical, the parts can be produced by a 3D-printing service.
 
-In the provided **Excel sheet**, fill in the number of dice required.
-The sheet will calculate which 3D files and electronic parts are needed.
+Because the Main Frame is printed in flexible TPU and requires support, outsourcing the Main Frame can be a convenient option.
 
----
+Several printing methods are available:
 
-## 5. Assembly of 3D-Printed Parts
+- **Fused Deposition Modelling (FDM):** generally lower cost
+- **Selective Laser Sintering (SLS):** generally higher cost, with different surface and mechanical properties
 
-### 5.1 Introduction
+A supplier we have used successfully is [JLC3D FDM Printing](https://jlc3dp.com/3d-printing/fused-deposition-modeling).
 
-The following instructions describe the assembly of **one Quantum Die**.  
-If you are building a pair of dice, you will need to follow this procedure **twice**.
 
----
+![alt text](<../images/parts.png>)
 
-### 5.2 Required Tools
 
-In addition to the Quantum Dice components themselves, you will need the following tools:
+## 5. Preparing the 3D-Printed Parts
 
-- Soldering iron  
-- Screwdrivers hex key (2 mm and 2,5 mm)  
-- Cutting pliers  
-- CA-glue e.g. LOCTITE 406 for plastics
-- Double sided foam tape
+Before installing the electronics, prepare the 3D-printed parts as described below.
 
-![alt text](<../images/utensils.png>)
+### 5.1 Required Tools
+You will need:
+- 2 mm and 2.5 mm hex keys
+- cutting pliers
+- **cyanoacrylate (CA) glue**, such as Loctite 406 for plastics
+- tape
 
----
+### 5.2 Gluing the PCB Display Backplane
 
-### 5.3 3D-Printed Components per Die
+The **PCB Display Backplane** must be glued to the yellow **Display Cup with flexible button tab** before the PCB can be mounted.
 
-For each Quantum Die, print the following components (see figure [x]):
+1. Apply a few drops of **CA glue** to the recessed edge of the Display Cup.
+2. Carefully position the **PCB Display Backplane** on the Display Cup.
+3. Press the Backplane firmly into place.
+4. Allow the glue to cure before continuing.
 
-- 1 × black **top frame**  
-- 1 × black **bottom frame**  
-- 2 × yellow **display cups** + 2 × yellow **display backplanes**  
-- 2 × red **display cups** + 2 × red **display backplanes**  
-- 2 × blue **display cups** + 2 × blue **display backplanes**  
-- 1 × **battery mount**
-
-![alt text](<../images/3D_Print_Parts.png>)
-
-> **Note:** The design of the display backplanes differs per colour. The yellow ones have additional mounting features for the PCBs.
-
----
-
-### 5.4 Mounting the Charger Cable
-
-Insert the **USB-C charging connector** firmly into the opening of the designated **yellow display cup**.  
-A small amount of pressure may be required to click it into place.
-
-![alt text](<../images/Yellow_USB.png>)
-
----
-
-### 5.5 Installing Threaded Inserts
-
-After printing all components, **threaded inserts** must be installed in several parts. These inserts are used for screwing the dice together securely.
-
-Threaded inserts are required in:
-
-- the **black frame**, and  
-- both **yellow display cups**
-
-**Procedure:**
-
-1. Place each insert into its designated hole with the **smooth side facing outwards**. The insert should initially sit about one-third deep.  
-2. Touch the insert gently with a **heated soldering iron**.  
-3. Apply slight downward pressure so that the insert melts into the plastic until it sits flush with the surface (see figure).  
-
-Allow the plastic to cool completely before continuing.
-
-![alt text](<../images/Melting_Inserts.png>)
-
----
-
-### 5.6 Gluing the Backplanes
-
-Attach the **backplanes** to their respective **display cups** using **cyanoacrylate (CA) glue** such as *Loctite 406 for plastics*.
-
-**Instructions:**
-
-- Apply only a few drops of glue to the recessed edge of the display cup.  
-- Avoid excess glue, as it may overflow and permanently bond parts that should remain separate.  
-- Press the backplane firmly in place and allow it to cure.
+> **Warning:** Use only a small amount of glue. Excess glue may overflow into the Display Cup or onto other surfaces.
 
 ![alt text](<../images/Gluing.png>)
-
 ---
 
-## 6. Preparing Electronic Parts and Displays
+## 6. Preparing the Electronics and Displays
 
-### 6.1 Introduction
+Before assembling the Quantum Die, prepare the PCB and the six TFT displays as described below.
 
-This section describes the preparation of the electronic components before assembly.  
-If you sourced pre-assembled boards from the **University of Twente**, some steps (such as soldering) may be skipped.
+### 6.1 Required Parts and Tools
 
----
+You will need:
 
-### 6.2 Materials and Required Tools
+- 1 × **PCB**
+- 6 × **TFT displays**
+- FPC cables
+- USB-C charging cable
+- battery cable
+- M3 screws
+- cutting pliers
+- soldering iron
 
-- ProcessorPCB  
-- PowerPCB  
-- Six TFT displays  
-- FPC cables (flat ribbon cables)  
-- Battery and charger cables  
-- M3 screws and threaded inserts  
+### 6.2 Soldering the Push Buttons
 
----
+> **Skip this step if the PCB was supplied by the University of Twente.**
 
-### 6.3 Soldering Push Buttons  
+Solder the required **push buttons** onto the **PCB**.
 
-*(Skip this step if electronics were sourced from the University of Twente.)*
+Ensure that the push buttons are correctly positioned and that the solder joints are clean. Avoid overheating the PCB or components while soldering.
 
-Solder the push buttons onto both the **PowerPCB** and **ProcessorPCB** as indicated in the circuit diagram.  
-Ensure clean solder joints and avoid overheating the components.
+### 6.3 Removing the Original Display Connectors
 
----
+Before mounting the TFT displays into the Display Cups, the original **grey plastic connectors and pins** must be removed from all six displays.
 
-### 6.4 Removing Display Connectors
+1. Use **cutting pliers** to make two cuts along the sides of the grey connector housing. This separates the plastic housing from the display board.
+2. Grip the connector with pliers and gently rock it back and forth along its short side until the connector and pins detach from the display.
+3. Remove the **protective foil stickers** covering the screw holes.
 
-*(Skip this step if displays were sourced from the University of Twente.)*
-
-Before the TFT displays can be mounted in their cups, the **grey plastic connectors** (and their pins) on the displays must be removed.  
-This is necessary because alternative connectors will be used later.
-
-**Procedure:**
-
-1. Use a **pair of cutting pliers** to make two cuts along the sides of the grey connector housing.  
-   This will release the plastic frame from the display board.  
-2. Grip the connector firmly with pliers and gently rock it back and forth along its short side until it detaches, bringing the metal pins with it.  
-   The displays can withstand moderate force.  
-3. Remove any **protective foil stickers** covering the screw holes so the displays can later be mounted into the cups.
+> **Note:** Some force may be required to remove the connectors. Work carefully to avoid damaging the display or other components on the display board.
 
 ![alt text](<../images/Display_Connector_Removal.png>)
 
 ![alt text](<../images/display_con.gif>)
----
 
-### 6.5 Mounting Displays into Display Cups
+### 6.4 Mounting the Displays into the Display Cups
 
-1. Insert each display into the back of its display cup. Some pressure may be needed.  
-   If a display does not fit properly due to a slightly protruding edge, carefully sand the plastic with fine sandpaper.  
-2. Fix the displays in place using **black countersunk M3×6 screws**.  
-3. Test-fit the **yellow** and **red** display cups into the **lower black frame** to verify alignment.  
+Repeat the following procedure for all six displays:
+
+1. Insert the display into the back of its **Display Cup**. Some pressure may be required.
+2. If the display does not fit properly because of a slightly protruding edge, carefully remove a small amount of material from the Display Cup using fine sandpaper.
+3. Secure the display using **countersunk M3×6 screws**. In most cases, **two screws per display are sufficient** to hold the display securely in place.
 
 ![alt text](<../images/Displ_Mount.png>)
 
-> **Note:**  
-> On the inside of each yellow and red display cup you will find a “^” symbol. This symbol must always point **upwards** when mounted in the frame.
+### 6.5 Mounting the USB-C Connector
+
+Insert the **USB-C connector** firmly into the opening of the yellow **Display Cup with USB-C port opening**.
+
+A small amount of pressure may be required to click the connector securely into place.
+
+### 6.6 Installing the Firmware
+
+If you are using a PCB supplied by the **University of Twente**, the firmware is already installed and the PCB has been tested and calibrated. You can skip this section.
+
+If you ordered and assembled the PCB yourself, install the firmware before continuing with the final assembly. Complete any required configuration and calibration as described in the firmware instructions.
+
+[Installing the Quantum Dice firmware](link)
+
+> **Note:** The firmware must be installed before performing the display tests in Chapter 7.
 
 ---
-
 ## 7. Assembling the Quantum Die
 
-### 7.1 Introduction
+With all 3D-printed and electronic components prepared, the Quantum Die can now be assembled.
 
-This final section describes how to assemble all components, attach the cables, mount the **ProcessorPCB** and **PowerPCB**, and complete the housing of the Quantum Die.
+### 7.1 Connecting FPC Cables
 
----
-
-### 7.2 Connecting FPC Cables to FPC Connectors (Sliding-Latch Type)
-
-Before connecting all displays, it is important to understand how to attach the **FPC cables** (flat ribbon cables) correctly to the **FPC connectors**.  
-Locking and unlocking these connectors can be delicate, so follow the instructions carefully.
+The displays are connected to the PCB using **FPC cables** (flat ribbon cables) with sliding-latch connectors. These connectors are delicate, so handle them carefully.
 
 ![alt text](<../images/FPC slide lock.png>)
 
-#### Steps
+To connect an FPC cable:
 
-1. **Unlock the connector**  
-   On the back of each display there is a small FPC terminal.  
-   Gently pull the **sliding latch** into the *open position*.  
-   Do not apply excessive force.
+1. **Unlock the connector** by gently pulling the sliding latch into the open position. Do not apply excessive force.
+2. **Insert the FPC cable** straight into the connector until it reaches the mechanical stop.
+3. **Lock the connector** by pushing the sliding latch back into the closed position while keeping the cable fully inserted.
+4. **Check the connection** and make sure the cable is fully inserted and securely locked.
 
-2. **Insert the FPC cable**  
-   Align the **contact side** of the FPC cable with the connector terminals.  
-   When inserting, ensure that the **blue side** of the cable faces upwards – this is also the side with the small notch on the connector.  
-   Carefully slide the cable straight in until it stops.
+> **Important:** Pay attention to the orientation of the FPC cable. The **blue side of the cable must face away from the indentation of the FPC connector**.
 
-3. **Lock the connector**  
-   Push the sliding latch back into the *closed position* to secure the cable.  
-   Check that the cable remains fully inserted during this step.
+![alt text](<../images/construction_cable_mount.png>)
 
-4. **Verify the connection**  
-   Confirm visually that the **blue marking** on the FPC cable is flush with the connector housing.
+### 7.2 Connecting the PCB Display Cup
 
-![alt text](<../images/Cable_Mount.png>)
+The six display connectors on the PCB are labelled **TOP**, **BOTTOM**, **LEFT**, **RIGHT**, **FRONT**, and **BACK**.
 
----
+Start with the yellow **Display Cup with flexible button tab**. This Display Cup holds the PCB and forms the **BACK** side of the die.
 
-### 7.3 ProcessorPCB and Display Connections
+1. Insert the **short 60 mm FPC cable** into the display connector.
+2. Connect the other end of the cable to the PCB connector labelled **BACK**.
+3. Attach the **PCB** to the **PCB Display Backplane** using M3 hex screws.
 
-Now connect the displays to the **ProcessorPCB**.
+![alt text](<../images/construction_cable_mount_frame.png>)
 
-Each connector on the ProcessorPCB is labelled as follows:  
-**TOP**, **BOTTOM**, **LEFT**, **RIGHT**, **FRONT**, **BACK**
+### 7.3 Preparing the Battery Display Cup
 
-Start with the **yellow display cup** that does **not** contain the USB-C charger port.  
-This cup connects to the **ProcessorPCB**.
+Next, prepare the yellow **Display Cup with USB-C port opening**. This Display Cup holds the battery and forms the **FRONT** side of the die.
 
-**Instructions:**
+1. Insert the **long FPC cable** into the display connector.
+2. Apply **double-sided foam tape** to the side of the **Battery Display Backplane** marked **BATTERY**.
+3. Mount the **battery** onto the double-sided foam tape.
+4. Attach the **Battery Display Backplane**, with the battery mounted, to the Display Cup using M3 hex screws.
+5. Place the completed yellow Display Cup into the **Main Frame**.
 
-1. Insert the **short 60 mm FPC cable** into the display connector of the **rear (yellow) display cup** (see previous section).  
-2. While holding the ProcessorPCB vertically, insert the same cable into the **rightmost connector** on the board, labelled *BACK*.  
-3. Attach the ProcessorPCB to the yellow cup using **M3 hex screws**.  
-4. Unlock the remaining five FPC connectors on the ProcessorPCB.  
-5. Insert the following FPC cables:
-   - Four **medium-length** cables into *TOP*, *BOTTOM*, *LEFT*, and *RIGHT* connectors.  
-   - One **long** cable into the *FRONT* connector.  
-   - Leave the *FRONT* cable disconnected for now from the display side.  
-6. Remember: the **blue side** of each cable must face **away** from the indentation of the connector.
+>The Main Frame itself does not have a predefined orientation. Use the **arrow on the inside of the yellow Display Cup** to establish the orientation of the die. From this point onwards, the direction indicated by the arrow defines the **TOP** of the die and serves as the reference for the remaining assembly.
 
-![alt text](<../images/Cable_Mount_Frame.png>)
+![alt text](<../images/construction_battery_cup.png>)
 
----
+### 7.4 Connecting the Remaining FPC Cables
 
-### 7.4 Left and Right (Red) Display Cup Installation
+With the FRONT and BACK displays prepared, connect the remaining FPC cables to the PCB.
 
-Repeat the same process for the **Left** and **Right** (red) display cups.
+1. Unlock the remaining five FPC connectors on the PCB.
+2. Insert four **medium-length FPC cables** into the connectors labelled **TOP**, **BOTTOM**, **LEFT**, and **RIGHT**.
+3. Connect the long FPC cable from the yellow FRONT Display Cup to the connector labelled **FRONT**.
 
-1. Insert each FPC cable into its display connector.  
-2. Attach the other ends to the **LEFT** and **RIGHT** connectors on the ProcessorPCB.  
-3. Place the **lower black frame** on its side.  
-   You can now install the **rear yellow cup** (with ProcessorPCB) into the frame, followed by the two **red cups**.
+Make sure all FPC cables are fully inserted and securely locked.
 
----
+![alt text](<../images/construction_longFPC_to_PCB.png>)
 
-### 7.5 PowerPCB and Front Display Cup
+### 7.5 Mounting the PCB Display Cup into the Main Frame
 
-Next, prepare the **front (yellow) display cup**.  
-This one holds the **PowerPCB** and the **battery**.
+1. Connect the **battery cable** to the PCB.
+2. Connect the **six-wire power cable** to the PCB.
+3. You may need to hold the PCB and its Display Cup close to the Main Frame while connecting the cables, as the cables are relatively short.
+4. Insert the yellow **PCB Display Cup** into the Main Frame on the side opposite the yellow Battery Display Cup.
+5. Make sure the **arrows on the inside of both yellow Display Cups point upwards**.
+6. Guide the remaining FPC cables through their corresponding openings in the Main Frame:
+   - **LEFT** and **RIGHT** through the openings on the sides
+   - **TOP** through the opening at the top
+   - **BOTTOM** through the opening at the bottom
 
-1. Insert the **long FPC cable** into the yellow display connector (the one with the **USB-C port**).  
-2. Attach the **PowerPCB** to the cup using **M3 hex screws**, ensuring the USB-C port aligns with its opening.  
-3. Mount **M3×6 + 6 mm standoffs** onto the corners of the PowerPCB.  
-4. Connect the **charger** and **battery cables** to the PowerPCB.  
-5. Use **double-sided foam tape** to fix the **battery** onto its **holder**.  
-6. Mount the **battery holder** (with battery attached) onto the **standoffs**.  
-7. Connect the **four-wire power cable** between the **PowerPCB** and **ProcessorPCB**.  
-8. Finally, connect the **long FPC cable** (from the front display) to the **FRONT connector** on the ProcessorPCB.
+> **Warning:** Avoid pulling, sharply bending, or pinching the FPC cables during assembly.
 
-![alt text](<../images/PowerPCB.png>)
+![alt text](<../images/construction_PCB_battery_connect.png>)
 
-From januari 2026 a different connector of the lipo battery is in use (JST-PH 2.0). See image on how to connect this battery to the PowerPCB.
-![alt text](<../images/battery connection.jpg>)
+### 7.6 Mounting the Red Display Cups
 
----
+Mount the **LEFT** and **RIGHT** red Display Cups.
 
-### 7.6 Testing the Displays
+1. Insert the **LEFT** FPC cable into the display in the corresponding red Display Cup and close the FPC connector latch.
+2. Repeat this procedure for the **RIGHT** Display Cup.
+3. Make sure the FPC cables are oriented so that they do not need to twist when the Display Cups are inserted.
+4. Insert both red Display Cups into the **Main Frame**.
 
-At this stage, it is recommended to **test all displays**.
+> **Warning:** An FPC cable can become trapped between a Display Cup and the Main Frame when the cup is pressed into place. Gently guide the cables into the central cavity of the die while inserting the Display Cups. Avoid pinching, sharply bending, or placing excessive stress on the cables.
 
-1. Connect the **four-wire power cable** to the ProcessorPCB.  
-2. Switch on the power by pressing the **front push button** (located on the cup marked with a small circular indentation).  
-3. All displays should show the **startup sequence**, including the **current battery voltage**.  
+![alt text](<../images/construction_red_cups.png>)
 
-If one or more displays remain blank, check all FPC connections and ensure each latch is properly closed.
+### 7.7 Initial Display Test
 
-> **Tip:**  
-> You may want to cover the green indicator LED with a small piece of tape to diffuse the light during operation.
+Before mounting the blue Display Cups, test the four displays that are currently connected.
 
----
+1. Switch on the Quantum Die by pressing the **push button** through the flexible button tab in the yellow Display Cup.
+2. Check that all connected displays show the **startup sequence**.
 
-### 7.7 Mounting the Display Cups into the Frame
+If one or more displays remain blank, switch off the Quantum Die and check the corresponding FPC cable and connector before continuing.
 
-Now you can begin placing the display cups into the **lower black frame** and close it with the **upper frame**.
+> **Note:** This test requires the firmware to be installed on the PCB. See Section 6.6.
 
-1. Insert the **four side display cups** (left, right, front, back) into the lower frame.  
-   Ensure that the **V-marking** inside each cup points **upwards**.  
-2. **Avoid tension** or sharp bends in the FPC cables.  
-   Gently guide the cables so they fold neatly inside the central cavity of the dice.
+### 7.8 Mounting the Blue Display Cups
 
-> Excessive stress or bending can damage the FPC cables. Handle them carefully.
+Finally, mount the **BOTTOM** and **TOP** blue Display Cups.
 
-1. Test the display connections again by powering on the dice.  
-2. Slide the **upper frame** onto the lower frame, ensuring that the cables do not become pinched.  
-   Press down evenly until the two halves fit together securely.
+1. Insert the **BOTTOM** FPC cable into the display in one of the blue Display Cups and close the FPC connector latch.
+2. Make sure the cable does not need to twist when the Display Cup is inserted.
+3. Insert the bottom blue Display Cup into the **Main Frame**.
+4. Insert the **TOP** FPC cable into the display in the remaining blue Display Cup and close the FPC connector latch.
+5. Make sure the cable does not need to twist when the Display Cup is inserted.
+6. Insert the top blue Display Cup into the **Main Frame**.
 
-![alt text](<../images/Mount_in_Frame.png>)
+> **Warning:** The FPC cables can become trapped between the Display Cups and the Main Frame. Gently guide the cables into the central cavity while inserting the Display Cups.
 
----
+![alt text](<../images/construction_blue_cups.png>)
 
-### 7.8 Bottom Display Cup (Blue)
+## 8. Final Test and Completion
 
-1. Guide the **bottom FPC cable** through the opening in the lower frame.  
-2. Ensure that the **blue side of the cable** faces upwards.  
-3. Insert the FPC cable into the display connector and close the latch.  
-4. Mount the **bottom blue display cup** into the frame, but do **not fully fix it** yet.
+The Quantum Die is now fully assembled.
 
----
+1. Switch on the Quantum Die.
+2. Check that **all six displays** show the startup sequence.
+3. Verify that the **battery voltage** is displayed correctly.
+4. Check that none of the Display Cups or FPC cables are loose or under tension.
 
-### 7.9 Top Display Cup (Blue)
+If one or more displays remain blank, switch off the Quantum Die and check the corresponding FPC cable and connector.
 
-1. Use the **blue display cup**
-2. Check that all connections are secure and aligned.  
-3. Screw the **top display cup** firmly into place.
+If you are using a PCB supplied by the **University of Twente**, the firmware, configuration, and calibration have already been completed. If you assembled the PCB yourself, make sure that all required firmware installation, configuration, and calibration steps have been completed.
 
-![alt text](<../images/Blue_Cup_Mount.png>)
+## Congratulations!
 
----
+You have successfully built a **Quantum Die**.
 
-### 7.10 Final Testing and Completion
+When two Quantum Dice are switched on, they automatically connect and communicate with each other. Your Quantum Dice are now ready for use.
 
-Power on the Quantum Die once more to confirm that all six displays light up correctly and the startup sequence appears. The dice should now function automatically if you are using PCBs sourced from the **University of Twente**.
+For instructions on how to use the Quantum Dice and the available demonstrations, see [Using the Quantum Dice](link).
 
----
-
-## Congratulations
-
-You have successfully built your own **Quantum Die**.  
-When used in a pair, the dice will communicate automatically based on their configured MAC addresses (*A – Alice* and *B – Bob*).  
-Your Quantum Dice are now ready for demonstration, experimentation, or educational use.
+![alt text](<../images/construction_final.png>)
