@@ -14,7 +14,7 @@ The Quantum Dice are designed to make abstract quantum-mechanical concepts such 
 
 The dice are used in pairs. Both share identical software and 3D-printed parts.
 
-Each Quantum Die consists of a **3D-printed frame** with electronic displays on all six sides. The displays are driven by a **microcontroller unit (MCU)** – an **ESP32-S3** module equipped with an orientation sensor and a random generator. Power is supplied by a rechargeable battery.
+Each Quantum Die consists of a **3D-printed frame** with electronic displays on all six sides. The displays are driven by a **microcontroller unit (MCU)** – an **ESP32-S3** module equipped with an orientation sensor. Power is supplied by a rechargeable battery.
 
 The base of the Quantum Die is a **black frame** holding six **TFT displays**, each mounted in a *display cup*.  
 The display cup colour indicates its orientation axis:
@@ -25,34 +25,25 @@ The display cup colour indicates its orientation axis:
 
 ![alt text](<../images/Exploded view Quantum Dice 3.png>)
 
-The ESP32 module is soldered to a **Printed Circuit Board (PCB)** referred to as the **ProcessorPCB**.  
+All electronics, including the ESP32-S3 module is soldered to a **Printed Circuit Board (PCB)** referred to as the **ProcessorPCB**.  
+![alt text](../images/PCBv42_Top_Bottom_view.png)
+
 This board also carries:
 
 - connectors for the six displays  
-- an **Inertial Measurement Unit (IMU)** to detect physical orientation and motion  
-- a **cryptographic chip**  
+- an **Inertial Measurement Unit (IMU)** to detect physical orientation and motion
 - a **push-button**  
+- Power and battery charging management
+- A USB connector is present for software management and charging of the battery
 
 The ProcessorPCB is mounted on the **rear (yellow) display cup**.
-
-To power the system, a second PCB – the **PowerPCB** – is mounted on the **front (yellow) display cup**.  
-It provides power to the ProcessorPCB via a **four-wire cable** and includes:
-
-- a **battery connector**  
-- a **power on/off button**  
-- a **voltage regulator**  
-- a **charging circuit** with a **USB-C connector**
-
-The MCU monitors the battery voltage continuously.
-
-![alt text](<../images/board layout.png>)
 
 ---
 
 ## 3. Sourcing of Materials
 
 All parts required to construct the Quantum Dice are listed in the **Bill of Materials (BOM)**.  
-The BOM can be found here: [BOM](/3D%20print%20files/Bill%20of%20Material%20quantum%20dice.xlsx).
+The BOM can be found here: [BOM](<Bill of Material quantum dice.xlsx>).
 
 It is an Excel sheet containing all components and quantities. At the top of the sheet, you can specify the number of die you wish to build. The total quantities will update automatically.
 
@@ -60,26 +51,25 @@ It is an Excel sheet containing all components and quantities. At the top of the
 
 ### 3.1 Quantum Dice Versions
 
-Not applicable anymore
+Latest version is version 4. Information of previous versions can be found in the archive folders.
 
 ---
 
 ### 3.2 Sourcing Electronic Components
 
-#### PowerPCB and ProcessorPCB
+#### ProcessorPCB
 
-The **PowerPCB** and **ProcessorPCB** can be obtained directly from the University of Twente:  
+The  **ProcessorPCB** can be obtained directly from the University of Twente:  
 [Quantum Dice by University of Twente](https://www.utwente.nl/en/mesaplus/education/quantum-dice/).
 
 The ProcessorPCB is supplied pre-configured with the latest firmware, including **IMU calibration** and **functional testing**.  
-Each board is labelled with its **MAC address** (on the rear side) and its assigned **role (A or B)**.
 
 A set of **connection cables**, **screws**, and **bolts** is included.
 
 Alternatively, if you have experience with microcontroller software and PCB design, you can order the PCBs yourself and flash the software manually.
 
-- PCB fabrication files: [PCB fabrication files](../PCB%20files/)
-- Arduino sketches can be downloaded [here](/Arduino/QuantumDice/)
+- [PCB fabrication files](<../PCB files>)
+- Firmware sources (Arduino) can be found [here](../firmware)
 
 ---
 
@@ -106,15 +96,12 @@ If a listed supplier is unavailable, equivalent alternatives can be used.
 #### Flat cable and wire set
 
 The following cables are required, as illustrated in the figure below:
-![alt text](../images/cablingSet.png)
 
-From left to right:
+TO BE ADDED
+2 types of wiring are used:
 
-- FFC flat cable (various lengths available) for connecting the displays to the ProcessorBoard
-- 4-wire power cable for connecting the PowerBoard to the ProcessorBoard
-- USB-C charging cable for connecting to the PowerBoard
-
-Detailed specifications and sourcing information are available in the BOM. UTwente can supply a complete cable set with the ProcessorBoard and PowerBoard
+- 6 flat cable to connect displays to the **ProcessorPCB**
+- USB-C cable to bring the USB-C connector outside the Quantumd Dice for software and charging.
 
 ---
 
@@ -160,25 +147,18 @@ Each Quantum Die consists of the following printed components:
 
 #### Display Cups (for mounting TFT displays)
 
-- Three colour variants for the X, Y, and Z axes.  
-- Each cup requires a **backplane** that must be **glued** onto it.  
-- The **yellow backplanes** (front and rear) differ from the others, as they are designed to hold the **PowerPCB** and **ProcessorPCB**.  
-- An additional backplane is used to mount the **battery**.  
-- **No support** is required for printing these parts.
+- Three colour variants for the X, Y, and Z axes.
+- The **yellow display cups** (front and rear) differ from the others, as they are designed to hold the **ProcessorPCB** and the **battery**. 2 additional parts must be printed to support the mounting. The front Display cups has an integrated button and the rear Display Cup holds the USB-C connector.
+- **Support** is required for printing these parts.
 
-#### Upper and Lower Frame Parts (black)
+#### TPU frame part (black)
 
-- Printed flat-side down on the print plate.  
-- **Supports are required** for these components.
+The frame is printed in one piece using TPU. Support is required. Due to the complexity of TPU printing it is recommended to outsource the printing. See [3D print files README](README.md) for more information
 
 #### Selecting Parts
 
-In the provided **Excel sheet**, fill in the number of dice required for roles A and B.  
+In the provided **Excel sheet**, fill in the number of dice required.
 The sheet will calculate which 3D files and electronic parts are needed.
-
-For convenience, **3MF build plates** containing all required parts are included.  
-These were created using **PrusaSlicer**, but they can also be used in **Bambu Studio**.  
-Minor rearrangements of parts may be necessary.
 
 ---
 
