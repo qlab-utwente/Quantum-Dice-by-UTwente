@@ -216,7 +216,7 @@ The **PCB Display Backplane** must be glued to the yellow **Display Cup with fle
 
 > **Warning:** Use only a small amount of glue. Excess glue may overflow into the Display Cup or onto other surfaces.
 
-![alt text](<../images/construction_Gluing.png>)
+![alt text](<../images/construction_gluing.png>)
 ---
 
 ## 6. Preparing the Electronics and Displays
@@ -256,7 +256,7 @@ Before mounting the TFT displays into the Display Cups, the original **grey plas
 
 ![alt text](<../images/construction_Display_Connector_Removal.png>)
 
-![alt text](<../images/construction_display_con.gif>)
+![alt text](<../images/display_con.gif>)
 
 ### 6.4 Mounting the Displays into the Display Cups
 
@@ -266,7 +266,7 @@ Repeat the following procedure for all six displays:
 2. If the display does not fit properly because of a slightly protruding edge, carefully remove a small amount of material from the Display Cup using fine sandpaper.
 3. Secure the display using **countersunk M3×6 screws**. In most cases, **two screws per display are sufficient** to hold the display securely in place.
 
-![alt text](<../images/construction_Displ_Mount.png>)
+![alt text](<../images/construction_displ_mount.png>)
 
 ### 6.5 Mounting the USB-C Connector
 
