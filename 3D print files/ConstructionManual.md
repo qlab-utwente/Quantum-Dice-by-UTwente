@@ -103,7 +103,7 @@ The battery should meet the following specifications:
 
 LiPo battery dimensions are commonly indicated by a six-digit size code. For example, in **xx3048**, `xx` indicates the battery thickness, `30` indicates a width of 30 mm, and `48` indicates a height of 48 mm.
 
-![alt text](<../images/123048 battery.jpg>)
+![alt text](<../images/construction_123048 battery.jpg>)
 
 ### 3.5 Cables and Other Components
 
@@ -191,7 +191,7 @@ Several printing methods are available:
 A supplier we have used successfully is [JLC3D FDM Printing](https://jlc3dp.com/3d-printing/fused-deposition-modeling).
 
 
-![alt text](<../images/parts.png>)
+![alt text](<../images/construction_parts.png>)
 
 
 ## 5. Preparing the 3D-Printed Parts
@@ -216,7 +216,7 @@ The **PCB Display Backplane** must be glued to the yellow **Display Cup with fle
 
 > **Warning:** Use only a small amount of glue. Excess glue may overflow into the Display Cup or onto other surfaces.
 
-![alt text](<../images/Gluing.png>)
+![alt text](<../images/construction_Gluing.png>)
 ---
 
 ## 6. Preparing the Electronics and Displays
@@ -254,9 +254,9 @@ Before mounting the TFT displays into the Display Cups, the original **grey plas
 
 > **Note:** Some force may be required to remove the connectors. Work carefully to avoid damaging the display or other components on the display board.
 
-![alt text](<../images/Display_Connector_Removal.png>)
+![alt text](<../images/construction_Display_Connector_Removal.png>)
 
-![alt text](<../images/display_con.gif>)
+![alt text](<../images/construction_display_con.gif>)
 
 ### 6.4 Mounting the Displays into the Display Cups
 
@@ -266,7 +266,7 @@ Repeat the following procedure for all six displays:
 2. If the display does not fit properly because of a slightly protruding edge, carefully remove a small amount of material from the Display Cup using fine sandpaper.
 3. Secure the display using **countersunk M3×6 screws**. In most cases, **two screws per display are sufficient** to hold the display securely in place.
 
-![alt text](<../images/Displ_Mount.png>)
+![alt text](<../images/construction_Displ_Mount.png>)
 
 ### 6.5 Mounting the USB-C Connector
 
@@ -293,7 +293,7 @@ With all 3D-printed and electronic components prepared, the Quantum Die can now 
 
 The displays are connected to the PCB using **FPC cables** (flat ribbon cables) with sliding-latch connectors. These connectors are delicate, so handle them carefully.
 
-![alt text](<../images/FPC slide lock.png>)
+![alt text](<../images/construction_FPC slide lock.png>)
 
 To connect an FPC cable:
 
