@@ -1,11 +1,16 @@
 # QuantumDice by UTwente
 
-> NEW RELEASE 📢: Quantum Dice V2.0.1
+> NEW RELEASE 📢: Quantum Dice Series 4
 [see](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/releases)
 
+- **Smaller and lighter design** for easier handling and classroom use
+- **Cleaner, more compact appearance** that looks and feels more like a real die
+- **Single-PCB design**, reducing complexity and the number of internal components
+- **Screw-free Main Frame assembly**, making construction simpler and faster
+- **Much quicker assembly**, with fewer parts and fewer mounting steps
+- **Lower overall cost** compared with previous versions
 - Every Quantum Die can entangle with another. No need to use pairs of QD's
 - Implementation of Teleportation protocol with 3 or more Quantum Die [See User Guide](USER_GUIDE.md)
-- Simplified configuration file
 - If you are on version V1.x.x.x  [use this guide](MIGRATION_GUIDE_V1.1.X_TO_V2.0.0.md) to migrate to V2.0.x
 - Lots software changes to create a more robust, better maintainable software framework.
 
