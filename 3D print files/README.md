@@ -8,16 +8,19 @@ Next to that a Bill of Material (Excel file) with both 3D print files and electr
 
 ## Versions
 
-Version 4 is the current version. Earlier versions (including version 2) are outdated and no longer maintained.
+Version 4 is the latest version. Earlier versions (including version 2) are outdated and no longer maintained.
 
-Version 4 comes in two variants, **Type A** and **Type B**, which differ only in the display used:
+Version 4 comes in two variants, **Type A** and **Type B**, which differ in the display used and the display cups.
 
 | Variant | Display |
 |---------|---------|
-| Type A  | [display name/model] |
-| Type B  | [display name/model] |
+| Type A  |  ![alt text](../images/S6e12d9fce2954b94a3017a033324f5dfA.jpg_220x220q75.jpg)   |
+| Type B  | ![alt text](../images/S1bf2db98455d499fa6052c81243a41634.jpg_220x220q75.jpg) |
 
-The TPU frame is identical for both variants. See the [BOM-list](<Bill of Material quantum dice.xlsx>)for the full parts list per variant.
+> [!NOTE]
+> The 3D printfiles of Type B are under construction. They will be release asap.
+
+The TPU frame is identical for both variants. See the [BOM-list](<Bill of Material quantum dice.xlsx>) for the full parts list per variant.
 
 > [!NOTE]
 > Files for older versions are kept in the [`archive/`](archive/) folder for reference only. Do not print these for new builds.
@@ -30,7 +33,7 @@ The black frame of the quantum dice is 3D printed from TPU material. It is a com
 
 The colored display cups are printed with PLA. You need red, green and blue for this. The color is indicated in the file name.
 
-Print the display cups with support enabled. It is easy to remove the support with a tool.
+Print the display cups with support enabled. Remove the support with a hobby knife or small screw driver.
 
 ## Assembly the Quantum Dice
 
