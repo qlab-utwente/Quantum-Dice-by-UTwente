@@ -413,16 +413,14 @@ void voltageIndicator(screenselections screens) {
 }
 
 void welcomeInfo(screenselections screens) {
-    char displayText1[10];
+    const char *generationText = "GEN 4.0";
     char displayText2[20];
     selectScreens(screens);
     tft.fillScreen(GC9A01A_BLACK);
     tft.setTextSize(1);
     tft.setFont(&FreeSans18pt7b);
 
-    strcpy((char *)displayText1, "FW");
-    strcat((char *)displayText1, VERSION);
-    drawStringCentered(tft, (char *)displayText1, 62);
+    drawStringCentered(tft, (char *)generationText, 62);
 
     // Use DICE_ID from config
     strcpy((char *)displayText2, (char *)currentConfig.diceId.c_str());
