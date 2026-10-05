@@ -87,7 +87,6 @@ void BatteryClass::taskMAX17048(void *parameter) {
 		singleton.voltage = singleton.adafruitMAX17048.cellVoltage();
 		float rawStateOfCharge = singleton.adafruitMAX17048.cellPercent();
 		singleton.stateOfCharge = BatteryClass::adjustStateOfCharge(rawStateOfCharge);
-		singleton.chargeRate = singleton.adafruitMAX17048.chargeRate();
 
 		// Sleep until it is time again.
 		xTaskDelayUntil(&singleton.lastWake, BatteryClass::TASK_UPDATE_INTERVAL);

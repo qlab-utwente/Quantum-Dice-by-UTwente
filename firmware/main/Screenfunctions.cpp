@@ -371,7 +371,6 @@ void voltageIndicator(screenselections screens) {
 
 	float batteryStateOfCharge = Battery.getStateOfCharge();
 	float batteryVoltage = Battery.getVoltage();
-	float batteryChargeRate = Battery.getChargeRate();
 
     dtostrf(batteryVoltage, 3, 2, (char *)bufferV);
     strcat((char *)bufferV, "V");

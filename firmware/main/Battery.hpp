@@ -32,17 +32,6 @@ public:
 		return this->stateOfCharge;
 	}
 
-	// Returns the rate at which the battery is charging.
-	//
-	// The charge rate is returned in state of charge percentage per hour. Positive numbers mean
-	// the battery is charging.
-	//
-	// NaN is returned if the battery monitoring has not been started or if it was unable to
-	// determine the charging rate of the battery.
-	[[nodiscard]] inline float getChargeRate() __attribute__((always_inline)) {
-		return this->chargeRate;
-	}
-
 	// Returns the singleton instance.
 	//
 	// The singleton instance will be instantiated when this function is called for the first
@@ -111,7 +100,6 @@ private:
 	// Battery variables.
 	float voltage = NAN;
 	float stateOfCharge = NAN;
-	float chargeRate = NAN;
 
 	// Task variables.
 	StackType_t taskStack[TASK_STACK_SIZE];
