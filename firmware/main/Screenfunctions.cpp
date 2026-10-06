@@ -19,6 +19,7 @@ extern StateMachine stateMachine;
 Adafruit_GC9A01A tft(-1, -1, -1); // Temporary pins, will be reinitialized
 
 // Global canvas declarations
+static GFXcanvas16 dotsCanvas(WIDTH, HEIGHT);
 static GFXcanvas16 backgroundCanvas(240, 240);
 static GFXcanvas16 imageCanvas(240, 240);
 static GFXcanvas16 staticCanvas(240, 100);
@@ -40,6 +41,35 @@ static void selectScreens(screenselections screens) {
 	gpio_set_level(SCREEN_CS4, ((binaryCode & 0b001000) != 0) ? 0 : 1);
 	gpio_set_level(SCREEN_CS5, ((binaryCode & 0b010000) != 0) ? 0 : 1);
 	gpio_set_level(SCREEN_CS6, ((binaryCode & 0b100000) != 0) ? 0 : 1);
+}
+
+// Function to blend colors with transparency
+static uint16_t blendColor(const uint16_t foreground, const uint16_t background, float alpha) noexcept {
+    // Constrain alpha between 0 and 1
+    alpha = constrain(alpha, 0.0, 1.0);
+
+    // Extract color components
+    uint8_t fR = (foreground >> 11) & 0x1F;
+    uint8_t fG = (foreground >> 5) & 0x3F;
+    uint8_t fB = foreground & 0x1F;
+
+    uint8_t bR = (background >> 11) & 0x1F;
+    uint8_t bG = (background >> 5) & 0x3F;
+    uint8_t bB = background & 0x1F;
+
+    // Blend color components
+    uint8_t rR = ((fR * alpha) + (bR * (1 - alpha)));
+    uint8_t rG = ((fG * alpha) + (bG * (1 - alpha)));
+    uint8_t rB = ((fB * alpha) + (bB * (1 - alpha)));
+
+    // Reconstruct 16-bit color
+    return ((rR & 0x1F) << 11) | ((rG & 0x3F) << 5) | (rB & 0x1F);
+}
+
+// Function to draw dot on dice with transparency
+static void drawDot(const int x, const int y, const float alpha = 1.0F, const uint16_t color = GC9A01A_WHITE, const uint16_t backgroundColor = GC9A01A_BLACK) {
+	const uint16_t blendedColor = blendColor(color, backgroundColor, alpha);
+	dotsCanvas.fillCircle(x, y, DOT_RADIUS, blendedColor);
 }
 
 void initDisplays() {
@@ -72,35 +102,6 @@ void initDisplays() {
 void blankScreen(screenselections screens) {
     selectScreens(screens);
     tft.fillScreen(GC9A01A_BLACK);
-}
-
-// Function to blend colors with transparency
-auto blendColor(uint16_t foreground, uint16_t background, float alpha) -> uint16_t {
-    // Constrain alpha between 0 and 1
-    alpha = constrain(alpha, 0.0, 1.0);
-
-    // Extract color components
-    uint8_t fR = (foreground >> 11) & 0x1F;
-    uint8_t fG = (foreground >> 5) & 0x3F;
-    uint8_t fB = foreground & 0x1F;
-
-    uint8_t bR = (background >> 11) & 0x1F;
-    uint8_t bG = (background >> 5) & 0x3F;
-    uint8_t bB = background & 0x1F;
-
-    // Blend color components
-    uint8_t rR = ((fR * alpha) + (bR * (1 - alpha)));
-    uint8_t rG = ((fG * alpha) + (bG * (1 - alpha)));
-    uint8_t rB = ((fB * alpha) + (bB * (1 - alpha)));
-
-    // Reconstruct 16-bit color
-    return ((rR & 0x1F) << 11) | ((rG & 0x3F) << 5) | (rB & 0x1F);
-}
-
-// Function to draw dot on dice with transparency
-void drawDot(int x, int y, float alpha, uint16_t color, uint16_t bgColor) {
-    uint16_t blendedColor = blendColor(color, bgColor, alpha);
-    tft.fillCircle(x, y, DOT_RADIUS, blendedColor);
 }
 
 void displayImageWithBackground(const unsigned short *image, screenselections screens) {
@@ -225,112 +226,135 @@ void displayQRcode(screenselections screens) {
 }
 
 void displayN1(screenselections screens) {
-    selectScreens(screens);
-    tft.fillScreen(GC9A01A_BLACK);
-    int centerX = tft.width() / 2;
-    int centerY = tft.height() / 2;
+	constexpr int CENTER_X = (WIDTH / 2);
+	constexpr int CENTER_Y = (HEIGHT / 2);
 
-    drawDot(centerX, centerY);
+	// Draw to the canvas.
+    dotsCanvas.fillScreen(GC9A01A_BLACK);
+    drawDot(CENTER_X, CENTER_Y);
+
+	// Select screens and draw dots to screen.
+    selectScreens(screens);
+	tft.drawRGBBitmap(0, 0, dotsCanvas.getBuffer(), dotsCanvas.width(), dotsCanvas.height());
 }
 
 void displayN2(screenselections screens) {
-    selectScreens(screens);
-    tft.fillScreen(GC9A01A_BLACK);
-    int centerX = tft.width() / 2;
-    int centerY = tft.height() / 2;
-    int offset  = DOT_OFFSET;
+	constexpr int CENTER_X = (WIDTH / 2);
+	constexpr int CENTER_Y = (HEIGHT / 2);
 
-    drawDot(centerX - offset, centerY + offset);
-    drawDot(centerX + offset, centerY - offset);
+	// Draw to the canvas.
+    dotsCanvas.fillScreen(GC9A01A_BLACK);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y + DOT_OFFSET);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y - DOT_OFFSET);
+
+	// Select screens and draw dots to screen.
+    selectScreens(screens);
+	tft.drawRGBBitmap(0, 0, dotsCanvas.getBuffer(), dotsCanvas.width(), dotsCanvas.height());
 }
 
 void displayN3(screenselections screens) {
-    selectScreens(screens);
-    tft.fillScreen(GC9A01A_BLACK);
-    int centerX = tft.width() / 2;
-    int centerY = tft.height() / 2;
-    int offset  = DOT_OFFSET;
+	constexpr int CENTER_X = (WIDTH / 2);
+	constexpr int CENTER_Y = (HEIGHT / 2);
 
-    drawDot(centerX - offset, centerY + offset);
-    drawDot(centerX, centerY);
-    drawDot(centerX + offset, centerY - offset);
+	// Draw to the canvas.
+    dotsCanvas.fillScreen(GC9A01A_BLACK);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y + DOT_OFFSET);
+    drawDot(CENTER_X, CENTER_Y);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y - DOT_OFFSET);
+
+	// Select screens and draw dots to screen.
+    selectScreens(screens);
+	tft.drawRGBBitmap(0, 0, dotsCanvas.getBuffer(), dotsCanvas.width(), dotsCanvas.height());
 }
 
 void displayN4(screenselections screens) {
-    selectScreens(screens);
-    tft.fillScreen(GC9A01A_BLACK);
-    int centerX = tft.width() / 2;
-    int centerY = tft.height() / 2;
-    int offset  = DOT_OFFSET;
+	constexpr int CENTER_X = (WIDTH / 2);
+	constexpr int CENTER_Y = (HEIGHT / 2);
 
-    drawDot(centerX - offset, centerY - offset);
-    drawDot(centerX + offset, centerY - offset);
-    drawDot(centerX - offset, centerY + offset);
-    drawDot(centerX + offset, centerY + offset);
+	// Draw to the canvas.
+    dotsCanvas.fillScreen(GC9A01A_BLACK);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y - DOT_OFFSET);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y - DOT_OFFSET);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y + DOT_OFFSET);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y + DOT_OFFSET);
+
+	// Select screens and draw dots to screen.
+    selectScreens(screens);
+	tft.drawRGBBitmap(0, 0, dotsCanvas.getBuffer(), dotsCanvas.width(), dotsCanvas.height());
 }
 
 void displayN5(screenselections screens) {
-    selectScreens(screens);
-    tft.fillScreen(GC9A01A_BLACK);
-    int centerX = tft.width() / 2;
-    int centerY = tft.height() / 2;
-    int offset  = DOT_OFFSET;
+	constexpr int CENTER_X = (WIDTH / 2);
+	constexpr int CENTER_Y = (HEIGHT / 2);
 
-    drawDot(centerX - offset, centerY - offset);
-    drawDot(centerX + offset, centerY - offset);
-    drawDot(centerX, centerY, 1.0);
-    drawDot(centerX - offset, centerY + offset);
-    drawDot(centerX + offset, centerY + offset);
+	// Draw to the canvas.
+    dotsCanvas.fillScreen(GC9A01A_BLACK);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y - DOT_OFFSET);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y - DOT_OFFSET);
+    drawDot(CENTER_X, CENTER_Y);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y + DOT_OFFSET);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y + DOT_OFFSET);
+
+	// Select screens and draw dots to screen.
+    selectScreens(screens);
+	tft.drawRGBBitmap(0, 0, dotsCanvas.getBuffer(), dotsCanvas.width(), dotsCanvas.height());
 }
 
 void displayN6(screenselections screens) {
-    selectScreens(screens);
-    tft.fillScreen(GC9A01A_BLACK);
-    int centerX = tft.width() / 2;
-    int centerY = tft.height() / 2;
-    int offset  = DOT_OFFSET;
+	constexpr int CENTER_X = (WIDTH / 2);
+	constexpr int CENTER_Y = (HEIGHT / 2);
 
-    drawDot(centerX - offset, centerY - offset);
-    drawDot(centerX + offset, centerY - offset);
-    drawDot(centerX - offset, centerY);
-    drawDot(centerX + offset, centerY);
-    drawDot(centerX - offset, centerY + offset);
-    drawDot(centerX + offset, centerY + offset);
+	// Draw to the canvas.
+    dotsCanvas.fillScreen(GC9A01A_BLACK);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y - DOT_OFFSET);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y - DOT_OFFSET);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y + DOT_OFFSET);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y + DOT_OFFSET);
+
+	// Select screens and draw dots to screen.
+    selectScreens(screens);
+	tft.drawRGBBitmap(0, 0, dotsCanvas.getBuffer(), dotsCanvas.width(), dotsCanvas.height());
 }
 
 void displayMix1to6(screenselections screens) {
-    selectScreens(screens);
-    tft.fillScreen(GC9A01A_BLACK);
-    int centerX = tft.width() / 2;
-    int centerY = tft.height() / 2;
-    int offset  = DOT_OFFSET;
+	constexpr int CENTER_X = (WIDTH / 2);
+	constexpr int CENTER_Y = (HEIGHT / 2);
 
-    drawDot(centerX - offset, centerY - offset, (3 * 0.16) + 0.2);
-    drawDot(centerX + offset, centerY - offset, (5 * 0.16) + 0.2);
-    drawDot(centerX - offset, centerY, (1 * 0.16) + 0.2);
-    drawDot(centerX + offset, centerY, 1 * 0.2);
-    drawDot(centerX - offset, centerY + offset, (5 * 0.16) + 0.2);
-    drawDot(centerX + offset, centerY + offset, (3 * 0.16) + 0.2);
-    drawDot(centerX, centerY, 3 * 0.2);
+	// Draw to the canvas.
+    dotsCanvas.fillScreen(GC9A01A_BLACK);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y - DOT_OFFSET, (3 * 0.16) + 0.2);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y - DOT_OFFSET, (5 * 0.16) + 0.2);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y, (1 * 0.16) + 0.2);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y, 1 * 0.2);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y + DOT_OFFSET, (5 * 0.16) + 0.2);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y + DOT_OFFSET, (3 * 0.16) + 0.2);
+    drawDot(CENTER_X, CENTER_Y, 3 * 0.2);
+
+	// Select screens and draw dots to screen.
+    selectScreens(screens);
+	tft.drawRGBBitmap(0, 0, dotsCanvas.getBuffer(), dotsCanvas.width(), dotsCanvas.height());
 }
 
 void displayMix1to6_entangled(screenselections screens) {
+	constexpr int CENTER_X = (WIDTH / 2);
+	constexpr int CENTER_Y = (HEIGHT / 2);
+	const uint16_t color = stateMachine.isColorFlash() ? stateMachine.getEntanglementColor() : GC9A01A_WHITE;
+
+	// Draw to the canvas.
+    dotsCanvas.fillScreen(GC9A01A_BLACK);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y - DOT_OFFSET, (3 * 0.16) + 0.2, color);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y - DOT_OFFSET, (5 * 0.16) + 0.2, color);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y, (1 * 0.16) + 0.2, color);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y, (1 * 0.16) + 0.2, color);
+    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y + DOT_OFFSET, (5 * 0.16) + 0.2, color);
+    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y + DOT_OFFSET, (3 * 0.16) + 0.2, color);
+    drawDot(CENTER_X, CENTER_Y, (3 * 0.16) + 0.2, color);
+
+	// Select screens and draw dots to screen.
     selectScreens(screens);
-    tft.fillScreen(GC9A01A_BLACK);
-    int centerX = tft.width() / 2;
-    int centerY = tft.height() / 2;
-    int offset = DOT_OFFSET;
-
-	// Determine color to show
-	uint16_t color = stateMachine.isColorFlash() ? stateMachine.getEntanglementColor() : 0xFFFF;
-
-    drawDot(centerX - offset, centerY - offset, (3 * 0.16) + 0.2, color);
-    drawDot(centerX + offset, centerY - offset, (5 * 0.16) + 0.2, color);
-    drawDot(centerX - offset, centerY, (1 * 0.16) + 0.2, color);
-    drawDot(centerX + offset, centerY, (1 * 0.16) + 0.2, color);
-    drawDot(centerX - offset, centerY + offset, (5 * 0.16) + 0.2, color);
-    drawDot(centerX + offset, centerY + offset, (3 * 0.16) + 0.2, color);
-    drawDot(centerX, centerY, (3 * 0.16) + 0.2, color);
+	tft.drawRGBBitmap(0, 0, dotsCanvas.getBuffer(), dotsCanvas.width(), dotsCanvas.height());
 }
 
 void printChar(screenselections screens, char *letters, uint16_t fontcolor, uint16_t bckcolor, int x,

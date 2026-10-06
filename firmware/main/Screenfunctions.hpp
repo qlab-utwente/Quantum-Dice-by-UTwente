@@ -46,9 +46,6 @@ enum screenselections : uint8_t {
     NO_ONE = 0
 };
 
-auto blendColor(uint16_t foreground, uint16_t background, float alpha) -> uint16_t;
-void drawDot(int x, int y, float alpha = 1.0, uint16_t color = GC9A01A_WHITE,
-             uint16_t bgColor = GC9A01A_BLACK);
 void displayImageWithBackground(const unsigned short *image, screenselections screens);
 void initDisplays();
 void blankScreen(screenselections screens);
