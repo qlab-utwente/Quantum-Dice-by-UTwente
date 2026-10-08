@@ -37,4 +37,4 @@ Print the display cups with support enabled. Remove the support with a hobby kni
 
 ## Assembly the Quantum Dice
 
-The assembly of the Quantum Dice is described in the construction manual. See ......
+The assembly of the Quantum Dice is described in the construction manual. See [Construction manual](ConstructionManual.md)
