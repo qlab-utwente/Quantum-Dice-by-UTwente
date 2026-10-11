@@ -1,369 +1,153 @@
-# Programming the QuantumDice by UTwente
+# Firmware of the Quantum Dice
 
----
+This readme provides a basic overview of the firmware, explaining what is present in this directory, how to contribute to the firware and how to build and upload the firmware.
 
 ## Table of Contents
 
-1. [Introduction](#1-introduction)
-2. [Technical Overview](#2-technical-overview)
-3. [Arduino IDE Setup](#3-arduino-ide-setup)
-   - 3.1 [Install Arduino IDE](#31-install-arduino-ide)
-   - 3.2 [Install ESP32 Board Support](#32-install-esp32-board-support)
-   - 3.3 [Configure Board Settings](#33-configure-board-settings)
-   - 3.4 [Install Required Libraries](#34-install-required-libraries)
-4. [First Time Setup](#4-first-time-setup)
-   - 4.1 [Initial Upload - Blink Test](#41-initial-upload---blink-test)
-   - 4.2 [Board Configuration](#42-board-configuration)
-5. [Programming the QuantumDice](#5-programming-the-quantumdice)
-   - 5.1 [Prepare for Upload](#51-prepare-for-upload)
-   - 5.2 [Upload the Sketch](#52-upload-the-sketch)
-   - 5.3 [Verify Operation](#53-verify-operation)
+1. [Directory Contents](#1-directory-contents)
+2. [Contributing to the Firmware](#2-contributing-to-the-firmware)
+3. [Building the Firmware](#3-building-the-firmware)<br>
+	3.1 [Using the arduino-cli](#31-using-the-arduino-cli)<br>
+	3.2 [Using the Arduino IDE](#32-using-the-arduino-ide)
+4. [Uploading the Firmware](#4-uploading-the-firmware)<br>
+	4.1 [Using the arduino-cli](#41-using-the-arduino-cli)<br>
+	4.2 [Using the Arduino IDE](#42-using-the-arduino-ide)
+5. [Changing the Configuration](#5-changing-the-configuration)
 
----
+## 1. Directory Contents
 
-## 1. Introduction
+```
+main/                      - This directory contains all the code of the firmware in the format
+ |                           that the arduino-cli and Arduino IDE except the code to be.
+ | ImageLibrary/           - This directory contains several header files, each containing an
+ |                           image in R5G6B5 format, which can be rendered to the screens.
+ | main.ino                - The entry point of the firmware code, defining the setup() and
+ |                           loop() functions that Arduino requires.
+ | partitions.csv          - The custom partition scheme of the firmware.
+ | sketch.yml              - The sketch project file that tells the arduino-cli how to build
+ |                           the firmware.
+ | *.c/cpp/h/hpp           - The C/C++ source and header files that also contain code of the
+ |                           firmware.
+.editorconfig              - A simple config file that tells compatible IDEs how to handle files,
+                             not all IDEs support editorconfig, some may require an extension.
+.gitignore                 - A simple file that tells Git which files and directories it should
+                             ignore.
+build.sh                   - A bash script that calls the arduino-cli to build the firmware, this
+                             script should be invoked in the firmware directory and will output
+					         the result to a new build directory.
+EXAMPLE_config.txt         - An example config file with explanations for all the settings.
+README.md                  - This file.
+technical documentation.md - A technical explanation of the design of the firmware.
+```
 
-This guide provides step-by-step instructions for programming and configuring the QuantumDice hardware. Before beginning, ensure you have a USB-C cable and have installed the Arduino IDE on your computer.
+## 2. Contributing to the Firmware
 
-> **⚠️ CRITICAL SAFETY WARNING:** Always disconnect the 4-wire power cable before connecting the USB cable to prevent permanent damage to the board! For easier access to the boot and reset buttons and to avoid stress on the display cables, disconnect both the upper and lower screens from the ProcessorBoard during programming.
+Contributions to the firmware are welcomed and appreciated, but please try to match the Arduino coding style.
 
----
+For questions about contributing to the firmware, please refer to the Quantum Dice Github or contact the UTwente development team.
 
-## 2. Technical Overview
+## 3. Building the Firmware
 
-The QuantumDice is built on an **ESP32-S3 N16R8 module** and includes several key components:
+For building the firmware, there are two options: the [arduino-cli](https://docs.arduino.cc/arduino-cli/) and the [Arduino IDE](https://www.arduino.cc/en/software/).
 
-**Partitions:**
-A custom partition setting is used to include a **littlFS** partition. Therefor the file `partitions.csv` must be added to the sketch folder. See [partitions.csv](main/partitions.csv)
+The Arduino IDE is recommended for beginners, the arduino-cli is recommended for those who have experience with programming in C/C++.
 
-**Display System:**
+You can install the arduino-cli using [this guide](https://arduino.github.io/arduino-cli/installation/) or the Arduino IDE using [this guide](https://docs.arduino.cc/software/ide-v2/tutorials/getting-started/ide-v2-downloading-and-installing/).
 
-- Six round TFT displays with SPI interface
-- Each display controlled via individual CS-pin connected to a digital port
+### 3.1 Using the arduino-cli
 
-**Sensors and Components:**
+In your command line, run the following:
 
-- **BNO055 IMU sensor**: Measures rotation and position of the dice. I2C protocol.
-- ESP32 random generator
-- Push button for user input
-- Battery voltage monitoring system
+```
+.../Quantum-Dice-by-UTwente/firmware> ./build.sh
+```
 
-**Communication:**
+This script will run the arduino-cli with the necessary arguments to compile the firmware, which will be output to a new build/ directory.
 
-- ESP-NOW protocol enables peer-to-peer communication between paired dice
-- Automatic neighbor discovery via mesh networking
+You can then upload the compiled output [using the arduino-cli](#41-using-the-arduino-cli).
 
-**Data Storage:**
+In the build/ directory, the compiled firmware will be in a file called *main.ino.bin*. There is also a file called *main.ino.merged.bin*, which is a full version of the firmware that includes the bootloader, partitions, etc...
 
-- Configuration data stored in LittleFS
-- Configuration file (called XXXXX_config.txt where XXXXX is the Set Name of the dice)
-- The system automatically detects and loads the config file on boot
-- [See example configs](example_configs/)
+### 3.2 Using the Arduino IDE
 
-**Reference Documentation:**
+Before you can use the Arduino IDE to build the firmware, you must configure the Arduino IDE, use [this step-by-step plan](#configuring-the-arduino-ide) (scroll down if the link does not work) to configure the Arduino IDE.
 
-- [ESP32-S3 N16R8 Datasheet](https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf)
-- [BNO055 IMU Datasheet](https://nl.mouser.com/datasheet/3/1046/1/bst-bno055-ds000.pdf)
+If your Arduino IDE is configured, then you can open the firmware sketch by navigating to **File > Open**. This will open a window in which you can select a .ino file. In this window, you must navigate to the [main/main.ino] file and select it. This will cause the Arduino IDE to open the firmware sketch.
 
----
+Then, you can press the Verify button (the checkmark) or you can navigate to **Sketch > Verify/Compile** to build the firmware.
 
-## 3. Arduino IDE Setup
+Then, you can upload the compiled output [using the Arduino IDE](#42-using-the-arduino-ide).
 
-### 3.1 Install Arduino IDE
+#### Configuring the Arduino IDE:
 
-Download and install the latest version of [Arduino IDE 2.x](https://docs.arduino.cc/software/ide/#ide-v2) for your operating system.
+1. In the Arduino IDE, navigate to **File > Preferences**.
+2. In the field *"Additional Boards Manager URLS"*, add: ` https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json `
+3. Click **Ok** to save.
+4. Navigate to **Tools > Board > Boards Manager**.
+5. Search for *"ESP32"*.
+6. Install version *3.3.2* of *esp32 by Espressif Systems*.
+7. After installation is complete, set the following settings in the **Tools** menu:
 
-### 3.2 Install ESP32 Board Support
-
-1. Open Arduino IDE
-2. Navigate to **File > Preferences**
-3. In the "Additional Boards Manager URLs" field, add:
-
-   ```
-   https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-   ```
-
-4. Click **OK** to save
-5. Go to **Tools > Board > Boards Manager**
-6. Search for "ESP32"
-7. Install **"esp32 by Espressif Systems"**
-8. Wait for installation to complete
-
-> **⚠️ IMPORTANT:** Use ESP32 version 3.3.2 from the Board Manager for compatibility.
-
-### 3.3 Configure Board Settings
-
-Select the following settings from the **Tools** menu:
-
-| Setting | Value |
-|---------|-------|
-| **Board** | ESP32S3 Dev Module |
-| **USB CDC On Boot** | Enabled *(critical for native USB)* |
-| **USB Mode** | USB-OTG (TinyUSB) or Hardware CDC and JTAG |
-| **Flash Size** | 16MB (128Mb) |
+| **Setting** | **Value** |
+| --- | --- |
+| **Board** | esp32 |
+| **USB CDC On Boot** | Enabled |
+| **USB Mode** | Hardware CDC and JTAG |
+| **Flash Size** | 16MB |
 | **PSRAM** | OPI PSRAM |
-| **Partition Scheme** | custom |
+| **Partition Scheme** | Custom |
 
-### 3.4 Install Required Libraries
+8. Then, navigate to **Tools > Manage Libraries**.
+9. Install the following libraries, make sure to install the right version:
 
-Install the following libraries via **Tools > Manage Libraries**:
+| **Name** | **Version** |
+| --- | --- |
+| Adafruit BNO055 | 1.6.4 |
+| Adafruit LSM6DS | 4.7.4 |
+| Adafruit Unified Sensor | 1.1.15 |
+| Adafruit GFX Library | 1.12.4 |
+| Adafruit GC9A01A | 1.1.1 |
+| Adafruit BusIO | 1.17.4 |
+| Adafruit MAX1704X | 1.0.3 |
 
-- BNO055 by Adafruit
-- Adafruit Unified Sensor
-- Adafruit GFX
-- Adafruit GC9A01A
-- Button2
+## 4. Uploading the Firmware
+### 4.1 Using the arduino-cli
 
-Your Arduino IDE is now ready for QuantumDice development.
+If this is the first time that you are uploading code to the ESP32-S3, then you must first enter download mode. To enter download mode, hold down the **BOOT** button on the PCB with the ESP32, then press and release the **RESET** button and then release the **BOOT** button. Your ESP32 should now be in download mode and you can now upload the firmware.
 
----
-
-## 4. First Time Setup
-
-When connecting a fresh ESP32-S3 module (ESP32-S3N16R8) to Arduino IDE for the first time, you may see continuous reboot messages in the Serial monitor:
+First, run the following in your command line:
 
 ```
-invalid header: 0xffffffff
-invalid header: 0xffffffff
-ESP-ROM:esp32s3-20210327
-Build:Mar 27 2021
-rst:0x7 (TG0WDT_SYS_RST),boot:0x2b (SPI_FAST_FLASH_BOOT)
-Saved PC:0x40048839
-invalid header: 0xffffffff
-...
+.../Quantum-Dice-by-UTwente/firmware> arduino-cli board list
 ```
 
-This is **completely normal** for a fresh module from the supplier. Here's what's happening:
+This will return a list of all the boards connected to your computer (that the arduino-cli recognizes) and their types.
 
-- **`invalid header: 0xffffffff`** - The bootloader is searching for valid firmware in flash memory but finding only erased flash (0xFFFFFFFF = all bits set high = empty state)
-- **`rst:0x7 (TG0WDT_SYS_RST)`** - Watchdog timer reset triggered because no valid firmware was found to execute
-- **Bootloop** - The module continuously resets because there's no program to run
+Then, in your command line, run the following to upload to the ESP32:
 
-The ESP32-S3 module has never been programmed and needs its first firmware upload.
-
-### 4.1 Initial Upload
-
-When programming an ESP32-S3 for the first time, a specific initialization procedure is required.
-
-> **⚠️ REMINDER:** Disconnect the 4-wire power cable before connecting USB!
-
-#### Step 1: Load the QuantumDice sketch
-
-1. Go to **File > Open** and select the QuantumDice.ino file
-
-#### Step 2: Enter Download Mode
-
-For the first upload, manually put the ESP32-S3 into download mode. See attached image for the locations of the **BOOT** and **RESET** button.
-![alt text](../images/bootAndReset.png)
-
-1. **Hold down** the **BOOT** button
-2. While holding BOOT, **press and release** the **RESET** button
-3. **Release** the **BOOT** button
-
-Your board is now in download mode and ready to receive code.
-
-*Alternative method:* Hold the BOOT button while plugging in the USB cable.
-
-#### Step 3: Select COM Port
-
-1. Go to **Tools > Port**
-2. Select the COM port for your ESP32-S3:
-   - **Windows:** COM# (e.g., COM3)
-   - **Mac:** /dev/cu.usbmodem# or /dev/tty.usbmodem#
-   - **Linux:** /dev/ttyACM# or /dev/ttyUSB#
-
-#### Step 4: Upload the Sketch
-
-1. Click the **Upload** button (right arrow icon)
-2. Wait for compilation and upload to complete
-3. You should see "Connecting..." followed by upload progress
-4. Once complete, **press the RESET button** on your board
-
-The QuantumDice should now be running.
-
-**After this initial upload, future uploads will not require the BOOT button procedure.**
-
-### 4.2 Board Configuration
-
-The board configuration is performed with a XXXXX_config.txt file. You can use the  enclosed [TEST1_config.txt](example_configs/TEST1_config.txt) as a starter.
-
-Uploading the config file with
-[ESPConnect](https://thelastoutpostworkshop.github.io/ESPConnect/) tool (need Google Chrome to run). For complete instructions, see the [Setup Guide](../SETUP.md).
-
----
-
-## 5. Programming the QuantumDice
-
-### 5.1 Prepare for Upload
-
-> **⚠️ REMINDER:** Always disconnect the 4-wire power cable before connecting USB!
-
-**Before programming:**
-
-1. Remove the top and bottom (blue) cups from the dice
-2. Disconnect the 4-wire power cable
-3. Optionally disconnect the display FPC cables for easier access to buttons
-4. Connect a USB-C cable to the underside of the ProcessorPCB
-
-### 5.2 Upload the Sketch
-
-1. Open the sketch in Arduino IDE
-2. Connect the ProcessorPCB via USB-C cable
-3. Select the correct communication port from **Tools > Port**
-4. Click **Upload** to compile and upload the sketch
-5. Wait for the upload to complete
-
-### 5.3 Verify Operation
-
-After uploading, open the **Serial Monitor** (baud rate: **115200**) to view debugging information.
-
-**Expected Startup Sequence:**
-
-The Serial Monitor will display:
-
-- Loaded configuration (Dice ID, colors, timing constants)
-- Hardware pin configuration
-- Display initialization
-- BNO055 sensor detection and calibration status
-- ESP-NOW initialization with MAC address
-- State machine initialization
-- Welcome sequence with logo displays
-
-**Example Output:**
-
-```text
-[LOG]
-[LOG]	╔════════════════════════════════════════╗
-[LOG]	║      QUANTUM DICE INITIALIZATION       ║
-[LOG]	╚════════════════════════════════════════╝
-
-[LOG]	/home/twan/Development/Quantum-Dice-by-UTwente/QuantumDice/QuantumDice.ino Jan 26 2026 21:09:54
-[L] FW: 2.0.0
-[LOG]	Step 1: Initializing filesystem and configuration...
-[LOG]
-[DEBUG]	Mounting LittleFS...
-[DEBUG]	LittleFS mounted successfully
-[D] Total: 4194304 bytes, Used: 8192 bytes
-[D] Found config file: DEFAULT_config.txt
-[D] Loading global config from /DEFAULT_config.txt...
-[DEBUG]	LittleFS mounted successfully
-[DEBUG]	Loading config from /DEFAULT_config.txt
-[D] Loaded 4 entanglement colors
-[DEBUG]	Config loaded successfully
-[D] Loaded global config from: /DEFAULT_config.txt
-[LOG]	✓ Filesystem and configuration ready!
-
-[LOG]	=== Global Configuration ===
-[L] Dice ID: DEFAULT
-[L] X Background: 0x0000 (0)
-[L] Y Background: 0x0000 (0)
-[L] Z Background: 0x0000 (0)
-[L] Entangle Colors (4): ffe0, 7e0, 7ff, f81f
-[LOG]
-[L] Color Flash Timeout: 250 ms
-[L] RSSI Limit: -35 dBm
-[L] Is SMD: true
-[L] Is Nano: false
-[L] Deep Sleep Timeout: 300000 ms
-[L] Checksum: 0x00
-[LOG]	============================
-[LOG]
-Step 2: Initializing hardware...
-[LOG]
-Initializing hardware pins...
-Hardware pins initialized successfully!
-[LOG]
-=== Hardware Pin Configuration ===
-[L] Board Type: DEVKIT
-[L] Screen Type: SMD
-[LOG]
-TFT Display Pins:
-[L]   CS:  GPIO10
-[L]   RST: GPIO48
-[L]   DC:  GPIO47
-[LOG]
-Screen CS Pins:
-[L]   Screen 0: GPIO4
-[L]   Screen 1: GPIO5
-[L]   Screen 2: GPIO6
-[L]   Screen 3: GPIO7
-[L]   Screen 4: GPIO15
-[L]   Screen 5: GPIO16
-[L]
-ADC Pin: GPIO2
-[LOG]	==================================
-
-[L]  - Dice ID: [LOG]	DEFAULT
-[L] Board type: [LOG]	DEVKIT
-[L] Connectie type isSMD: [LOG]	SMD
-Initializing displays...
-Displays initialized successfully!
-[D] Qlab logo on screen: [DEBUG]	14
-[LOG]
-Step 3: Initializing IMU sensor...
-[LOG]
-[L] Initializing BNO055... E (3501) i2c.master: I2C transaction unexpected nack detected
-E (3502) i2c.master: s_i2c_synchronous_transaction(945): I2C transaction failed
-E (3503) i2c.master: i2c_master_transmit_receive(1248): I2C transaction failed
-E (3520) i2c.master: I2C transaction unexpected nack detected
-...
-E (3773) i2c.master: s_i2c_synchronous_transaction(945): I2C transaction failed
-E (3775) i2c.master: i2c_master_transmit_receive(1248): I2C transaction failed
-[LOG]	detected.
-[L] Applying axis remapping... [LOG]	done.
-[L] Waiting for stable readings... [L] OK ([L] 9.46[L]  m/s² after [L] 1[LOG]	 attempts)
-[L] Stabilizing baseline... [LOG]	done.
-[LOG]	✓ BNO055 initialization complete!
-[D] QR code on screen: [DEBUG]	1
-[D] Einstein on screen: [DEBUG]	8
-[D] UTwente logo on screen: [DEBUG]	7
-[LOG]
-Step 4: Completing initialization...
-[LOG]
-ESP-NOW initialized successfully!
-[D] MAC Address is : D0[D] :CF[D] :13[D] :36[D] :15[D] :90[D]
-[LOG]	ESP-NOW initialized successfully!
-[D] MAC Address is : D0[D] :CF[D] :13[D] :36[D] :15[D] :90[D]
-[LOG]	StateMachine Begin: Calling onEntry for initial state
-[D] StateMachine: CLASSIC | IDLE | PURE
-[DEBUG]	=== Entering CLASSIC MODE ===
-[DEBUG]	Entering N2 case
-[DEBUG]	Entering N3 case
-[DEBUG]	Entering N6 case
-[DEBUG]	Entering N5 case
-[DEBUG]	Entering N4 case
-[DEBUG]	Entering N1 case
-[LOG]
-[LOG]	╔════════════════════════════════════════╗
-[LOG]	║       SETUP COMPLETE - READY!          ║
-[LOG]	╚════════════════════════════════════════╝
+```
+.../Quantum-Dice-by-UTwente/firmware> arduino-cli upload main/ -p <PORT> --build-path build/
 ```
 
+Where, `<PORT>` is the port that belongs to your ESP32.
 
-> **Note:** You may see some I2C error messages during initialization. These are typically harmless if the sensors are detected successfully afterward.
+Finally, press and release the **RESET** button on the PCB (only if you have the ESP32 in download mode).
 
-**Your QuantumDice is now programmed and ready to use!**
+### 4.2 Using the Arduino IDE
 
----
+If this is the first time that you are uploading code to the ESP32-S3, then you must first enter download mode. To enter download mode, hold down the **BOOT** button on the PCB with the ESP32, then press and release the **RESET** button and then release the **BOOT** button. Your ESP32 should now be in download mode and you can now upload the firmware.
 
-## Troubleshooting
+First, you must select the port, which you can do by either navigating to **Tools > Port** and selecting the port there, or by selecting one in the drop-down menu next to the verify (checkmark), upload (arrow pointing to the right) and start debugging (play triangle with a bug) buttons.
 
-**Upload fails:**
+Then, simply press the upload button (arrow pointing to the right) to upload the compiled firmware to the ESP32.
 
-- Ensure BOOT button procedure was followed for first-time uploads
-- Check USB cable connection and try a different cable
-- Verify correct COM port is selected
-- Confirm 4-wire power cable is disconnected
+Finally, press and release the **RESET** button on the PCB (only if you have the ESP32 in download mode).
 
-**Sensor errors:**
+## 5. Changing the Configuration
 
-- Check I2C connections
-- Verify sensors are properly seated
+When starting the Quantum Dice for the first time, it will have a default configuration that it will load and save to the file system onboard. This configuration matches the settings stored in the [example config](EXAMPLE_config.txt).
 
-**Display issues:**
-
-- Ensure FPC cables are properly connected
-- Check CS pin assignments in code match your hardware version
+For instructions on changing the settings in the config file, see [the Setup Guide](..SETUP.md).
 
 ---
 
