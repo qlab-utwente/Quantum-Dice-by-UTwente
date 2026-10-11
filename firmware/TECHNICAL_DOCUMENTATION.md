@@ -1,7 +1,7 @@
 # Quantum Dice - Technical Documentation
 
-**Version:** 2.0.0  
-**Platform:** ESP32-S3 N16R8  
+**Version:** Gen 4.0
+**Platform:** ESP32-S3 N16R8
 **Framework:** Arduino
 
 ---
@@ -34,7 +34,7 @@ The Quantum Dice is an interactive educational device that demonstrates quantum 
 - Quantum entanglement between multiple dice
 - Quantum teleportation between three dice (Alice, Bob, and Measurement)
 - Measurement basis correlation
-- State persistence (memoization)
+- State persistence (memorization)
 - Visual feedback through six circular TFT displays
 - Battery-powered with deep sleep capability
 - ESP-NOW wireless communication
@@ -48,21 +48,20 @@ The Quantum Dice is an interactive educational device that demonstrates quantum 
 | Component | Model/Type | Interface | Purpose |
 |-----------|-----------|-----------|---------|
 | **Microcontroller** | ESP32-S3 N16R8 | - | Main processor with 16MB Flash, 8MB PSRAM |
-| **IMU Sensor** | Adafruit BNO055 | I2C | 9-DOF orientation, motion detection |
+| **IMU Sensor** | Adafruit LSM6DS3 | I2C | IMU |
 | **Displays (6x)** | GC9A01A Round TFT | SPI | Visual state representation |
-| **Button** | Button2 | GPIO_NUM_14 | Mode switching, UI control |
-| **Power** | Li-Po Battery | ADC monitoring | Battery voltage monitoring |
+| **Button** | - | GPIO_NUM_14 | Mode switching, UI control |
+| **Power** | Li-Po Battery | MAX17048 | Battery voltage monitoring |
 | **Communication** | ESP-NOW | WiFi (channel 6) | Peer-to-peer messaging |
 
 ### Pin Assignments
 
 The system uses dynamic pin mapping loaded from configuration:
 
-- **Power Control**: GPIO_NUM_18 (REGULATOR_PIN) - keeps power on when HIGH
 - **Button Input**: GPIO_NUM_14 (BUTTON_PIN) - user interaction
 - **SPI Bus**: Shared among all six displays
-- **Display CS Pins**: Configurable per board variant (NANO/DEVKIT, SMD/HDR)
-- **I2C Bus**: BNO055 IMU communication
+- **Display CS Pins**: One pin for each display
+- **I2C Bus**: LSM6DS3 and MAX17048 communication
 
 ### Display Configuration
 
@@ -77,7 +76,7 @@ Six displays arranged to represent the six faces of a dice:
 
 ### Initialization Sequence
 
-The `setup()` function follows a strict four-step initialization:
+The `setup()` function follows a rough four-step initialization:
 
 ```
 1. Power Management
@@ -92,12 +91,12 @@ The `setup()` function follows a strict four-step initialization:
 3. Hardware Initialization
    ├─ Configure GPIO pins
    ├─ Initialize displays
+   ├─ Configure button handler
    ├─ Initialize IMU sensor
    └─ Apply axis remapping (NANO variant)
 
 4. State Machine Setup
    ├─ Initialize ESP-NOW
-   ├─ Configure button handler
    └─ Enter initial state (CLASSIC/IDLE/PURE)
 ```
 
@@ -107,7 +106,7 @@ The `loop()` function operates at **50ms intervals** (UPDATE_INTERVAL):
 
 ```cpp
 void loop() {
-    button.loop();           // Process button events
+    IMU.update();            // Process IMU measurements
     stateMachine.update();   // Execute state machine logic
 }
 ```
@@ -124,8 +123,8 @@ The system state is defined by three orthogonal dimensions:
 struct State {
     Mode              mode;              // CLASSIC, QUANTUM, LOW_BATTERY
     ThrowState        throwState;        // IDLE, THROWING, OBSERVED
-    EntanglementState entanglementState; // PURE, ENTANGLE_REQUESTED, 
-                                         // ENTANGLED, POST_ENTANGLEMENT, 
+    EntanglementState entanglementState; // PURE, ENTANGLE_REQUESTED,
+                                         // ENTANGLED, POST_ENTANGLEMENT,
                                          // TELEPORTED
 };
 ```
@@ -352,7 +351,7 @@ struct message {
 
 ```cpp
 // Typical configuration
-rssiLimit = -35  // dBm threshold for "close by"
+rssiLimit = config.rssiLimit // dBm threshold for "close by"
 
 // Detection logic
 if (last_rssi > rssiLimit && last_rssi < -1) {
@@ -380,15 +379,15 @@ This enables:
 
 ### Configuration File Structure
 
-Text-based configuration file (e.g., `TEST1_config.txt`):
+Text-based configuration file (e.g., `EXAMPLE_config.txt`):
 
 ```ini
 # Dice Identification
-diceId=TEST1
+diceId=EXAMPLE
 
 # Display Background Colors (RGB565 format)
 x_background=0x001F    # Blue
-y_background=0xF800    # Red  
+y_background=0xF800    # Red
 z_background=0xFFE0    # Yellow
 
 # Entanglement Colors (up to 8)
@@ -400,10 +399,6 @@ deepSleepTimeout=300000   # Deep sleep after 5 min idle (ms)
 
 # Communication
 rssiLimit=-35             # RSSI threshold for proximity (dBm)
-
-# Hardware Configuration
-isSMD=true               # SMD vs HDR connection type
-isNano=true              # NANO vs DEVKIT board type
 ```
 
 ### DiceConfig Structure
@@ -416,8 +411,6 @@ struct DiceConfig {
     uint8_t  entang_colors_count;                       // Active colors
     uint16_t colorFlashTimeout;                         // Flash duration
     int8_t   rssiLimit;                                 // Proximity threshold
-    bool     isSMD;                                     // Pin mapping variant
-    bool     isNano;                                    // Board variant
     uint32_t deepSleepTimeout;                          // Power saving
     uint8_t  checksum;                                  // Validation
 };
@@ -457,19 +450,17 @@ Variants:
 
 ## 8. Motion Detection
 
-### BNO055 IMU Sensor
+### IMU Sensor
 
-The system uses polymorphic IMU abstraction:
+The system uses a singleton:
 
 ```cpp
-class IMUSensor {
-    virtual bool moving() = 0;
-    virtual bool stable() = 0;
-    virtual bool on_table() = 0;
-    virtual IMU_Orientation orientation() = 0;
-    virtual void resetTumbleDetection() = 0;
-    virtual bool tumbled() = 0;
-};
+IMU.moving();
+IMU.stable();
+IMU.onTable();
+IMU.getOrientation();
+IMU.resetTumbleDetection();
+IMU.tumbled();
 ```
 
 ### Motion Detection Algorithm
@@ -477,16 +468,16 @@ class IMUSensor {
 **Parameters:**
 - `motionThreshold`: 0.5 m/s² (significant acceleration change)
 - `stableThreshold`: 0.15 m/s² (minimal movement)
-- `stableCountRequired`: 5 consecutive stable samples
+- `stableCountRequired`: 10 consecutive stable samples
 
 **Logic:**
 ```cpp
-accelChange = abs(currentAccelMag - prevAccelMag);
+gyroMag = sqrtf(gyro.dotProduct(gyro));
 
-if (accelChange > motionThreshold) {
+if (gyroMag > motionThreshold) {
     isMoving = true;
     stableCounter = 0;
-} else if (accelChange < stableThreshold) {
+} else if (gyroMag < stableThreshold) {
     stableCounter++;
     if (stableCounter >= stableCountRequired) {
         isMoving = false;  // Confirmed stable
@@ -499,15 +490,48 @@ if (accelChange > motionThreshold) {
 Determines which face is up by analyzing gravity vector:
 
 ```cpp
-enum IMU_Orientation {
-    ORIENTATION_Z_UP,      // Z+ face up
-    ORIENTATION_Z_DOWN,    // Z- face up
-    ORIENTATION_X_UP,      // X+ face up
-    ORIENTATION_X_DOWN,    // X- face up
-    ORIENTATION_Y_UP,      // Y+ face up
-    ORIENTATION_Y_DOWN,    // Y- face up
-    ORIENTATION_TILTED,    // Not aligned
-    ORIENTATION_UNKNOWN    // Cannot determine
+enum class IMUOrientation : uint8_t {
+	/**
+	 * The orientation is unknown.
+	 */
+	UNKNOWN,
+
+	/**
+	 * The die is tilted.
+	 *
+	 * No face of the die is pointing up.
+	 */
+	TILTED,
+
+	/**
+	 * The Z+ face of the die is pointing up.
+	 */
+	Z_POS,
+
+	/**
+	 * The Z- face of the die is pointing up.
+	 */
+	Z_NEG,
+
+	/**
+	 * The Y+ face of the die is pointing up.
+	 */
+	Y_POS,
+
+	/**
+	 * The Y- face of the die is pointing up.
+	 */
+	Y_NEG,
+
+	/**
+	 * The X+ face of the die is pointing up.
+	 */
+	X_POS,
+
+	/**
+	 * The X- face of the die is pointing up.
+	 */
+	X_NEG
 };
 ```
 
@@ -523,20 +547,26 @@ Uses rotation matrix integration to track orientation change:
 ```cpp
 void resetTumbleDetection() {
     // Capture current "up" direction
-    xUpStart = accel.x() / accelMagnitude;
-    yUpStart = accel.y() / accelMagnitude;
-    zUpStart = accel.z() / accelMagnitude;
+	this->_upStartX = -(this->_gravityX / _gravityMag);
+	this->_upStartY = -(this->_gravityY / _gravityMag);
+	this->_upStartZ = -(this->_gravityZ / _gravityMag);
 }
 
-bool tumbled() {
-    // Calculate rotation using gyroscope integration
-    updateUpVector(deltaTime);
-    
-    // Dot product between current and initial up vectors
-    dotProduct = (xUp * xUpStart) + (yUp * yUpStart) + (zUp * zUpStart);
-    
-    // Threshold: cos(45°) = 0.707
-    return dotProduct < tumbleThreshold;
+void update() {
+	...
+
+    // Tumble detection logic.
+	if (this->_tumbleReferenceSet) {
+		// Calculate dot product between current and initial up vectors
+		float upMag = sqrtf(this->_upX * this->_upX + this->_upY * this->_upY + this->_upZ * this->_upZ);
+		float upStartMag = sqrtf(this->_upStartX * this->_upStartX + this->_upStartY * this->_upStartY + this->_upStartZ * this->_upStartZ);
+		float dotProduct = (this->_upX * this->_upStartX + this->_upY * this->_upStartY + this->_upZ * this->_upStartZ) / (upMag * upStartMag);
+
+		// Check if tumbled beyond threshold.
+		if (dotProduct < this->_tumbleThreshold) {
+			this->_tumbled = true;
+		}
+	}
 }
 ```
 
@@ -544,15 +574,6 @@ bool tumbled() {
 - Rotation-axis independent (ignores spinning on table)
 - Detects only actual rolling/tumbling motion
 - Configurable threshold angle
-
-### Axis Remapping
-
-For Arduino Nano ESP32 variant, axes are remapped to match physical orientation:
-
-```cpp
-const uint8_t NANO_AXIS_REMAP_CONFIG = 0x06;
-imuSensor->setAxisRemap(NANO_AXIS_REMAP_CONFIG, NANO_AXIS_REMAP_CONFIG);
-```
 
 ---
 
@@ -563,9 +584,8 @@ imuSensor->setAxisRemap(NANO_AXIS_REMAP_CONFIG, NANO_AXIS_REMAP_CONFIG);
 Six **GC9A01A** round TFT displays (240×240 pixels each):
 
 ```cpp
-Adafruit_GC9A01A tft0(hwPins.screen_cs[0], hwPins.tft_dc, hwPins.tft_rst);
-Adafruit_GC9A01A tft1(hwPins.screen_cs[1], hwPins.tft_dc, hwPins.tft_rst);
-// ... tft2 through tft5
+// CS done separately.
+Adafruit_GC9A01A tft0(-1, SCREEN_DC, SCREEN_CS);
 ```
 
 ### Screen Selection System
@@ -574,16 +594,21 @@ Screens are addressed via bitmask enum:
 
 ```cpp
 enum screenselections : uint8_t {
-    X0 = 0b000001,      // Individual faces
-    X1 = 0b000010,
-    Y0 = 0b000100,
-    Y1 = 0b001000,
-    Z0 = 0b010000,
-    Z1 = 0b100000,
-    XX = X0 | X1,       // Axis pairs
+    X0 = 0b00000100,
+    X1 = 0b00010000,
+    Y0 = 0b00001000,
+    Y1 = 0b00000010,
+    Z0 = 0b00100000,
+    Z1 = 0b00000001,
+    XX = X0 | X1,
     YY = Y0 | Y1,
     ZZ = Z0 | Z1,
-    ALL = 0b111111,     // All screens
+    XXYY = XX | YY,
+    XXZZ = XX | ZZ,
+    YYZZ = YY | ZZ,
+    ODD = X0 | Y0 | Z0,
+    EVEN = X1 | Y1 | Z1,
+    ALL = ODD | EVEN,
     NO_ONE = 0
 };
 ```
@@ -594,15 +619,30 @@ Each face shows a specific `ScreenState`:
 
 ```cpp
 enum class ScreenStates : uint8_t {
-    // Numbers
-    N1, N2, N3, N4, N5, N6,
-    
-    // Quantum states
-    MIX1TO6,              // Superposition (white dots)
-    MIX1TO6_ENTANGLED,    // Entangled superposition (colored dots)
-    
-    // Special
-    LOWBATTERY, BLANC, QLAB_LOGO, WELCOME, etc.
+    // Splash screens
+    GODDICE,
+    WELCOME,
+    QLAB_LOGO,
+    QRCODE,
+    UT_LOGO,
+
+    // Number displays (1-6)
+    N1,
+    N2,
+    N3,
+    N4,
+    N5,
+    N6,
+
+    // Quantum superposition states
+    MIX1TO6,           // Normal quantum superposition
+    MIX1TO6_ENTANGLED, // Entangled superposition (different color)
+
+    // Special states
+    LOWBATTERY,
+    BLANC, // Blank screen
+    DIAGNOSE,
+    RESET
 };
 ```
 
@@ -610,18 +650,15 @@ enum class ScreenStates : uint8_t {
 
 ```cpp
 void refreshScreens() {
-    // Determine what to show on each face based on:
-    // - Current state (mode, throwState, entanglementState)
-    // - Dice number (if observed)
-    // - Measurement axis
-    // - Entanglement color
-    
-    findValues(stateSelf, diceNumberSelf, upSideSelf,
-               x0ScreenState, x1ScreenState,
-               y0ScreenState, y1ScreenState,
-               z0ScreenState, z1ScreenState);
-    
-    checkAndCallFunctions(x0, x1, y0, y1, z0, z1);
+    // set screens, depending of states
+    if (determineScreenStates(stateMachine.getCurrentState(), stateMachine.getDiceNumberSelf(), stateMachine.getUpSideSelf(), x0ReqScreenState, x1ReqScreenState,
+                   y0ReqScreenState, y1ReqScreenState, z0ReqScreenState, z1ReqScreenState)) {
+        checkAndCallFunctions(x0ReqScreenState, x1ReqScreenState, y0ReqScreenState,
+                              y1ReqScreenState, z0ReqScreenState, z1ReqScreenState);
+    } else {
+        debugln("no match found");
+        // No match found, handle accordingly
+    }
 }
 ```
 
@@ -704,12 +741,12 @@ struct StateTransition {
     std::optional<Mode>              currentMode;
     std::optional<ThrowState>        currentThrowState;
     std::optional<EntanglementState> currentEntanglementState;
-    
+
     // Next state (if transition occurs)
     std::optional<Mode>              nextMode;
     std::optional<ThrowState>        nextThrowState;
     std::optional<EntanglementState> nextEntanglementState;
-    
+
     // Trigger that causes transition
     Trigger trigger;
 };
@@ -719,57 +756,55 @@ struct StateTransition {
 
 ## 11. Code Modules
 
-### QuantumDice.ino
+### Main.ino
 
-**Purpose**: Main sketch entry point  
+**Purpose**: Main sketch entry point
 **Key Functions**:
 - `setup()`: Four-stage initialization (power, config, hardware, state machine)
 - `loop()`: 50ms update cycle for button and state machine
 
 ### StateMachine.hpp / .cpp
 
-**Purpose**: Core state machine implementation  
+**Purpose**: Core state machine implementation
 **Key Components**:
 - State representation and transitions (37 transitions)
 - State handler functions (onEntry, whileInState)
 - Message processing logic
-- Entanglement and teleportation protocols  
+- Entanglement and teleportation protocols
 **Lines**: ~1246 lines
 
 ### DiceConfigManager.hpp / .cpp
 
-**Purpose**: Configuration file management  
+**Purpose**: Configuration file management
 **Key Functions**:
 - `load()`: Parse text config file
 - `ensureLittleFSAndConfig()`: Auto-detect and load config
-- `createDefaultConfigFile()`: Generate default config  
+- `createDefaultConfigFile()`: Generate default config
 **Features**:
 - Checksum validation
 - Comment and whitespace handling
 - Default value initialization
 
-### IMUhelpers.hpp / .cpp
+### IMU.hpp / .cpp
 
-**Purpose**: Polymorphic IMU sensor abstraction  
+**Purpose**: IMU singleton
 **Classes**:
-- `IMUSensor`: Abstract base class
-- `BNO055IMUSensor`: BNO055 implementation  
+- `IMUClass`: Singleton class
 **Key Functions**:
 - Motion detection (`moving()`, `stable()`)
 - Orientation detection (`orientation()`, `on_table()`)
 - Tumble tracking (`resetTumbleDetection()`, `tumbled()`)
-- Gyroscope integration for rotation matrices  
-**Lines**: ~540 lines
+- Gyroscope integration for rotation matrices
 
 ### EspNowSensor.hpp
 
-**Purpose**: Template-based ESP-NOW communication wrapper  
-**Design Pattern**: Singleton with static interface  
+**Purpose**: Template-based ESP-NOW communication wrapper
+**Design Pattern**: Singleton with static interface
 **Key Functions**:
 - `Init()`: Initialize ESP-NOW and WiFi
 - `Send()`: Transmit message to peer
 - `Poll()`: Retrieve received messages from queue
-- `AddPeer()`: Register communication partner  
+- `AddPeer()`: Register communication partner
 **Features**:
 - RSSI extraction from packet headers
 - Message queuing
@@ -777,13 +812,13 @@ struct StateTransition {
 
 ### Screenfunctions.hpp / .cpp
 
-**Purpose**: Display management and rendering  
+**Purpose**: Display management and rendering
 **Key Functions**:
 - `initDisplays()`: Initialize six GC9A01A displays
 - `refreshScreens()`: Update all displays based on state
 - `display1to6()`: Show dice numbers
 - `displayMix1to6()`: Superposition pattern
-- `displayEntangled()`: Entanglement indicator  
+- `displayEntangled()`: Entanglement indicator
 **Utilities**:
 - `blendColor()`: Alpha blending for smooth visuals
 - `drawDot()`: Draw dice dots
@@ -791,26 +826,31 @@ struct StateTransition {
 
 ### ScreenStateDefs.hpp / .cpp
 
-**Purpose**: Screen state determination logic  
+**Purpose**: Screen state determination logic
 **Key Functions**:
 - `findValues()`: Map quantum state → screen states for each face
 - `selectOneToSix()`: Random number generation
 - `selectOppositeOneToSix()`: Anti-correlation for entangled dice
 
-### handyHelpers.hpp / .cpp
+### Button.hpp / .cpp
 
-**Purpose**: Utility functions  
+**Purpose**: Button singleton for interacting with button.
 **Key Functions**:
-- `initHardwarePins()`: Configure GPIO based on board type
-- `initButton()`: Setup button callbacks
-- `checkMinimumVoltage()`: Battery level monitoring
-- `checkTimeForDeepSleep()`: Power management
-- `generateDiceRoll()`: Hardware random number generation
+- `pollPressShort()`: Get whether a short press has been registered since last call.
+- `pollPressDouble()`: Get whether a double press has been registered since last call.
+- `pollPressLong()`: Get whether a long press has been registered since last call.
+
+### Battery.hpp / .cpp
+
+**Purpose**: Battery singleton for interacting with the button.
+**Key Functions**:
+- `getVoltage()`: Returns the voltage of the battery.
+- `getStateOfCharge()`: Returns the state of charge of the battery.s
 
 ### Queue.hpp
 
-**Purpose**: Generic FIFO queue implementation  
-**Template Class**: `Queue<T>`  
+**Purpose**: Generic FIFO queue implementation
+**Template Class**: `Queue<T>`
 **Features**:
 - Dynamic resizing
 - Circular buffer
@@ -818,7 +858,7 @@ struct StateTransition {
 
 ### defines.hpp
 
-**Purpose**: System-wide constants and debug macros  
+**Purpose**: System-wide constants and debug macros
 **Contents**:
 - Version string
 - Debug/logging macros (debug, info, warn, error)
@@ -855,19 +895,6 @@ DiceNumbers selectOppositeOneToSix(DiceNumbers input) {
 }
 ```
 
-### Battery Voltage Monitoring
-
-```cpp
-bool checkMinimumVoltage() {
-    float voltage = analogRead(hwPins.adc_pin) * (3.3 / 4095.0) * 2.0;
-    
-    if (voltage < MINBATERYVOLTAGE) {  // 3.40V
-        return true;  // Low battery
-    }
-    return false;
-}
-```
-
 ---
 
 ## Performance Characteristics
@@ -888,11 +915,11 @@ bool checkMinimumVoltage() {
 
 ### Arduino Libraries
 
-- **Adafruit_BNO055**: IMU sensor driver
-- **Adafruit_Sensor**: Unified sensor abstraction
-- **Adafruit_GFX**: Graphics primitives
+- **Adafruit BNO055**: IMU sensor driver
+- **Adafruit LSM6DS3**: IMU sensor driver
+- **Adafruit Unified Sensor**: Unified sensor abstraction
+- **Adafruit GFX Library**: Graphics primitives
 - **Adafruit_GC9A01A**: Round TFT display driver
-- **Button2**: Debounced button handling
 - **WiFi**: ESP32 WiFi stack (for ESP-NOW)
 - **esp_now**: Peer-to-peer communication
 - **LittleFS**: Filesystem for configuration storage
@@ -920,7 +947,6 @@ Partition Scheme: Custom (partitions.csv)
 ### Custom Partitions
 
 The `partitions.csv` file allocates space for:
-- Bootloader
 - Application firmware
 - LittleFS filesystem (for config storage)
 
@@ -943,7 +969,7 @@ error("failed!\n");          // [E] failed!
 
 ```cpp
 void printStateName(const char *objectName, State state) {
-    Serial.printf("%s: %s | %s | %s\n", 
+    Serial.printf("%s: %s | %s | %s\n",
                   objectName,
                   getModeName(state.mode),
                   getThrowStateName(state.throwState),
@@ -970,6 +996,6 @@ stateMachine: QUANTUM | IDLE | ENTANGLED
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: January 2026  
-**Firmware Version**: 2.0.0
+**Document Version**: 1.1
+**Last Updated**: October 2026
+**Firmware Version**: Gen 4.0

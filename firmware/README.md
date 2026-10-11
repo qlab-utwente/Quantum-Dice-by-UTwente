@@ -37,7 +37,7 @@ build.sh                   - A bash script that calls the arduino-cli to build t
 					         the result to a new build directory.
 EXAMPLE_config.txt         - An example config file with explanations for all the settings.
 README.md                  - This file.
-technical documentation.md - A technical explanation of the design of the firmware.
+TECHNICAL_DOCUMENTATION.md - A technical explanation of the design of the firmware.
 ```
 
 ## 2. Contributing to the Firmware
