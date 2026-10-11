@@ -36,11 +36,4 @@ void power_off_screens() {
 void power_shutdown() {
 	gpio_set_level(POWER_PIN_SHUTDOWN, 1);
 	gpio_set_level(POWER_PIN_I2C, 0);
-	gpio_set_level(POWER_PIN_SCREENS, 0);
-
-	// Try to to start deep sleep in a loop.
-	while (true) {
-		esp_deep_sleep_try_to_start();
-		vTaskDelay(DEEP_SLEEP_LOOP_WAIT_TIME);
-	}
 }

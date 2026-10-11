@@ -207,6 +207,7 @@ class StateMachine {
 	static constexpr float BATTERY_MINIMUM_CHARGE = 20.0f;
 
 	State currentState;
+	bool tryingToSleep;
 
 	uint8_t current_peer[MAC_ADDRESS_LENGTH];
 	uint8_t next_peer[MAC_ADDRESS_LENGTH];

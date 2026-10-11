@@ -409,6 +409,7 @@ StateMachine::StateMachine()
 		.throwState = ThrowState::IDLE,
 		.entanglementState = EntanglementState::PURE
 	  },
+	  tryingToSleep(false),
 	  current_peer{ 0, 0, 0, 0, 0, 0 },
 	  next_peer{ 0, 0, 0, 0, 0, 0 },
 	  new_peer{ 0, 0, 0, 0, 0, 0 },
@@ -495,7 +496,18 @@ void StateMachine::update() {
 
 	// If the button is held for a long time, then we must shut down.
 	if (button_poll_press_long()) {
+		this->tryingToSleep = true;
 		power_shutdown();
+		power_off_screens();
+	}
+
+	if (this->tryingToSleep) {
+		esp_deep_sleep_try_to_start();
+
+		if (button_poll_press_short() || button_poll_press_double() || button_poll_press_long()) {
+			esp_restart();
+		}
+		return;
 	}
 
 	// Check whether the dice has been inactive for long enough to go to sleep.
@@ -830,7 +842,9 @@ void StateMachine::checkTimeForDeepSleep() {
 
 	// Use the timeout from configuration
 	if (!isMoving && !button_is_pressed() && (millis() - lastMovementTime > currentConfig.deepSleepTimeout)) {
+		this->tryingToSleep = true;
 		power_shutdown();
+		power_off_screens();
 	}
 }
 
