@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <Arduino.h>
 #include <driver/gpio.h>
+#include <cmath>
 
 #include "Battery.hpp"
 
@@ -44,7 +45,7 @@ static void selectScreens(screenselections screens) {
 }
 
 // Function to blend colors with transparency
-static uint16_t blendColor(const uint16_t foreground, const uint16_t background, float alpha) noexcept {
+static constexpr uint16_t blendColor(const uint16_t foreground, const uint16_t background, float alpha) noexcept {
     // Constrain alpha between 0 and 1
     alpha = constrain(alpha, 0.0, 1.0);
 
@@ -83,7 +84,7 @@ void initDisplays() {
 
     selectScreens(ALL); // Select all screens
     delay(500);
-    tft.begin();
+    tft.begin(40'000'000);
     delay(1000);
     tft.fillScreen(GC9A01A_BLACK);
 
@@ -464,4 +465,67 @@ void showConfigMode(screenselections screens) {
     tft.setTextSize(1);
 
     drawStringCentered(tft, "Setup Mode", (tft.height() / 2) + 9);
+}
+
+static constexpr float ANIMATE_CENTER_X = (WIDTH / 2);
+static constexpr float ANIMATE_CENTER_Y = (HEIGHT / 2);
+static constexpr float ANIMATE_COLOR0 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (3.0F * 0.16F) + 0.2F);
+static constexpr float ANIMATE_COLOR1 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (5.0F * 0.16F) + 0.2F);
+static constexpr float ANIMATE_COLOR2 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (1.0F * 0.16F) + 0.2F);
+static constexpr float ANIMATE_COLOR3 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, 0.2F);
+static constexpr float ANIMATE_COLOR4 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (5.0F * 0.16F) + 0.2F);
+static constexpr float ANIMATE_COLOR5 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, 3.0F * 0.2F);
+static constexpr float ANIMATE_FULL_ROTATION_TIME = 1.25F;
+static unsigned long animateStartTime = NAN;
+static float animatePreviousAngle = NAN;
+
+void animateRestart() {
+	selectScreens(ALL);
+	animateStartTime = millis();
+	animatePreviousAngle = 0.0F;
+
+	tft.fillScreen(GC9A01A_BLACK);
+	tft.fillCircle(ANIMATE_CENTER_X - DOT_OFFSET, ANIMATE_CENTER_Y - DOT_OFFSET, DOT_RADIUS, ANIMATE_COLOR0);
+	tft.fillCircle(ANIMATE_CENTER_X + DOT_OFFSET, ANIMATE_CENTER_Y - DOT_OFFSET, DOT_RADIUS, ANIMATE_COLOR1);
+	tft.fillCircle(ANIMATE_CENTER_X - DOT_OFFSET, ANIMATE_CENTER_Y, DOT_RADIUS, ANIMATE_COLOR2);
+	tft.fillCircle(ANIMATE_CENTER_X + DOT_OFFSET, ANIMATE_CENTER_Y, DOT_RADIUS, ANIMATE_COLOR3);
+	tft.fillCircle(ANIMATE_CENTER_X - DOT_OFFSET, ANIMATE_CENTER_Y + DOT_OFFSET, DOT_RADIUS, ANIMATE_COLOR1);
+	tft.fillCircle(ANIMATE_CENTER_X + DOT_OFFSET, ANIMATE_CENTER_Y + DOT_OFFSET, DOT_RADIUS, ANIMATE_COLOR0);
+    tft.fillCircle(ANIMATE_CENTER_X, ANIMATE_CENTER_Y, DOT_RADIUS, ANIMATE_COLOR5);
+}
+
+static void animateDrawDot(const int offsetX, const int offsetY, const float angleCos, const float angleSin, const uint16_t color) noexcept {
+	const int rotatedOffsetX = static_cast<int>(static_cast<float>(offsetX) * angleCos - static_cast<float>(offsetY) * angleSin);
+	const int rotatedOffsetY = static_cast<int>(static_cast<float>(offsetX) * angleSin + static_cast<float>(offsetY) * angleCos);
+
+	tft.fillCircle(ANIMATE_CENTER_X + rotatedOffsetX, ANIMATE_CENTER_Y + rotatedOffsetY, DOT_RADIUS, color);
+}
+
+void animateUpdate() {
+	const unsigned long now = millis();
+	const float timeElapsed = static_cast<float>(now - animateStartTime) / 1000.0F;
+	const float angle = fmod(TWO_PI * timeElapsed / ANIMATE_FULL_ROTATION_TIME, TWO_PI);
+
+	const float angleCos = cosf(angle);
+	const float angleSin = sinf(angle);
+
+	const float previousAngleCos = cosf(animatePreviousAngle);
+	const float previousAngleSin = sinf(animatePreviousAngle);
+
+	animateDrawDot(-DOT_OFFSET, -DOT_OFFSET, previousAngleCos, previousAngleSin, GC9A01A_BLACK);
+	animateDrawDot(-DOT_OFFSET, -DOT_OFFSET, angleCos, angleSin, ANIMATE_COLOR0);
+	animateDrawDot( DOT_OFFSET, -DOT_OFFSET, previousAngleCos, previousAngleSin, GC9A01A_BLACK);
+	animateDrawDot( DOT_OFFSET, -DOT_OFFSET, angleCos, angleSin, ANIMATE_COLOR1);
+	animateDrawDot(-DOT_OFFSET, 0, previousAngleCos, previousAngleSin, GC9A01A_BLACK);
+	animateDrawDot(-DOT_OFFSET, 0, angleCos, angleSin, ANIMATE_COLOR2);
+	animateDrawDot( DOT_OFFSET, 0, previousAngleCos, previousAngleSin, GC9A01A_BLACK);
+	animateDrawDot( DOT_OFFSET, 0, angleCos, angleSin, ANIMATE_COLOR3);
+	animateDrawDot(-DOT_OFFSET,  DOT_OFFSET, previousAngleCos, previousAngleSin, GC9A01A_BLACK);
+	animateDrawDot(-DOT_OFFSET,  DOT_OFFSET, angleCos, angleSin, ANIMATE_COLOR1);
+	animateDrawDot( DOT_OFFSET,  DOT_OFFSET, previousAngleCos, previousAngleSin, GC9A01A_BLACK);
+	animateDrawDot( DOT_OFFSET,  DOT_OFFSET, angleCos, angleSin, ANIMATE_COLOR0);
+
+	animatePreviousAngle = angle;
+	const float timeToRender = static_cast<float>(millis() - now) / 1000.0F;
+	debugf("Time to render: %.2f\n", timeToRender);
 }
