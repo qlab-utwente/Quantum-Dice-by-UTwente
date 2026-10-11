@@ -76,4 +76,7 @@ void drawStringCentered(Adafruit_GFX &gfx, const String &text, int16_t y);
 void showConfigMode(screenselections screens);
 void rssiScreen(int32_t rssi);
 
+void animateRestart();
+void animateUpdate();
+
 #endif /* SCREENFUNCTIONS_H_ */
