@@ -241,6 +241,7 @@ void StateMachine::sendEntanglementConfirm(uint8_t *target) {
     // Trigger color flash
     this->colorFlash = true;
     this->colorFlashStartTime = millis();
+	animateRestart();
     debugln("Triggering color flash (accepting entanglement)");
 
     EspNowSensor<message>::Send(myData, target);
@@ -555,11 +556,27 @@ void StateMachine::update() {
 	}
 
 	// State-independent: Handle color flash timeout
+	const bool pressDouble = button_poll_press_double();
+	if (this->colorFlash) {
+		if (currentTime - this->colorFlashStartTime >= 5000) {
+			this->colorFlash = false;
+			refreshScreens();
+		} else {
+			animateUpdate();
+		}
+	} else if (pressDouble) {
+		this->colorFlash = true;
+		this->colorFlashStartTime = millis();
+		animateRestart();
+	}
+
+	/*
 	if (this->colorFlash && (currentTime - this->colorFlashStartTime >= currentConfig.colorFlashTimeout)) {
 		debugln("Color flash timeout - refreshing screens to show white");
 		this->colorFlash = false;
 		refreshScreens(); // Update display to show white instead of color
 	}
+	*/
 
 	// Call whileInState function for current state
 	auto it = stateFunctions.find(this->currentState);
