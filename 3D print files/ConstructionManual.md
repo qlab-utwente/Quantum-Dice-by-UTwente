@@ -1,4 +1,5 @@
 ## 1. Introduction
+
 This construction manual provides all the information required to build your own set of **Quantum Dice (Series 4)**. It covers component sourcing, 3D printing, preparation of the electronics, firmware installation, and step-by-step assembly.
 
 The Quantum Dice were developed by the **University of Twente**. All designs are freely available under the **CC BY licence**.
@@ -49,7 +50,6 @@ The PCB controls the six displays, monitors and manages the power supply, detect
 The PCB is mounted on the yellow **Display Cup with flexible button tab**. The battery is mounted on the opposite yellow Display Cup.
 
 More information about obtaining the PCB, either as a ready-to-use board from the **University of Twente** or by ordering and assembling it yourself, is provided in Section 3.2.
-
 
 ## 3. Parts and Sourcing
 
@@ -103,7 +103,7 @@ The battery should meet the following specifications:
 
 LiPo battery dimensions are commonly indicated by a six-digit size code. For example, in **xx3048**, `xx` indicates the battery thickness, `30` indicates a width of 30 mm, and `48` indicates a height of 48 mm.
 
-![alt text](<../images/construction_123048 battery.jpg>)
+![Battery](../images/construction_123048_battery.jpg)
 
 ### 3.5 Cables and Other Components
 
@@ -112,10 +112,11 @@ The Quantum Die uses two main types of cables:
 - **6 FPC cables** to connect the six TFT displays to the PCB
 - **1 USB-C extension cable** to make the PCB's USB-C connection accessible from outside the Quantum Die for firmware management and battery charging
 
+![Cable set](../images/cable_set_version4.jpg)
+
 Additional cables and mounting components, including the battery cable, screws, and other fasteners, are listed in the BOM.
 
 Use the BOM as the reference for the required quantities and specifications before starting the assembly.
-
 
 ## 4. 3D Printing
 
@@ -171,10 +172,6 @@ Support is required for printing the Display Cups and the Main Frame.
 
 All 3D models are supplied in **STL format**. The filenames include the part name, recommended material, colour, and version number.
 
-For convenience, **3MF build plates** containing the required parts are also provided. These files were prepared using **PrusaSlicer**, but can also be imported into **Bambu Studio**.
-
-Depending on the printer and build plate size, some rearrangement of the parts may be required.
-
 For additional information about the print files, orientation, and support settings, see the [3D print files README](README.md).
 
 ### 4.5 Outsourcing 3D Printing
@@ -190,16 +187,16 @@ Several printing methods are available:
 
 A supplier we have used successfully is [JLC3D FDM Printing](https://jlc3dp.com/3d-printing/fused-deposition-modeling).
 
-
 ![alt text](<../images/construction_parts.png>)
-
 
 ## 5. Preparing the 3D-Printed Parts
 
 Before installing the electronics, prepare the 3D-printed parts as described below.
 
 ### 5.1 Required Tools
+
 You will need:
+
 - 2 mm and 2.5 mm hex keys
 - cutting pliers
 - **cyanoacrylate (CA) glue**, such as Loctite 406 for plastics
@@ -285,6 +282,7 @@ If you ordered and assembled the PCB yourself, install the firmware before conti
 > **Note:** The firmware must be installed before performing the display tests in Chapter 7.
 
 ---
+
 ## 7. Assembling the Quantum Die
 
 With all 3D-printed and electronic components prepared, the Quantum Die can now be assembled.
@@ -412,7 +410,7 @@ If one or more displays remain blank, switch off the Quantum Die and check the c
 
 If you are using a PCB supplied by the **University of Twente**, the firmware, configuration, and calibration have already been completed. If you assembled the PCB yourself, make sure that all required firmware installation, configuration, and calibration steps have been completed.
 
-## Congratulations!
+## Congratulations
 
 You have successfully built a **Quantum Die**.
 
