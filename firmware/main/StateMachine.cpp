@@ -522,6 +522,7 @@ void StateMachine::update() {
 	if (button_poll_press_long()) {
 		(void)pollUsbConnected();
 		this->tryingToSleep = true;
+		IMU.sleep();
 		power_shutdown();
 		power_off_screens();
 	}
@@ -869,6 +870,7 @@ void StateMachine::checkTimeForDeepSleep() {
 	if (!isMoving && !button_is_pressed() && (millis() - lastMovementTime > currentConfig.deepSleepTimeout)) {
 		(void)pollUsbConnected();
 		this->tryingToSleep = true;
+		IMU.sleep();
 		power_shutdown();
 		power_off_screens();
 	}

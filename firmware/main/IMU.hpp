@@ -133,6 +133,13 @@ public:
 		return this->orientation;
 	}
 
+	inline void sleep() noexcept {
+		if (this->chip == IMUChip::LSM6DS3) {
+			this->_lsm.setAccelDataRate(LSM6DS_RATE_SHUTDOWN);
+			this->_lsm.setGyroDataRate(LSM6DS_RATE_SHUTDOWN);
+		}
+	}
+
 	void init();
 	void update();
 	inline bool moving() const __attribute__((always_inline)) { return this->_isMoving; }

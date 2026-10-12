@@ -21,6 +21,8 @@ void IMUClass::init() {
 
 		if (this->_lsm.begin_I2C()) {
 			this->chip = IMUChip::LSM6DS3;
+			this->_lsm.setAccelDataRate(LSM6DS_RATE_26_HZ);
+			this->_lsm.setGyroDataRate(LSM6DS_RATE_26_HZ);
 			break;
 		}
 	}
