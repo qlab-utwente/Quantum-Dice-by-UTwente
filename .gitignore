@@ -5,3 +5,4 @@
 *.elf
 *.map
 3D print files/~$Bill of Material quantum dice.xlsx
+.DS_Store
