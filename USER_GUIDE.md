@@ -98,11 +98,14 @@ The Quantum Dice has a single button that serves as both the power button and th
 **Long press:** Put the die into sleep mode.
 
 
+![quantumbutton](images/single-die-classic-to-superposition.png)
+
 
 ## Entanglement Colour Display
 
 When two dice are entangled, the Quantum Dice will display colours on the superposition state to indicate entanglement status. Both dice will have the same colour. When the colour display is toggled off, the dice will show the entanglement colour, and shortly after revert to the standard superposition state display.
 
+![alt text](images/two_dice_entangled_1.png)
 
 ## Entanglement
 
@@ -123,7 +126,7 @@ When two dice are entangled, the Quantum Dice will display colours on the superp
 
 **⚠️ Important:** After entanglement, separate the dice by **more than 1 meter** to prevent them from re-entangling after rolling.
 
-
+![alt text](images/two_dice_entangled_2.png)
 
 ## Teleportation
 
