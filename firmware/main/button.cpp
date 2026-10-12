@@ -122,7 +122,7 @@ bool button_poll_press_long() {
 	}
 }
 
-static void IRAM_ATTR interrupt_edge(void *parameter) {
+static void ARDUINO_ISR_ATTR interrupt_edge() {
 	BaseType_t higher_priority_task_woken = pdFALSE;
 
 	xTaskNotifyFromISR(
@@ -175,30 +175,20 @@ static inline void task_loop() {
 }
 
 static inline void edge_setup() {
-	static gpio_config_t GPIO_CONFIG = {
-		.pin_bit_mask = (1 << BUTTON_PIN),
-		.mode = GPIO_MODE_INPUT,
-		.pull_up_en = GPIO_PULLUP_DISABLE,
-		.pull_down_en = GPIO_PULLDOWN_ENABLE,
-		.intr_type = GPIO_INTR_ANYEDGE
-	};
-
-	gpio_config(&GPIO_CONFIG);
-	gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
-	gpio_isr_handler_add(BUTTON_PIN, interrupt_edge, NULL);
-	button_level = gpio_get_level(BUTTON_PIN);
+	pinMode(BUTTON_PIN, INPUT_PULLDOWN);
+	attachInterrupt(BUTTON_PIN, interrupt_edge, CHANGE);
 
 	rtc_gpio_pullup_dis(BUTTON_PIN);
 	rtc_gpio_pulldown_en(BUTTON_PIN);
 	esp_sleep_enable_ext1_wakeup((1 << BUTTON_PIN), ESP_EXT1_WAKEUP_ANY_HIGH);
 
-	if (button_level == 1) {
+	if (digitalRead(BUTTON_PIN) == 1) {
 		button_state = BUTTON_STATE_PRESS_IGNORE;
 	}
 }
 
 static inline void edge_handle() {
-	int32_t level = gpio_get_level(BUTTON_PIN);
+	int32_t level = digitalRead(BUTTON_PIN);
 	if (level == button_level) {
 		return;
 	}
