@@ -24,7 +24,7 @@ In this repo you can find all relevant files, including assembly instructions, 3
 
 For further information see [Quantum Dice by University of Twente](https://www.utwente.nl/en/mesaplus/education/quantum-dice/)
 
-You can find more information about the dice in our article, including didactical approaches, for which a preprint is available on [*arXiv*](https://arxiv.org/abs/2510.04931)
+You can find more information about the Dice in our article, including didactical approaches, available on [*Physics Education*](https://iopscience.iop.org/article/10.1088/1361-6552/ae43aa) or [*arXiv*](https://arxiv.org/abs/2510.04931).
 
 Content of this repo:
 - [Construction manual](/3D%20print%20files/ConstructionManual.md) (incl. firmware)
