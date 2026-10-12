@@ -28,7 +28,7 @@ The colour of each Display Cup indicates its orientation axis:
 
 - **Top / Bottom**: z-axis, blue
 
-![alt text](<../images/Exploded view Quantum Dice 3.png>)
+![alt text](<images/Exploded view Quantum Dice 3.png>)
 
 Inside the die, a rechargeable **LiPo battery** supplies power to the electronics. The displays, communication, orientation sensing, and other functions are controlled by an **ESP32-S3 microcontroller** mounted on the PCB.
 
@@ -36,7 +36,7 @@ Inside the die, a rechargeable **LiPo battery** supplies power to the electronic
 
 All electronics are integrated on a single double-sided **Printed Circuit Board (PCB)**.
 
-![alt text](../images/PCBv42_Top_Bottom_view.png)
+![alt text](images/PCBv42_Top_Bottom_view.png)
 
 The PCB includes:
 
@@ -84,11 +84,11 @@ A PCB supplied by the University of Twente comes with the latest firmware instal
 
 If you have experience with PCB fabrication and microcontroller firmware, you can also order and assemble the PCB yourself using the provided production files.
 
-- [PCB fabrication files](<../PCB files>)
+- [PCB fabrication files](<PCB files>)
 
-- [Firmware source files](../firmware)
+- [Firmware source files](firmware)
 
-- [Firmware installation and configuration](#66-installing-the-firmware-and-configuration)
+- [Firmware installation and configuration](#9-firmware-installation-configuration-and-updates)
 
 > **Note:** If you order and assemble the PCB yourself, the firmware must be installed and the required configuration completed before the Quantum Die can be tested. The firmware performs IMU calibration automatically.
 
@@ -116,7 +116,7 @@ The battery should meet the following specifications:
 
 LiPo battery dimensions are commonly indicated by a six-digit size code. For example, in **xx3048**, `xx` indicates the battery thickness, `30` indicates a width of 30 mm, and `48` indicates a height of 48 mm.
 
-![Battery](../images/construction_123048_battery.jpg)
+![Battery](images/construction_battery.png)
 
 ### 3.5 Cables and Other Components
 
@@ -126,7 +126,7 @@ The Quantum Die uses two main types of cables:
 
 - **1 USB-C extension cable** to make the PCB's USB-C connection accessible from outside the Quantum Die for firmware management and battery charging
 
-![Cable set](../images/cable_set_version4.jpg)
+![Cable set](images/cable_set_version4.jpg)
 
 Additional cables and mounting components, including the battery cable, screws, and other fasteners, are listed in the BOM.
 
@@ -212,7 +212,7 @@ Several printing methods are available:
 
 A supplier we have used successfully is [JLC3D FDM Printing](https://jlc3dp.com/3d-printing/fused-deposition-modeling).
 
-![alt text](<../images/construction_parts.png>)
+![alt text](<images/construction_parts.png>)
 
 ## 5. Preparing the 3D-Printed Parts
 
@@ -244,7 +244,7 @@ The **PCB Display Backplane** must be glued to the yellow **Display Cup with fle
 
 > **Warning:** Use only a small amount of glue. Excess glue may overflow into the Display Cup or onto other surfaces.
 
-![alt text](<../images/construction_gluing.png>)
+![alt text](<images/construction_gluing.png>)
 
 ---
 
@@ -292,9 +292,9 @@ Before mounting the TFT displays into the Display Cups, the original **grey plas
 
 > **Note:** Some force may be required to remove the connectors. Work carefully to avoid damaging the display or other components on the display board.
 
-![alt text](<../images/construction_Display_Connector_Removal.png>)
+![alt text](<images/construction_Display_Connector_Removal.png>)
 
-![alt text](<../images/display_con.gif>)
+![alt text](<images/display_con.gif>)
 
 ### 6.4 Mounting the Displays into the Display Cups
 
@@ -306,7 +306,7 @@ Repeat the following procedure for all six displays:
 
 3. Secure the display using **countersunk M3×6 screws**. In most cases, **two screws per display are sufficient** to hold the display securely in place.
 
-![alt text](<../images/construction_displ_mount.png>)
+![alt text](<images/construction_displ_mount.png>)
 
 ### 6.5 Mounting the USB-C Connector
 
@@ -316,107 +316,15 @@ The external USB-C port supports both **battery charging** and **direct data com
 
 A small amount of pressure may be required to click the connector securely into place.
 
-### 6.6 Installing the Firmware and Configuration
-
-A PCB supplied by the **University of Twente** already has firmware installed and has been tested. If you are using such a PCB, **skip the initial firmware installation** and continue with Chapter 7. Instructions for updating the firmware or changing the configuration later are provided in Chapter 9.
-
-If you ordered and assembled the PCB yourself, install the firmware before closing the Quantum Die. The procedure below starts with a new PCB. **You must prepare each PCB separately.**
-
-> **Important:** The initial installation and later updates use different firmware files and flash offsets. Do not follow the initial-installation procedure to update a configured PCB, as this can erase its stored configuration.
-
-#### 6.6.1 What You Need
-
-- An assembled **PCB** with an accessible USB-C connection (the displays do not need to be connected).
-- A computer with internet access and a **USB-C data cable**, not a charging-only cable.
-- A current **Chromium-based browser**, such as Chrome, Edge or Opera. Safari and Firefox do not support the WebSerial connection used here.
-- The latest Quantum Dice firmware files.
-
-#### 6.6.2 Download the Firmware Files
-
-1. Open the [Quantum Dice firmware releases](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/releases).
-2. Find the release intended for your PCB and download these files, where `X.X.X` represents the version number:
-   - `QuantumDice.vX.X.X.merged.bin`: for the **first installation on a new PCB**.
-   - `QuantumDice.vX.X.X.bin`: for **later firmware updates**.
-3. Keep the files in a location you can find again, such as your Downloads folder.
-
-![Quantum Dice firmware files on GitHub](<../images/Github binaries.png>)
-
-#### 6.6.3 Connect the PCB to ESPConnect
-
-1. Connect the PCB to your computer using the USB-C data cable.
-2. In your browser, open [ESPConnect](https://thelastoutpostworkshop.github.io/ESPConnect/).
-3. Click **Connect**, select the serial device corresponding to your PCB, and grant the browser permission to use it.
-4. Wait until ESPConnect recognises the board and makes its tools available.
-
-> **Note:** Only one application can use the serial port at a time. If you cannot connect, close the Arduino IDE, any serial monitor, or other application using the device. See Chapter 10 for troubleshooting.
-
-#### 6.6.4 Flash a New PCB (First Installation Only)
-
-Use these instructions **only for a new PCB that has not yet been configured**.
-
-1. In ESPConnect, open **Flash Tools**.
-2. Scroll to **Flash Firmware** and select **Firmware binary (.bin)**.
-3. Select `QuantumDice.vX.X.X.merged.bin`.
-4. Set the **Flash Offset** to **`0x0`**.
-5. Click **Flash firmware** and wait for the operation to finish. It typically takes around 30 seconds to one minute.
-6. Check that ESPConnect reports **Flash complete**.
-7. Repeat the procedure for any other new PCBs.
-
-> **Warning:** Do not use the `merged.bin` file for a normal update to a PCB that already contains a configuration. For that, follow Section 9.1.
-
-#### 6.6.5 Prepare a Configuration File (Optional)
-
-The firmware uses a configuration file to define settings such as colours and timeouts. If the default settings meet your needs, you may leave them unchanged.
-
-1. Obtain the [example configuration file](../firmware/example_configs/TEST1_config.txt).
-2. Open it in a plain-text editor and read the comments explaining each setting.
-3. Make any necessary changes and save the file as plain text.
-4. Keep the original example filename, **`TEST1_config.txt`**, unless you have checked which filenames are accepted by the firmware version you are using.
-
-> **Filename note:** The earlier Setup Guide specifies a five-character prefix (`XXXXX_config.txt`), but also provides the longer example `YOURNAME_config.txt`. Because these examples conflict, the required naming rule should be checked in the current firmware before renaming a configuration file.
-
-#### 6.6.6 Upload a Configuration File (Optional)
-
-1. Keep the PCB connected in ESPConnect and open **LittleFS Tools**.
-2. Click **Download Backup** and allow the backup to finish. This safety step also makes the file-upload controls available in the workflow described by the original Setup Guide.
-3. Click **Choose File**, select your configuration text file, and click **Upload**.
-4. The file is now staged in your browser. Click **SAVE TO FLASH** to write it to the PCB.
-5. Confirm the operation and wait for it to finish.
-6. If the interface offers an eye or preview icon, use it to open the file on the board and verify its contents.
-7. Repeat for other PCBs if needed.
-
-![ESPConnect LittleFS tools](<../images/littlefs screen.png>)
-
-> **Note:** Quantum Dice used together do not necessarily need identical configuration files. For example, they can have different colours configured for entanglement and still cooperate correctly.
-
-#### 6.6.7 Verify the Firmware and Configuration
-
-The firmware can be checked before the displays are attached.
-
-1. In ESPConnect, open **Serial Monitor** and click **Start**.
-2. Observe the startup messages. Depending on the installed firmware version, they should indicate that the filesystem mounted, the configuration was loaded, and ESP-NOW communication initialised.
-3. Check whether the log ends with a successful setup message and whether the reported die ID is correct.
-4. If a configuration file is missing or fails to load, check Section 10.4.
-
-![ESPConnect serial monitor](../images/Serial_monitor.png)
-
-> **Note:** Some I2C warnings during startup may be temporary if the corresponding sensor initialises successfully afterward. Persistent failures or an incomplete setup require troubleshooting.
-
-Once the firmware installation and configuration have been verified, continue with the assembly in Chapter 7. The visual display test is described in Section 7.7, and the completed device is checked in Chapter 8.
-
-**Automatic IMU calibration:** The firmware handles IMU calibration automatically. No separate manual calibration procedure is required, including for independently assembled PCBs.
-
----
-
 ## 7. Assembling the Quantum Die
 
-With all 3D-printed and electronic components prepared, the Quantum Die can now be assembled.
+With all 3D-printed and electronic components prepared, the Quantum Die can now be assembled. **If you assembled your own PCB, install its firmware using Section 9.1 before the display test in Section 7.7.**
 
 ### 7.1 Connecting FPC Cables
 
 The displays are connected to the PCB using **FPC cables** (flat ribbon cables) with sliding-latch connectors. These connectors are delicate, so handle them carefully.
 
-![alt text](<../images/construction_FPC slide lock.png>)
+![alt text](<images/construction_FPC slide lock.png>)
 
 To connect an FPC cable:
 
@@ -430,7 +338,7 @@ To connect an FPC cable:
 
 > **Important:** Pay attention to the orientation of the FPC cable. The **blue side of the cable must face away from the indentation of the FPC connector**.
 
-![alt text](<../images/construction_cable_mount.png>)
+![alt text](<images/construction_cable_mount.png>)
 
 ### 7.2 Connecting the PCB Display Cup
 
@@ -444,7 +352,7 @@ Start with the yellow **Display Cup with flexible button tab**. This Display Cup
 
 3. Attach the **PCB** to the **PCB Display Backplane** using M3 hex screws.
 
-![alt text](<../images/construction_cable_mount_frame.png>)
+![alt text](<images/construction_cable_mount_frame.png>)
 
 ### 7.3 Preparing the Battery Display Cup
 
@@ -462,7 +370,7 @@ Next, prepare the yellow **Display Cup with USB-C port opening**. This Display C
 
 >The Main Frame itself does not have a predefined orientation. Use the **arrow on the inside of the yellow Display Cup** to establish the orientation of the die. From this point onwards, the direction indicated by the arrow defines the **TOP** of the die and serves as the reference for the remaining assembly.
 
-![alt text](<../images/construction_battery_cup.png>)
+![alt text](<images/construction_battery_cup.png>)
 
 ### 7.4 Connecting the Remaining FPC Cables
 
@@ -476,7 +384,7 @@ With the FRONT and BACK displays prepared, connect the remaining FPC cables to t
 
 Make sure all FPC cables are fully inserted and securely locked.
 
-![alt text](<../images/construction_longFPC_to_PCB.png>)
+![alt text](<images/construction_longFPC_to_PCB.png>)
 
 ### 7.5 Mounting the PCB Display Cup into the Main Frame
 
@@ -500,7 +408,7 @@ Make sure all FPC cables are fully inserted and securely locked.
 
 > **Warning:** Avoid pulling, sharply bending, or pinching the FPC cables during assembly.
 
-![alt text](<../images/construction_PCB_battery_connect.png>)
+![alt text](<images/construction_PCB_battery_connect.png>)
 
 ### 7.6 Mounting the Red Display Cups
 
@@ -516,7 +424,7 @@ Mount the **LEFT** and **RIGHT** red Display Cups.
 
 > **Warning:** An FPC cable can become trapped between a Display Cup and the Main Frame when the cup is pressed into place. Gently guide the cables into the central cavity of the die while inserting the Display Cups. Avoid pinching, sharply bending, or placing excessive stress on the cables.
 
-![alt text](<../images/construction_red_cups.png>)
+![alt text](<images/construction_red_cups.png>)
 
 ### 7.7 Initial Display Test
 
@@ -528,7 +436,7 @@ Before mounting the blue Display Cups, test the four displays that are currently
 
 If one or more displays remain blank, switch off the Quantum Die and check the corresponding FPC cable and connector before continuing.
 
-> **Note:** This test requires the firmware to be installed on the PCB. See Section 6.6.
+> **Note:** This test requires the firmware to be installed on the PCB. See Section 9.1.
 
 ### 7.8 Mounting the Blue Display Cups
 
@@ -548,7 +456,7 @@ Finally, mount the **BOTTOM** and **TOP** blue Display Cups.
 
 > **Warning:** The FPC cables can become trapped between the Display Cups and the Main Frame. Gently guide the cables into the central cavity while inserting the Display Cups.
 
-![alt text](<../images/construction_blue_cups.png>)
+![alt text](<images/construction_blue_cups.png>)
 
 ## 8. Final Test and Completion
 
@@ -566,11 +474,103 @@ If one or more displays remain blank, switch off the Quantum Die and check the c
 
 If you are using a PCB supplied by the **University of Twente**, the firmware and configuration are already installed. If you assembled the PCB yourself, make sure that firmware installation and any required configuration have been completed. The firmware handles IMU calibration automatically.
 
-## 9. Firmware Updates and Configuration Changes
+## 9. Firmware Installation, Configuration and Updates
 
-You can update or reconfigure an assembled Quantum Die through its accessible USB-C connection. **Connect and update each die individually.** Before starting, use a USB-C cable that supports data transfer and a supported browser, as described in Section 6.6.3.
+This chapter covers the **first firmware installation**, **configuration**, **firmware updates**, and **subsequent configuration changes**. A PCB supplied by the University of Twente already comes with firmware installed and tested, so you can skip Section 9.1 unless you need to change its configuration. The firmware automatically calibrates the IMU, so no separate calibration procedure is required.
 
-### 9.1 Updating the Firmware
+**For independently assembled PCBs:** Complete Section 9.1 **before the initial display test in Section 7.7**, preferably while the USB-C connection is still readily accessible. You can then return to Chapter 7 to finish assembly. Once assembled, the external USB-C port supports both charging and direct communication with the ESP32-S3.
+
+### 9.1 Initial Firmware Installation and Configuration
+
+A PCB supplied by the **University of Twente** already has firmware installed and has been tested. If you are using such a PCB, **skip the initial firmware installation** and continue with Chapter 7. Firmware updates and later configuration changes are covered in Sections 9.2 and 9.3.
+
+If you ordered and assembled the PCB yourself, install the firmware before closing the Quantum Die. The procedure below starts with a new PCB. **You must prepare each PCB separately.**
+
+> **Important:** The initial installation and later updates use different firmware files and flash offsets. Do not follow the initial-installation procedure to update a configured PCB, as this can erase its stored configuration.
+
+#### 9.1.1 What You Need
+
+- An assembled **PCB** with an accessible USB-C connection (the displays do not need to be connected).
+- A computer with internet access and a **USB-C data cable**, not a charging-only cable.
+- A current **Chromium-based browser**, such as Chrome, Edge or Opera. Safari and Firefox do not support the WebSerial connection used here.
+- The latest Quantum Dice firmware files.
+
+#### 9.1.2 Download the Firmware Files
+
+1. Open the [Quantum Dice firmware releases](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/releases).
+2. Find the release intended for your PCB and download these files, where `X.X.X` represents the version number:
+   - `QuantumDice.vX.X.X.merged.bin`: for the **first installation on a new PCB**.
+   - `QuantumDice.vX.X.X.bin`: for **later firmware updates**.
+3. Keep the files in a location you can find again, such as your Downloads folder.
+
+![Quantum Dice firmware files on GitHub](<images/Github binaries.png>)
+
+#### 9.1.3 Connect the PCB to ESPConnect
+
+1. Connect the PCB to your computer using the USB-C data cable.
+2. In your browser, open [ESPConnect](https://thelastoutpostworkshop.github.io/ESPConnect/).
+3. Click **Connect**, select the serial device corresponding to your PCB, and grant the browser permission to use it.
+4. Wait until ESPConnect recognises the board and makes its tools available.
+
+> **Note:** Only one application can use the serial port at a time. If you cannot connect, close the Arduino IDE, any serial monitor, or other application using the device. See Chapter 10 for troubleshooting.
+
+#### 9.1.4 Flash a New PCB (First Installation Only)
+
+Use these instructions **only for a new PCB that has not yet been configured**.
+
+1. In ESPConnect, open **Flash Tools**.
+2. Scroll to **Flash Firmware** and select **Firmware binary (.bin)**.
+3. Select `QuantumDice.vX.X.X.merged.bin`.
+4. Set the **Flash Offset** to **`0x0`**.
+5. Click **Flash firmware** and wait for the operation to finish. It typically takes around 30 seconds to one minute.
+6. Check that ESPConnect reports **Flash complete**.
+7. Repeat the procedure for any other new PCBs.
+
+> **Warning:** Do not use the `merged.bin` file for a normal update to a PCB that already contains a configuration. For that, follow Section 9.2.
+
+#### 9.1.5 Prepare a Configuration File (Optional)
+
+The firmware uses a configuration file to define settings such as colours and timeouts. If the default settings meet your needs, you may leave them unchanged.
+
+1. Obtain the [example configuration file](firmware/EXAMPLE_config.txt).
+2. Open it in a plain-text editor and read the comments explaining each setting.
+3. Make any necessary changes and save the file as plain text.
+4. Keep the original example filename, **`EXAMPLE_config.txt`**, unless you have checked which filenames are accepted by the firmware version you are using.
+
+> **Filename note:** The earlier Setup Guide specifies a five-character prefix (`XXXXX_config.txt`), but also provides the longer example `YOURNAME_config.txt`. Because these examples conflict, the required naming rule should be checked in the current firmware before renaming a configuration file.
+
+#### 9.1.6 Upload a Configuration File (Optional)
+
+1. Keep the PCB connected in ESPConnect and open **LittleFS Tools**.
+2. Click **Download Backup** and allow the backup to finish. This safety step also makes the file-upload controls available in the workflow described by the original Setup Guide.
+3. Click **Choose File**, select your configuration text file, and click **Upload**.
+4. The file is now staged in your browser. Click **SAVE TO FLASH** to write it to the PCB.
+5. Confirm the operation and wait for it to finish.
+6. If the interface offers an eye or preview icon, use it to open the file on the board and verify its contents.
+7. Repeat for other PCBs if needed.
+
+![ESPConnect LittleFS tools](<images/littlefs screen.png>)
+
+> **Note:** Quantum Dice used together do not necessarily need identical configuration files. For example, they can have different colours configured for entanglement and still cooperate correctly.
+
+#### 9.1.7 Verify the Firmware and Configuration
+
+The firmware can be checked before the displays are attached.
+
+1. In ESPConnect, open **Serial Monitor** and click **Start**.
+2. Observe the startup messages. Depending on the installed firmware version, they should indicate that the filesystem mounted, the configuration was loaded, and ESP-NOW communication initialised.
+3. Check whether the log ends with a successful setup message and whether the reported die ID is correct.
+4. If a configuration file is missing or fails to load, check Section 10.4.
+
+![ESPConnect serial monitor](images/Serial_monitor.png)
+
+> **Note:** Some I2C warnings during startup may be temporary if the corresponding sensor initialises successfully afterward. Persistent failures or an incomplete setup require troubleshooting.
+
+Once the firmware installation and configuration have been verified, continue with the assembly in Chapter 7. The visual display test is described in Section 7.7, and the completed device is checked in Chapter 8.
+
+**Automatic IMU calibration:** The firmware handles IMU calibration automatically. No separate manual calibration procedure is required, including for independently assembled PCBs.
+
+### 9.2 Updating the Firmware
 
 1. Download the latest appropriate **`QuantumDice.vX.X.X.bin`** file from the [Quantum Dice releases page](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/releases).
 2. Connect the die to your computer and open [ESPConnect](https://thelastoutpostworkshop.github.io/ESPConnect/).
@@ -584,13 +584,13 @@ You can update or reconfigure an assembled Quantum Die through its accessible US
 
 This update procedure is intended to leave the existing configuration intact. Afterward, switch on the dice and check that they start correctly.
 
-> **Important:** For a **new**, unconfigured PCB use `merged.bin` at **`0x0`** as explained in Section 6.6.4. For a **normal update** use the standard `.bin` at **`0x10000`** and do not erase the flash.
+> **Important:** For a **new**, unconfigured PCB use `merged.bin` at **`0x0`** as explained in Section 9.1.4. For a **normal update** use the standard `.bin` at **`0x10000`** and do not erase the flash.
 
-### 9.2 Updating the Configuration File
+### 9.3 Updating the Configuration File
 
 1. Edit your existing configuration file on your computer, keeping a copy of the previous version.
-2. Connect the die to ESPConnect as in Section 6.6.3.
-3. Use **LittleFS Tools** and follow the backup, upload and **SAVE TO FLASH** instructions in Section 6.6.6.
+2. Connect the die to ESPConnect as in Section 9.1.3.
+3. Use **LittleFS Tools** and follow the backup, upload and **SAVE TO FLASH** instructions in Section 9.1.6.
 4. Verify the file contents using the preview function, if available.
 5. Repeat for the other die if that die also needs an update.
 
@@ -633,10 +633,10 @@ If ESPConnect reports **"Flash failed"** or **"Upload failed"**:
 
 If the Serial Monitor reports **"No config file found"**, the firmware may create and use `DEFAULT_config.txt` instead.
 
-1. Check the filename expected by your firmware. The original Setup Guide describes the pattern `XXXXX_config.txt`, while its examples are inconsistent. The supplied example is `TEST1_config.txt`.
+1. Check the filename expected by your firmware. The original Setup Guide describes the pattern `XXXXX_config.txt`, while its examples are inconsistent. The supplied example is `EXAMPLE_config.txt`.
 2. In ESPConnect, open **LittleFS Tools** and use the file preview to check that your configuration is present on the PCB.
-3. If necessary, upload it again using Section 6.6.6.
-4. If the configuration disappeared after a firmware update, check whether the wrong firmware image or flash option was used. See Sections 6.6.4 and 9.1.
+3. If necessary, upload it again using Section 9.1.6.
+4. If the configuration disappeared after a firmware update, check whether the wrong firmware image or flash option was used. See Sections 9.1.4 and 9.2.
 
 ### 10.5 Errors in the Serial Monitor
 
@@ -662,6 +662,6 @@ You have successfully built a **Quantum Die**.
 
 When two Quantum Dice are switched on, they automatically connect and communicate with each other. Your Quantum Dice are now ready for use.
 
-For instructions on how to use the Quantum Dice and the available demonstrations, see [Using the Quantum Dice](link).
+For instructions on how to use the Quantum Dice and the available demonstrations, see [Using the Quantum Dice](USER_GUIDE.md).
 
-![alt text](<../images/construction_final.png>)
+![alt text](<images/construction_final.png>)
