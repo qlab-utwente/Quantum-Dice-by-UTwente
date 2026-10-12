@@ -11,7 +11,7 @@
 7. [Entanglement](#entanglement)
 8. [Teleportation](#teleportation)
 
----
+
 
 ## Introduction
 
@@ -30,15 +30,14 @@ Once your Quantum Dice assembly is complete, you're ready to start using it! Thi
 - **Yellow** - front and rear sides
 Watch the [instructional video](https://youtu.be/DUJu3AJgXRc?si=qqh9P63NLDmi5nQ0) for usage guidance
 
----
 
 ## Power On
 
-Locate the power button on one of the yellow sides (marked with a power symbol).
+Locate the power button on one of the yellow sides.
 
 **To power on/off:** Press the button briefly.
 
----
+
 
 ## Charging the Battery
 
@@ -50,18 +49,17 @@ Locate the power button on one of the yellow sides (marked with a power symbol).
 **Charging instructions:**
 
 1. Locate the USB-C connector on one of the yellow sides
-2. **⚠️ Important:** This connector is **only** for battery charging and is not connected to the ESP32 processor
-3. **Use a USB-A to USB-C cable** with a USB-A charger (USB-C chargers will not work)
-4. Charging takes approximately **2-3 hours**
+2. **⚠️ Important:** This connector is for battery charging and can connect to the ESP32 processor.
+3. Charging takes approximately **2-3 hours**
 
 **Monitoring charging status:**
 
-The charge indicator LEDs are located inside the dice and are not visible during charging. To monitor the charging process, you can use:
+A white LED inside the Quantum Dice lights up while the battery is charging. This LED is often visible through the small gaps between the displays or through a seam in the housing. If you cannot see the LED, carefully remove one of the display caps to check the charging status. Or you can use:
 
 - A USB charger with a built-in current indicator, or
 - A USB current monitor dongle such as [this one](https://www.amazon.com/Multi-function-Voltmeter-Electrical-Appliances-Detection/dp/B0CRTBWTQF?th=1)
 
----
+
 
 ## Start Up Sequence
 
@@ -77,7 +75,7 @@ After powering on, the dice initializes and displays the following:
 
 The startup sequence completes in **Classic mode**, where each side displays a fixed number (like a traditional die). Long press the Quantum button to enter Quantum mode.
 
----
+
 
 ## Basic Quantum State
 
@@ -89,20 +87,25 @@ In Quantum mode, all six sides display a **superposition state**.
 - When it comes to rest, a random number appears on the top and bottom sides
 - This represents the "measurement" of the quantum state
 
----
 
-## Using the Quantum Button
 
-The Quantum button is located on the opposite side from the power button.
+## Turning the Dice in the Quantum Mode
 
-**Short press:** Toggle entanglement colour display
-**Long press:** Return to Classic mode
+The Quantum Dice has a single button that serves as both the power button and the Quantum mode button.
 
-### Entanglement Colour Display
+**Short press:** Enter Quantum mode.
+
+**Long press:** Put the die into sleep mode.
+
+
+![quantumbutton](images/single-die-classic-to-superposition.png)
+
+
+## Entanglement Colour Display
 
 When two dice are entangled, the Quantum Dice will display colours on the superposition state to indicate entanglement status. Both dice will have the same colour. When the colour display is toggled off, the dice will show the entanglement colour, and shortly after revert to the standard superposition state display.
 
----
+![alt text](images/two_dice_entangled_1.png)
 
 ## Entanglement
 
@@ -123,7 +126,7 @@ When two dice are entangled, the Quantum Dice will display colours on the superp
 
 **⚠️ Important:** After entanglement, separate the dice by **more than 1 meter** to prevent them from re-entangling after rolling.
 
----
+![alt text](images/two_dice_entangled_2.png)
 
 ## Teleportation
 
