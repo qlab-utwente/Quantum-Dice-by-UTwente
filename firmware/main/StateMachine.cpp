@@ -15,6 +15,22 @@
 #include "IMU.hpp"
 #include "power.h"
 
+constexpr gpio_num_t PIN_VIDV_USB = GPIO_NUM_13;
+static bool usbConnected = false;
+
+static bool pollUsbConnected() {
+	if (usbConnected) {
+		usbConnected = false;
+		return true;
+	} else {
+		return false;
+	}
+}
+
+static void ARDUINO_ISR_ATTR usbConnect() {
+	usbConnected = true;
+}
+
 static uint8_t generateDiceRoll() {
 	// Get a random 32-bit integer from the crypto chip
 	uint32_t randomNumber = esp_random();
@@ -429,6 +445,14 @@ StateMachine::StateMachine()
 	  colorFlashStartTime(0) {}
 
 void StateMachine::begin() {
+	// USB Voltage divider.
+	pinMode(PIN_VIDV_USB, INPUT_PULLDOWN);
+	attachInterrupt(PIN_VIDV_USB, usbConnect, RISING);
+
+	rtc_gpio_pullup_dis(PIN_VIDV_USB);
+	rtc_gpio_pulldown_en(PIN_VIDV_USB);
+	esp_sleep_enable_ext1_wakeup((1 << PIN_VIDV_USB) | (1 << BUTTON_PIN), ESP_EXT1_WAKEUP_ANY_HIGH);
+
     // Initialize ESP-NOW with device A MAC from config
     EspNowSensor<message>::Init();
 
@@ -496,6 +520,7 @@ void StateMachine::update() {
 
 	// If the button is held for a long time, then we must shut down.
 	if (button_poll_press_long()) {
+		(void)pollUsbConnected();
 		this->tryingToSleep = true;
 		power_shutdown();
 		power_off_screens();
@@ -504,7 +529,7 @@ void StateMachine::update() {
 	if (this->tryingToSleep) {
 		esp_deep_sleep_try_to_start();
 
-		if (button_poll_press_short() || button_poll_press_double() || button_poll_press_long()) {
+		if (pollUsbConnected() || button_poll_press_short() || button_poll_press_double() || button_poll_press_long()) {
 			esp_restart();
 		}
 		return;
@@ -842,6 +867,7 @@ void StateMachine::checkTimeForDeepSleep() {
 
 	// Use the timeout from configuration
 	if (!isMoving && !button_is_pressed() && (millis() - lastMovementTime > currentConfig.deepSleepTimeout)) {
+		(void)pollUsbConnected();
 		this->tryingToSleep = true;
 		power_shutdown();
 		power_off_screens();
