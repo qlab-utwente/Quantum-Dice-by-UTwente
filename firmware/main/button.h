@@ -5,7 +5,7 @@
 extern "C" {
 #endif // __cplusplus
 
-void button_start(bool pullup);
+void button_start();
 bool button_is_pressed();
 bool button_poll_press_short();
 bool button_poll_press_double();

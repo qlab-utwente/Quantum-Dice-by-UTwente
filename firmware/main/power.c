@@ -22,6 +22,7 @@ void power_prepare() {
 	gpio_config(&GPIO_CONFIG);
 	gpio_set_level(POWER_PIN_SHUTDOWN, 0);
 	gpio_set_level(POWER_PIN_I2C, 1);
+	gpio_hold_en(POWER_PIN_I2C);
 	gpio_set_level(POWER_PIN_SCREENS, 0);
 }
 
@@ -35,5 +36,4 @@ void power_off_screens() {
 
 void power_shutdown() {
 	gpio_set_level(POWER_PIN_SHUTDOWN, 1);
-	gpio_set_level(POWER_PIN_I2C, 0);
 }

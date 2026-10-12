@@ -97,7 +97,7 @@ void setup() {
 	infoln("Step 4: Completing initialization...\n");
 
 	// Initialize button
-	button_start(currentConfig.buttonPullup);
+	button_start();
 
 	// Initialize the state machine
 	stateMachine.begin();

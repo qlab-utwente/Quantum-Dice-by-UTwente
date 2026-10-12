@@ -112,8 +112,6 @@ auto DiceConfigManager::load(const String &filename) -> bool {
             _config.deepSleepTimeout = strtoul(value.c_str(), nullptr, 0);
         } else if (key == "checksum") {
             _config.checksum = (uint8_t)strtol(value.c_str(), nullptr, 0);
-        } else if (key == "buttonPullup") {
-            _config.buttonPullup = parseBool(value);
         } else {
             warnf("Line %d: Unknown key '%s'\n", lineNum, key.c_str());
         }
@@ -217,7 +215,6 @@ void DiceConfigManager::initDefaultConfig() {
 
     // Checksum (will be calculated on save)
     _config.checksum = 0;
-    _config.buttonPullup = false;
 }
 
 // ============================================================================
@@ -259,7 +256,6 @@ void printGlobalConfig() {
     infof("Tumble Constant: %d\n", currentConfig.tumbleConstant);
     infof("Deep Sleep Timeout: %u ms\n", currentConfig.deepSleepTimeout);
     infof("Checksum: 0x%02X\n", currentConfig.checksum);
-    infof("Button Pullup: %s\n", currentConfig.buttonPullup ? "true" : "false");
     infoln("============================");
 }
 
@@ -379,7 +375,6 @@ auto createDefaultConfigFile() -> bool {
     file.println("tumbleConstant=45");
     file.println("deepSleepTimeout=300000");
     file.println("checksum=0");
-    file.println("buttonPullup=false");
 
     file.close();
 

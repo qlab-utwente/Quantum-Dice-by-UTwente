@@ -36,7 +36,6 @@ static const char *BUTTON_TIMER_NAME = "button_timer";
 static esp_timer_handle_t button_timer_handle = NULL;
 
 // Button variables.
-static bool button_pullup = false;
 static bool button_press_short = false;
 static bool button_press_double = false;
 static bool button_press_long = false;
@@ -75,9 +74,7 @@ static inline void handle_press_short();
 static inline void handle_press_double();
 static inline void handle_press_long();
 
-void button_start(bool pullup) {
-	button_pullup = pullup;
-
+void button_start() {
 	task_handle = xTaskCreateStaticPinnedToCore(
 		task_function,
 		TASK_NAME,
@@ -181,8 +178,8 @@ static inline void edge_setup() {
 	static gpio_config_t GPIO_CONFIG = {
 		.pin_bit_mask = (1 << BUTTON_PIN),
 		.mode = GPIO_MODE_INPUT,
-		.pull_up_en = button_pullup ? GPIO_PULLUP_ENABLE : GPIO_PULLUP_DISABLE,
-		.pull_down_en = button_pullup ? GPIO_PULLDOWN_DISABLE : GPIO_PULLDOWN_ENABLE,
+		.pull_up_en = GPIO_PULLUP_DISABLE,
+		.pull_down_en = GPIO_PULLDOWN_ENABLE,
 		.intr_type = GPIO_INTR_ANYEDGE
 	};
 
@@ -191,22 +188,12 @@ static inline void edge_setup() {
 	gpio_isr_handler_add(BUTTON_PIN, interrupt_edge, NULL);
 	button_level = gpio_get_level(BUTTON_PIN);
 
-	if (button_pullup) {
-		rtc_gpio_pulldown_dis(BUTTON_PIN);
-		rtc_gpio_pullup_en(BUTTON_PIN);
-		esp_sleep_enable_ext0_wakeup(BUTTON_PIN, 0);
+	rtc_gpio_pullup_dis(BUTTON_PIN);
+	rtc_gpio_pulldown_en(BUTTON_PIN);
+	esp_sleep_enable_ext1_wakeup((1 << BUTTON_PIN), ESP_EXT1_WAKEUP_ANY_HIGH);
 
-		if (button_level == 0) {
-			button_state = BUTTON_STATE_PRESS_IGNORE;
-		}
-	} else {
-		rtc_gpio_pullup_dis(BUTTON_PIN);
-		rtc_gpio_pulldown_en(BUTTON_PIN);
-		esp_sleep_enable_ext0_wakeup(BUTTON_PIN, 1);
-
-		if (button_level == 1) {
-			button_state = BUTTON_STATE_PRESS_IGNORE;
-		}
+	if (button_level == 1) {
+		button_state = BUTTON_STATE_PRESS_IGNORE;
 	}
 }
 
@@ -217,24 +204,23 @@ static inline void edge_handle() {
 	}
 
 	bool rising_edge = level > button_level;
-	bool press_edge = button_pullup ? !rising_edge : rising_edge;
 	button_level = level;
 
-	if (button_state == BUTTON_STATE_RELEASED && press_edge) {
+	if (button_state == BUTTON_STATE_RELEASED && rising_edge) {
 		button_state = BUTTON_STATE_DEBOUNCE;
 		esp_timer_start_once(button_timer_handle, BUTTON_TIME_DEBOUNCE);
-	} else if (button_state == BUTTON_STATE_DEBOUNCE && !press_edge) {
+	} else if (button_state == BUTTON_STATE_DEBOUNCE && !rising_edge) {
 		button_state = BUTTON_STATE_RELEASED;
 		esp_timer_stop(button_timer_handle);
-	} else if (button_state == BUTTON_STATE_PRESS_SHORT && !press_edge) {
+	} else if (button_state == BUTTON_STATE_PRESS_SHORT && !rising_edge) {
 		button_state = BUTTON_STATE_AWAIT_PRESS_DOUBLE;
 		button_last_short_release_time = esp_timer_get_time();
 		esp_timer_start_once(button_timer_handle, BUTTON_TIME_PRESS_DOUBLE);
-	} else if (button_state == BUTTON_STATE_AWAIT_PRESS_DOUBLE && press_edge) {
+	} else if (button_state == BUTTON_STATE_AWAIT_PRESS_DOUBLE && rising_edge) {
 		button_state = BUTTON_STATE_DEBOUNCE_DOUBLE;
 		esp_timer_stop(button_timer_handle);
 		esp_timer_start_once(button_timer_handle, BUTTON_TIME_DEBOUNCE);
-	} else if (button_state == BUTTON_STATE_DEBOUNCE_DOUBLE && !press_edge) {
+	} else if (button_state == BUTTON_STATE_DEBOUNCE_DOUBLE && !rising_edge) {
 		esp_timer_stop(button_timer_handle);
 		int64_t time_difference = esp_timer_get_time() - button_last_short_release_time;
 		int64_t time_left = BUTTON_TIME_PRESS_DOUBLE - time_difference;
@@ -250,7 +236,7 @@ static inline void edge_handle() {
 				(button_state == BUTTON_STATE_PRESS_DOUBLE
 					|| button_state == BUTTON_STATE_PRESS_LONG
 					|| button_state == BUTTON_STATE_PRESS_IGNORE)
-				&& !press_edge
+				&& !rising_edge
 			) {
 		button_state = BUTTON_STATE_RELEASED;
 	}
