@@ -467,14 +467,14 @@ void showConfigMode(screenselections screens) {
     drawStringCentered(tft, "Setup Mode", (tft.height() / 2) + 9);
 }
 
-static constexpr float ANIMATE_CENTER_X = (WIDTH / 2);
-static constexpr float ANIMATE_CENTER_Y = (HEIGHT / 2);
-static constexpr float ANIMATE_COLOR0 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (3.0F * 0.16F) + 0.2F);
-static constexpr float ANIMATE_COLOR1 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (5.0F * 0.16F) + 0.2F);
-static constexpr float ANIMATE_COLOR2 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (1.0F * 0.16F) + 0.2F);
-static constexpr float ANIMATE_COLOR3 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, 0.2F);
-static constexpr float ANIMATE_COLOR4 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (5.0F * 0.16F) + 0.2F);
-static constexpr float ANIMATE_COLOR5 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, 3.0F * 0.2F);
+static constexpr int ANIMATE_CENTER_X = (WIDTH / 2);
+static constexpr int ANIMATE_CENTER_Y = (HEIGHT / 2);
+static constexpr uint16_t ANIMATE_COLOR0 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (3.0F * 0.16F) + 0.2F);
+static constexpr uint16_t ANIMATE_COLOR1 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (5.0F * 0.16F) + 0.2F);
+static constexpr uint16_t ANIMATE_COLOR2 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (1.0F * 0.16F) + 0.2F);
+static constexpr uint16_t ANIMATE_COLOR3 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, 0.2F);
+static constexpr uint16_t ANIMATE_COLOR4 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (5.0F * 0.16F) + 0.2F);
+static constexpr uint16_t ANIMATE_COLOR5 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, 3.0F * 0.2F);
 static constexpr float ANIMATE_FULL_ROTATION_TIME = 1.25F;
 static unsigned long animateStartTime = NAN;
 static float animatePreviousAngle = NAN;
