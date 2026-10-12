@@ -11,7 +11,6 @@
 #include "stdint.h"
 
 // Button constants.
-#define BUTTON_PIN GPIO_NUM_14
 #define BUTTON_TIME_DEBOUNCE 50'000
 #define BUTTON_TIME_PRESS_DOUBLE 300'000
 #define BUTTON_TIME_PRESS_LONG 1'000'000
@@ -180,7 +179,7 @@ static inline void edge_setup() {
 
 	rtc_gpio_pullup_dis(BUTTON_PIN);
 	rtc_gpio_pulldown_en(BUTTON_PIN);
-	esp_sleep_enable_ext1_wakeup((1 << BUTTON_PIN), ESP_EXT1_WAKEUP_ANY_HIGH);
+	//esp_sleep_enable_ext1_wakeup((1 << BUTTON_PIN), ESP_EXT1_WAKEUP_ANY_HIGH);
 
 	if (digitalRead(BUTTON_PIN) == 1) {
 		button_state = BUTTON_STATE_PRESS_IGNORE;

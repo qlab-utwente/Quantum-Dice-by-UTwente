@@ -1,6 +1,8 @@
 #ifndef BUTTON_H
 #define BUTTON_H
 
+#define BUTTON_PIN GPIO_NUM_14
+
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
