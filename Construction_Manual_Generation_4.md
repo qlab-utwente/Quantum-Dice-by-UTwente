@@ -1,3 +1,59 @@
+## Table of Contents
+
+- [1. Introduction](#1-introduction)
+- [2. General Description of the Quantum Dice](#2-general-description-of-the-quantum-dice)
+  - [2.1 Main Components](#21-main-components)
+  - [2.2 PCB](#22-pcb)
+- [3. Parts and Sourcing](#3-parts-and-sourcing)
+  - [3.1 3D-Printed Parts](#31-3d-printed-parts)
+  - [3.2 PCB](#32-pcb)
+  - [3.3 TFT Displays](#33-tft-displays)
+  - [3.4 Battery](#34-battery)
+  - [3.5 Cables and Other Components](#35-cables-and-other-components)
+- [4. 3D Printing](#4-3d-printing)
+  - [4.1 Recommended Materials](#41-recommended-materials)
+  - [4.2 Printing with TPU](#42-printing-with-tpu)
+  - [4.3 3D-Printed Components](#43-3d-printed-components)
+  - [4.4 Print Files](#44-print-files)
+  - [4.5 Outsourcing 3D Printing](#45-outsourcing-3d-printing)
+- [5. Preparing the 3D-Printed Parts](#5-preparing-the-3d-printed-parts)
+  - [5.1 Required Tools](#51-required-tools)
+  - [5.2 Gluing the PCB Display Backplane](#52-gluing-the-pcb-display-backplane)
+- [6. Preparing the Electronics and Displays](#6-preparing-the-electronics-and-displays)
+  - [6.1 Required Parts and Tools](#61-required-parts-and-tools)
+  - [6.2 Removing the Original Display Connectors](#62-removing-the-original-display-connectors)
+  - [6.3 Mounting the Displays into the Display Cups](#63-mounting-the-displays-into-the-display-cups)
+  - [6.4 Mounting the USB-C Connector](#64-mounting-the-usb-c-connector)
+- [7. Assembling the Quantum Die](#7-assembling-the-quantum-die)
+  - [7.1 Connecting FPC Cables](#71-connecting-fpc-cables)
+  - [7.2 Connecting the PCB Display Cup](#72-connecting-the-pcb-display-cup)
+  - [7.3 Preparing the Battery Display Cup](#73-preparing-the-battery-display-cup)
+  - [7.4 Connecting the Remaining FPC Cables](#74-connecting-the-remaining-fpc-cables)
+  - [7.5 Mounting the PCB Display Cup into the Main Frame](#75-mounting-the-pcb-display-cup-into-the-main-frame)
+  - [7.6 Mounting the Red Display Cups](#76-mounting-the-red-display-cups)
+  - [7.7 Initial Display Test](#77-initial-display-test)
+  - [7.8 Mounting the Blue Display Cups](#78-mounting-the-blue-display-cups)
+- [8. Final Test and Completion](#8-final-test-and-completion)
+- [9. Firmware Installation, Configuration and Updates](#9-firmware-installation-configuration-and-updates)
+  - [9.1 Initial Firmware Installation and Configuration](#91-initial-firmware-installation-and-configuration)
+    - [9.1.1 What You Need](#911-what-you-need)
+    - [9.1.2 Download the Firmware Files](#912-download-the-firmware-files)
+    - [9.1.3 Connect the PCB to ESPConnect](#913-connect-the-pcb-to-espconnect)
+    - [9.1.4 Flash a New PCB (First Installation Only)](#914-flash-a-new-pcb-first-installation-only)
+    - [9.1.5 Prepare a Configuration File (Optional)](#915-prepare-a-configuration-file-optional)
+    - [9.1.6 Upload a Configuration File (Optional)](#916-upload-a-configuration-file-optional)
+    - [9.1.7 Verify the Firmware and Configuration](#917-verify-the-firmware-and-configuration)
+  - [9.2 Updating the Firmware](#92-updating-the-firmware)
+  - [9.3 Updating the Configuration File](#93-updating-the-configuration-file)
+- [10. Troubleshooting and Support](#10-troubleshooting-and-support)
+  - [10.1 The Browser Does Not Support WebSerial](#101-the-browser-does-not-support-webserial)
+  - [10.2 Cannot Connect to the Serial Port](#102-cannot-connect-to-the-serial-port)
+  - [10.3 Firmware Flash Fails](#103-firmware-flash-fails)
+  - [10.4 Configuration File Does Not Load](#104-configuration-file-does-not-load)
+  - [10.5 Errors in the Serial Monitor](#105-errors-in-the-serial-monitor)
+  - [10.6 Getting Help](#106-getting-help)
+- [11. Congratulations](#11-congratulations)
+
 ## 1. Introduction
 
 This construction manual provides all the information required to build your own set of **Quantum Dice (Generation 4)**. It covers component sourcing, 3D printing, preparation of the electronics, firmware installation, and step-by-step assembly.
@@ -270,17 +326,7 @@ You will need:
 
 - cutting pliers
 
-- soldering iron
-
-### 6.2 Soldering the Push Buttons
-
-> **Skip this step if the PCB was supplied by the University of Twente.**
-
-Solder the required **push buttons** onto the **PCB**.
-
-Ensure that the push buttons are correctly positioned and that the solder joints are clean. Avoid overheating the PCB or components while soldering.
-
-### 6.3 Removing the Original Display Connectors
+### 6.2 Removing the Original Display Connectors
 
 Before mounting the TFT displays into the Display Cups, the original **grey plastic connectors and pins** must be removed from all six displays.
 
@@ -296,7 +342,7 @@ Before mounting the TFT displays into the Display Cups, the original **grey plas
 
 ![alt text](<images/display_con.gif>)
 
-### 6.4 Mounting the Displays into the Display Cups
+### 6.3 Mounting the Displays into the Display Cups
 
 Repeat the following procedure for all six displays:
 
@@ -308,7 +354,7 @@ Repeat the following procedure for all six displays:
 
 ![alt text](<images/construction_displ_mount.png>)
 
-### 6.5 Mounting the USB-C Connector
+### 6.4 Mounting the USB-C Connector
 
 Insert the **USB-C extension connector** firmly into the opening of the yellow **Display Cup with USB-C port opening**.
 
