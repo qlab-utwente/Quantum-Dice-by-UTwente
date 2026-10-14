@@ -525,6 +525,8 @@ void StateMachine::update() {
 			refreshScreens();
 		} else {
 			animateUpdate();
+			delay(20);
+			animateUpdate();
 		}
 	} else if (pressDouble) {
 		this->colorFlash = true;
