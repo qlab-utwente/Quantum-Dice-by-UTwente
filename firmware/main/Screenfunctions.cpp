@@ -467,6 +467,35 @@ void showConfigMode(screenselections screens) {
     drawStringCentered(tft, "Setup Mode", (tft.height() / 2) + 9);
 }
 
+struct verticalLine {
+	int16_t x;
+	int16_t y;
+	int16_t height;
+};
+
+static const struct verticalLine DOT_LINES[21] = {
+	{ -20, -4,  9 },
+	{ -19, -7,  15 },
+	{ -18, -9,  19 },
+	{ -17, -11, 23 },
+	{ -16, -12, 25 },
+	{ -15, -13, 27 },
+	{ -14, -14, 29 },
+	{ -13, -15, 31 },
+	{ -12, -16, 33 },
+	{ -11, -17, 35 },
+	{ -10, -17, 35 },
+	{  -9, -18, 37 },
+	{  -8, -18, 37 },
+	{  -7, -19, 39 },
+	{  -6, -19, 39 },
+	{  -5, -19, 39 },
+	{  -4, -20, 41 },
+	{  -3, -20, 41 },
+	{  -2, -20, 41 },
+	{  -1, -20, 41 },
+	{   0, -20, 41 }
+};
 static constexpr int ANIMATE_CENTER_X = (WIDTH / 2);
 static constexpr int ANIMATE_CENTER_Y = (HEIGHT / 2);
 static constexpr uint16_t ANIMATE_COLOR0 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (3.0F * 0.16F) + 0.2F);
@@ -477,12 +506,14 @@ static constexpr uint16_t ANIMATE_COLOR4 = blendColor(GC9A01A_WHITE, GC9A01A_BLA
 static constexpr uint16_t ANIMATE_COLOR5 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, 3.0F * 0.2F);
 static constexpr float ANIMATE_FULL_ROTATION_TIME = 1.25F;
 static unsigned long animateStartTime = NAN;
-static float animatePreviousAngle = NAN;
+static float animatePreviousAngleCos = NAN;
+static float animatePreviousAngleSin = NAN;
 
 void animateRestart() {
 	selectScreens(ALL);
 	animateStartTime = millis();
-	animatePreviousAngle = 0.0F;
+	animatePreviousAngleCos = 1.0F;
+	animatePreviousAngleSin = 0.0F;
 
 	tft.fillScreen(GC9A01A_BLACK);
 	tft.fillCircle(ANIMATE_CENTER_X - DOT_OFFSET, ANIMATE_CENTER_Y - DOT_OFFSET, DOT_RADIUS, ANIMATE_COLOR0);
@@ -494,11 +525,113 @@ void animateRestart() {
     tft.fillCircle(ANIMATE_CENTER_X, ANIMATE_CENTER_Y, DOT_RADIUS, ANIMATE_COLOR5);
 }
 
-static void animateDrawDot(const int offsetX, const int offsetY, const float angleCos, const float angleSin, const uint16_t color) noexcept {
-	const int rotatedOffsetX = static_cast<int>(static_cast<float>(offsetX) * angleCos - static_cast<float>(offsetY) * angleSin);
-	const int rotatedOffsetY = static_cast<int>(static_cast<float>(offsetX) * angleSin + static_cast<float>(offsetY) * angleCos);
+static void animatePlaceDot(const int dotX, const int dotY, struct verticalLine *output) noexcept {
+	static constexpr int lastIndex = 2 * DOT_RADIUS;
+	for (int i = 0; i < (DOT_RADIUS + 1); i++) {
+		const int inverseI = lastIndex - i;
+		output[i].x = dotX + DOT_LINES[i].x;
+		output[i].y = dotY + DOT_LINES[i].y;
+		output[i].height = DOT_LINES[i].height;
+		if (inverseI != i) {
+			output[inverseI].x = dotX - DOT_LINES[i].x;
+			output[inverseI].y = dotY + DOT_LINES[i].y;
+			output[inverseI].height = DOT_LINES[i].height;
+		}
+	}
+}
 
-	tft.fillCircle(ANIMATE_CENTER_X + rotatedOffsetX, ANIMATE_CENTER_Y + rotatedOffsetY, DOT_RADIUS, color);
+static void animateDrawDotMask(const struct verticalLine *dotToDraw, const struct verticalLine *mask, const uint16_t color) noexcept {
+	tft.startWrite();
+
+	// i is iterator for dotToDraw.
+	// j is iterator for mask.
+	int i = 0, j = 0;
+
+	// Skip over mask lines that are to the left of the dotToDraw lines.
+	while (j < (2 * DOT_RADIUS + 1)) {
+		if (mask[j].x >= dotToDraw[i].x) {
+			break;
+		}
+		j++;
+	}
+
+	// Quickly do dotToDraw lines that are to the left of mask lines.
+	while (i < (2 * DOT_RADIUS + 1)) {
+		if (mask[j].x <= dotToDraw[i].x) {
+			break;
+		}
+		tft.writeFastVLine(dotToDraw[i].x, dotToDraw[i].y, dotToDraw[i].height, color);
+		i++;
+	}
+
+	// Loop over the lines where there are dotToDraw lines and mask lines.
+	while (i < (2 * DOT_RADIUS + 1) && (j < 2 * DOT_RADIUS + 1)) {
+		const int16_t maskLow = mask[j].y;
+		const int16_t maskHigh = maskLow + mask[j].height - 1;
+
+		const int16_t dotLow = dotToDraw[i].y;
+		const int16_t dotHigh = dotLow + dotToDraw[i].height - 1;
+
+		if (maskHigh < dotLow || maskLow > dotHigh) {
+			tft.writeFastVLine(dotToDraw[i].x, dotToDraw[i].y, dotToDraw[i].height, color);
+		} else if (maskLow <= dotLow && maskHigh < dotHigh) {
+			const int16_t y = maskHigh + 1;
+			const int16_t height = dotHigh - maskHigh;
+			tft.writeFastVLine(dotToDraw[i].x, y, height, color);
+		} else if (maskLow > dotLow && maskHigh >= dotHigh) {
+			const int16_t y = dotLow;
+			const int16_t height = maskLow - y;
+			tft.writeFastVLine(dotToDraw[i].x, y, height, color);
+		} else if (maskLow > dotLow && maskHigh < dotHigh) {
+			const int16_t y0 = dotLow;
+			const int16_t height0 = maskLow - y0;
+
+			const int16_t y1 = maskHigh + 1;
+			const int16_t height1 = dotHigh - maskHigh;
+
+			const int16_t x = dotToDraw[i].x;
+
+			tft.writeFastVLine(x, y0, height0, color);
+			tft.writeFastVLine(x, y1, height1, color);
+		}
+
+		i++;
+		j++;
+	}
+
+	// Quickly do dotToDraw lines that are to the right of mask lines.
+	while (i < (2 * DOT_RADIUS + 1)) {
+		tft.writeFastVLine(dotToDraw[i].x, dotToDraw[i].y, dotToDraw[i].height, color);
+		i++;
+	}
+
+	tft.endWrite();
+}
+
+static void animateUpdateDot(const int offsetX, const int offsetY, const uint16_t color, const float angleCos, const float angleSin) noexcept {
+	const int dotX = static_cast<int>(static_cast<float>(offsetX) * angleCos - static_cast<float>(offsetY) * angleSin) + ANIMATE_CENTER_X;
+	const int dotY = static_cast<int>(static_cast<float>(offsetX) * angleSin + static_cast<float>(offsetY) * angleCos) + ANIMATE_CENTER_Y;
+
+	const int previousDotX = static_cast<int>(static_cast<float>(offsetX) * animatePreviousAngleCos - static_cast<float>(offsetY) * animatePreviousAngleSin) + ANIMATE_CENTER_X;
+	const int previousDotY = static_cast<int>(static_cast<float>(offsetX) * animatePreviousAngleSin + static_cast<float>(offsetY) * animatePreviousAngleCos) + ANIMATE_CENTER_Y;
+
+	struct verticalLine oldDot[2 * DOT_RADIUS + 1];
+	animatePlaceDot(previousDotX, previousDotY, oldDot);
+
+	struct verticalLine newDot[2 * DOT_RADIUS + 1];
+	animatePlaceDot(dotX, dotY, newDot);
+
+	animateDrawDotMask(newDot, oldDot, color);
+	animateDrawDotMask(oldDot, newDot, GC9A01A_BLACK);
+
+	/* tft.startWrite();
+	for (int i = 0; i < (2 * DOT_RADIUS + 1); i++) {
+		tft.writeFastVLine(oldDot[i].x, oldDot[i].y, oldDot[i].height, GC9A01A_BLACK);
+	}
+	for (int i = 0; i < (2 * DOT_RADIUS + 1); i++) {
+		tft.writeFastVLine(newDot[i].x, newDot[i].y, newDot[i].height, color);
+	}
+	tft.endWrite(); */
 }
 
 void animateUpdate() {
@@ -509,23 +642,15 @@ void animateUpdate() {
 	const float angleCos = cosf(angle);
 	const float angleSin = sinf(angle);
 
-	const float previousAngleCos = cosf(animatePreviousAngle);
-	const float previousAngleSin = sinf(animatePreviousAngle);
+	animateUpdateDot(-DOT_OFFSET, -DOT_OFFSET, ANIMATE_COLOR0, angleCos, angleSin);
+	animateUpdateDot( DOT_OFFSET, -DOT_OFFSET, ANIMATE_COLOR1, angleCos, angleSin);
+	animateUpdateDot(-DOT_OFFSET,  0, ANIMATE_COLOR2, angleCos, angleSin);
+	animateUpdateDot( DOT_OFFSET,  0, ANIMATE_COLOR3, angleCos, angleSin);
+	animateUpdateDot(-DOT_OFFSET,  DOT_OFFSET, ANIMATE_COLOR1, angleCos, angleSin);
+	animateUpdateDot( DOT_OFFSET,  DOT_OFFSET, ANIMATE_COLOR0, angleCos, angleSin);
 
-	animateDrawDot(-DOT_OFFSET, -DOT_OFFSET, previousAngleCos, previousAngleSin, GC9A01A_BLACK);
-	animateDrawDot(-DOT_OFFSET, -DOT_OFFSET, angleCos, angleSin, ANIMATE_COLOR0);
-	animateDrawDot( DOT_OFFSET, -DOT_OFFSET, previousAngleCos, previousAngleSin, GC9A01A_BLACK);
-	animateDrawDot( DOT_OFFSET, -DOT_OFFSET, angleCos, angleSin, ANIMATE_COLOR1);
-	animateDrawDot(-DOT_OFFSET, 0, previousAngleCos, previousAngleSin, GC9A01A_BLACK);
-	animateDrawDot(-DOT_OFFSET, 0, angleCos, angleSin, ANIMATE_COLOR2);
-	animateDrawDot( DOT_OFFSET, 0, previousAngleCos, previousAngleSin, GC9A01A_BLACK);
-	animateDrawDot( DOT_OFFSET, 0, angleCos, angleSin, ANIMATE_COLOR3);
-	animateDrawDot(-DOT_OFFSET,  DOT_OFFSET, previousAngleCos, previousAngleSin, GC9A01A_BLACK);
-	animateDrawDot(-DOT_OFFSET,  DOT_OFFSET, angleCos, angleSin, ANIMATE_COLOR1);
-	animateDrawDot( DOT_OFFSET,  DOT_OFFSET, previousAngleCos, previousAngleSin, GC9A01A_BLACK);
-	animateDrawDot( DOT_OFFSET,  DOT_OFFSET, angleCos, angleSin, ANIMATE_COLOR0);
-
-	animatePreviousAngle = angle;
+	animatePreviousAngleCos = angleCos;
+	animatePreviousAngleSin = angleSin;
 	const float timeToRender = static_cast<float>(millis() - now) / 1000.0F;
 	debugf("Time to render: %.2f\n", timeToRender);
 }
