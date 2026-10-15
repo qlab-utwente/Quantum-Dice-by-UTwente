@@ -35,7 +35,7 @@ z_background=0 # Black
 # This dice will randomly pick from these colors when accepting an entanglement request
 # You can add multiple colors separated by commas
 # Examples: Yellow=65504, Green=2016, Cyan=2047, Magenta=63519, Red=63488, Blue=31
-entang_colors=65504,2016,2047,63519
+entang_colors=65504
 
 # ==========================================
 # RSSI SETTINGS

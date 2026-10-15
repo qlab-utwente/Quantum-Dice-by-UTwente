@@ -196,10 +196,7 @@ void DiceConfigManager::initDefaultConfig() {
 
     // Default entanglement colors: Yellow, Green, Cyan, Magenta
     _config.entang_colors[0]    = 0xFFE0; // Yellow
-    _config.entang_colors[1]    = 0x07E0; // Green
-    _config.entang_colors[2]    = 0x07FF; // Cyan
-    _config.entang_colors[3]    = 0xF81F; // Magenta
-    _config.entang_colors_count = 4;
+    _config.entang_colors_count = 1;
 
     // Default color flash timeout (250ms)
     _config.colorFlashTimeout = 250;
@@ -369,7 +366,7 @@ auto createDefaultConfigFile() -> bool {
     file.println("x_background=0");
     file.println("y_background=0");
     file.println("z_background=0");
-    file.println("entang_colors=65504,2016,2047,63519");
+    file.println("entang_colors=65504");
     file.println("colorFlashTimeout=1000");
     file.println("rssiLimit=-35");
     file.println("tumbleConstant=45");
