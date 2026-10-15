@@ -85,9 +85,9 @@ void setup() {
 	IMU.resetTumbleDetection();
 
 	// Show welcome info.
-	welcomeInfo(screenselections::X0);
-	voltageIndicator(screenselections::X0);
-	displayQRcode(screenselections::X1);
+	welcomeInfo(screenselections::X1);
+	voltageIndicator(screenselections::X1);
+	displayQRcode(screenselections::X0);
 	displayEinstein(screenselections::ZZ);
 	displayUTlogo(screenselections::YY);
 
