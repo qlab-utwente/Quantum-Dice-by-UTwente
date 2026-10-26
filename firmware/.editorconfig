@@ -13,5 +13,6 @@ tab_width = 4
 
 ; Settings for YAML files.
 [*.{yml, yaml}]
+indent_style = space
 indent_size = 2
 tab_width = 2
