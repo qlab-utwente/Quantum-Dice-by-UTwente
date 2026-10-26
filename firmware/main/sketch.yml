@@ -1,8 +1,9 @@
 profiles:
   esp32s3_dev_module:
-    fqbn: esp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=16M,PartitionScheme=app3M_fat9M_16MB,PSRAM=opi
+    fqbn: esp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=16M,PartitionScheme=custom,PSRAM=opi
     platforms:
       - platform: esp32:esp32 (3.3.2)
+        platform_index_url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
     libraries:
       - Adafruit BNO055 (1.6.4)
       - Adafruit LSM6DS (4.7.4)
