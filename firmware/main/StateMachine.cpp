@@ -877,6 +877,10 @@ void StateMachine::checkTimeForDeepSleep() {
 }
 
 void StateMachine::checkCloseBy() {
+	if (this->currentState.mode != Mode::QUANTUM) {
+		return;
+	}
+
 	if (this->currentState.entanglementState != EntanglementState::PURE
 		&& this->currentState.entanglementState != EntanglementState::POST_ENTANGLEMENT
 		&& this->currentState.entanglementState != EntanglementState::TELEPORTED
