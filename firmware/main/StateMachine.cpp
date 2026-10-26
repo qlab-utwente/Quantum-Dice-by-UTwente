@@ -451,7 +451,7 @@ void StateMachine::begin() {
 
 	rtc_gpio_pullup_dis(PIN_VIDV_USB);
 	rtc_gpio_pulldown_en(PIN_VIDV_USB);
-	esp_sleep_enable_ext1_wakeup((1 << PIN_VIDV_USB) | (1 << BUTTON_PIN), ESP_EXT1_WAKEUP_ANY_HIGH);
+	esp_sleep_enable_ext1_wakeup_io((1 << PIN_VIDV_USB), ESP_EXT1_WAKEUP_ANY_HIGH);
 
     // Initialize ESP-NOW with device A MAC from config
     EspNowSensor<message>::Init();

@@ -179,7 +179,7 @@ static inline void edge_setup() {
 
 	rtc_gpio_pullup_dis(BUTTON_PIN);
 	rtc_gpio_pulldown_en(BUTTON_PIN);
-	//esp_sleep_enable_ext1_wakeup((1 << BUTTON_PIN), ESP_EXT1_WAKEUP_ANY_HIGH);
+	esp_sleep_enable_ext1_wakeup_io((1 << BUTTON_PIN), ESP_EXT1_WAKEUP_ANY_HIGH);
 
 	if (digitalRead(BUTTON_PIN) == 1) {
 		button_state = BUTTON_STATE_PRESS_IGNORE;
