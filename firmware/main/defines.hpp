@@ -1,7 +1,7 @@
 #ifndef DEFINES_H_
 #define DEFINES_H_
 
-#define VERSION "2.1.0"
+#define VERSION "Gen4.0.1"
 #define DEFAULT_DICE_ID "DEFAULT"
 
 #define DEBUG 1

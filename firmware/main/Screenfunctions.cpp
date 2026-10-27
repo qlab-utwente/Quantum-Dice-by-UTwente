@@ -437,7 +437,7 @@ void voltageIndicator(screenselections screens) {
 }
 
 void welcomeInfo(screenselections screens) {
-    const char *generationText = "GEN 4.0";
+    const char *generationText = "GEN 4.0.1";
     char displayText2[20];
     selectScreens(screens);
     tft.fillScreen(GC9A01A_BLACK);
