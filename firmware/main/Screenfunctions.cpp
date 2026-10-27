@@ -73,6 +73,8 @@ static void drawDot(const int x, const int y, const float alpha = 1.0F, const ui
 	dotsCanvas.fillCircle(x, y, DOT_RADIUS, blendedColor);
 }
 
+static void animateInit() noexcept;
+
 void initDisplays() {
     Serial.println("Initializing displays...");
 
@@ -96,6 +98,8 @@ void initDisplays() {
 
     selectScreens(NO_ONE); // Deactivate all screens
     delay(100);
+
+	animateInit();
 
     Serial.println("Displays initialized successfully!");
 }
@@ -338,26 +342,6 @@ void displayMix1to6(screenselections screens) {
 	tft.drawRGBBitmap(0, 0, dotsCanvas.getBuffer(), dotsCanvas.width(), dotsCanvas.height());
 }
 
-void displayMix1to6_entangled(screenselections screens) {
-	constexpr int CENTER_X = (WIDTH / 2);
-	constexpr int CENTER_Y = (HEIGHT / 2);
-	const uint16_t color = stateMachine.isColorFlash() ? stateMachine.getEntanglementColor() : GC9A01A_WHITE;
-
-	// Draw to the canvas.
-    dotsCanvas.fillScreen(GC9A01A_BLACK);
-    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y - DOT_OFFSET, (3 * 0.16) + 0.2, color);
-    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y - DOT_OFFSET, (5 * 0.16) + 0.2, color);
-    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y, (1 * 0.16) + 0.2, color);
-    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y, (1 * 0.16) + 0.2, color);
-    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y + DOT_OFFSET, (5 * 0.16) + 0.2, color);
-    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y + DOT_OFFSET, (3 * 0.16) + 0.2, color);
-    drawDot(CENTER_X, CENTER_Y, (3 * 0.16) + 0.2, color);
-
-	// Select screens and draw dots to screen.
-    selectScreens(screens);
-	tft.drawRGBBitmap(0, 0, dotsCanvas.getBuffer(), dotsCanvas.width(), dotsCanvas.height());
-}
-
 void printChar(screenselections screens, char *letters, uint16_t fontcolor, uint16_t bckcolor, int x,
                int y) {
     selectScreens(screens);
@@ -520,8 +504,21 @@ static constexpr float ANIMATE_FULL_ROTATION_TIME = 1.25F;
 static unsigned long animateStartTime = NAN;
 static float animatePreviousAngleCos = NAN;
 static float animatePreviousAngleSin = NAN;
+static const char *TASK_NAME = "animateTask";
+static const char *TIMER_NAME = "animateTimer";
+static constexpr uint32_t TASK_STACK_SIZE = 8192;
+static constexpr UBaseType_t TASK_PRIORITY = 10;
+static constexpr BaseType_t TASK_CORE = ARDUINO_RUNNING_CORE;
+static constexpr uint32_t NOTIFICATION_UPDATE = 0x01;
+static constexpr uint64_t ANIMATION_FPS = 60;
+static constexpr uint64_t TIMER_PERIOD = 1'000'000 / ANIMATION_FPS;
+static esp_timer_handle_t animateTimer;
+static StackType_t animateStack[TASK_STACK_SIZE];
+static TaskHandle_t animateTaskHandle;
+static StaticTask_t animateTaskBuffer;
+static bool animateRunning = false;
 
-void animateRestart() {
+void animateStart() {
 	selectScreens(ALL);
 	animateStartTime = millis();
 	animatePreviousAngleCos = 1.0F;
@@ -535,6 +532,13 @@ void animateRestart() {
 	tft.fillCircle(ANIMATE_CENTER_X - DOT_OFFSET, ANIMATE_CENTER_Y + DOT_OFFSET, DOT_RADIUS, ANIMATE_COLOR1);
 	tft.fillCircle(ANIMATE_CENTER_X + DOT_OFFSET, ANIMATE_CENTER_Y + DOT_OFFSET, DOT_RADIUS, ANIMATE_COLOR0);
     tft.fillCircle(ANIMATE_CENTER_X, ANIMATE_CENTER_Y, DOT_RADIUS, ANIMATE_COLOR5);
+
+	animateRunning = true;
+	esp_timer_start_periodic(animateTimer, TIMER_PERIOD);
+}
+
+bool animateIsRunning() {
+	return animateRunning;
 }
 
 static void animatePlaceDot(const int dotX, const int dotY, struct verticalLine *output) noexcept {
@@ -646,8 +650,16 @@ static void animateUpdateDot(const int offsetX, const int offsetY, const uint16_
 	tft.endWrite(); */
 }
 
-void animateUpdate() {
+static void animateUpdate() {
 	const unsigned long now = millis();
+	const unsigned long timeElapsedMillis = now - animateStartTime;
+	if (timeElapsedMillis >= 5'000) {
+		esp_timer_stop(animateTimer);
+		animateRunning = false;
+		refreshScreens();
+		return;
+	}
+
 	const float timeElapsed = static_cast<float>(now - animateStartTime) / 1000.0F;
 	const float angle = fmod(TWO_PI * timeElapsed / ANIMATE_FULL_ROTATION_TIME, TWO_PI);
 
@@ -665,4 +677,50 @@ void animateUpdate() {
 	animatePreviousAngleSin = angleSin;
 	const float timeToRender = static_cast<float>(millis() - now) / 1000.0F;
 	debugf("Time to render: %.2f\n", timeToRender);
+}
+
+static void animateTaskFunction(void *parameter) noexcept {
+	uint32_t notificationValue = 0;
+	while (true) {
+		xTaskNotifyWait(
+			0,
+			UINT32_MAX,
+			&notificationValue,
+			portMAX_DELAY
+		);
+
+		if ((notificationValue & NOTIFICATION_UPDATE) != 0) {
+			animateUpdate();
+		}
+	}
+}
+
+static void animateTimerCallback(void *parameter) noexcept {
+	xTaskNotify(
+		animateTaskHandle,
+		NOTIFICATION_UPDATE,
+		eSetBits
+	);
+}
+
+static void animateInit() noexcept {
+	animateTaskHandle = xTaskCreateStaticPinnedToCore(
+		animateTaskFunction,
+		TASK_NAME,
+		TASK_STACK_SIZE,
+		nullptr,
+		TASK_PRIORITY,
+		animateStack,
+		&animateTaskBuffer,
+		TASK_CORE
+	);
+
+	static const esp_timer_create_args_t TIMER_CREATE_ARGS = {
+		.callback = animateTimerCallback,
+		.arg = nullptr,
+		.dispatch_method = ESP_TIMER_TASK,
+		.name = TIMER_NAME,
+	};
+
+	esp_timer_create(&TIMER_CREATE_ARGS, &animateTimer);
 }

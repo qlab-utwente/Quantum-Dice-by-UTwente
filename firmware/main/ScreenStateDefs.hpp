@@ -22,7 +22,6 @@ enum class ScreenStates : uint8_t {
 
     // Quantum superposition states
     MIX1TO6,           // Normal quantum superposition
-    MIX1TO6_ENTANGLED, // Entangled superposition (different color)
 
     // Special states
     LOWBATTERY,

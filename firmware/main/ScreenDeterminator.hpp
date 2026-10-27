@@ -40,33 +40,13 @@ inline auto determineScreens(State state, DiceNumbers diceNumber, UpSide upSide)
     // THROWING STATE - show superposition
     if (state.throwState == ThrowState::THROWING) {
         // Show superposition based on entanglement state
-        ScreenStates throwingScreen;
-
-        if (state.entanglementState == EntanglementState::ENTANGLED) {
-            // Entangled: show special entangled superposition
-            throwingScreen = ScreenStates::MIX1TO6_ENTANGLED;
-        } else {
-            // Pure superposition (including ENTANGLE_REQUESTED)
-            throwingScreen = ScreenStates::MIX1TO6;
-        }
-
-        config.x0 = config.x1 = config.y0 = config.y1 = config.z0 = config.z1 = throwingScreen;
+        config.x0 = config.x1 = config.y0 = config.y1 = config.z0 = config.z1 = ScreenStates::MIX1TO6;
         return config;
     }
 
     // IDLE STATE - show superposition (waiting to throw)
     if (state.throwState == ThrowState::IDLE) {
-        ScreenStates idleScreen;
-
-        if (state.entanglementState == EntanglementState::ENTANGLED) {
-            // Entangled: show entangled superposition
-            idleScreen = ScreenStates::MIX1TO6_ENTANGLED;
-        } else {
-            // Pure quantum: show superposition (including ENTANGLE_REQUESTED)
-            idleScreen = ScreenStates::MIX1TO6;
-        }
-
-        config.x0 = config.x1 = config.y0 = config.y1 = config.z0 = config.z1 = idleScreen;
+        config.x0 = config.x1 = config.y0 = config.y1 = config.z0 = config.z1 = ScreenStates::MIX1TO6;
         return config;
     }
 
@@ -86,12 +66,7 @@ inline auto determineScreens(State state, DiceNumbers diceNumber, UpSide upSide)
             default:                 measuredScreen = ScreenStates::MIX1TO6; break;
         }
 
-        // Default all to superposition
-        ScreenStates defaultScreen = (state.entanglementState == EntanglementState::ENTANGLED)
-                                       ? ScreenStates::MIX1TO6_ENTANGLED
-                                       : ScreenStates::MIX1TO6;
-
-        config.x0 = config.x1 = config.y0 = config.y1 = config.z0 = config.z1 = defaultScreen;
+        config.x0 = config.x1 = config.y0 = config.y1 = config.z0 = config.z1 = ScreenStates::MIX1TO6;
 
         // Set the measured face to show the number
         switch (upSide) {

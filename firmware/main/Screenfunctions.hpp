@@ -68,7 +68,6 @@ void displayN4(screenselections screens);
 void displayN5(screenselections screens);
 void displayN6(screenselections screens);
 void displayMix1to6(screenselections screens);
-void displayMix1to6_entangled(screenselections screens);
 void printChar(screenselections screens, char *letters, uint16_t fontcolor, uint16_t bckcolor, int x, int y);
 void voltageIndicator(screenselections screens);
 void welcomeInfo(screenselections screens);
@@ -76,7 +75,7 @@ void drawStringCentered(Adafruit_GFX &gfx, const String &text, int16_t y);
 void showConfigMode(screenselections screens);
 void rssiScreen(int32_t rssi);
 
-void animateRestart();
-void animateUpdate();
+void animateStart();
+bool animateIsRunning();
 
 #endif /* SCREENFUNCTIONS_H_ */

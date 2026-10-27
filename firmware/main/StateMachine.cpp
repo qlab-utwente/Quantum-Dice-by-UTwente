@@ -254,7 +254,7 @@ void StateMachine::sendEntanglementConfirm(uint8_t *target) {
     // Trigger color flash
     this->colorFlash = true;
     this->colorFlashStartTime = millis();
-	animateRestart();
+	animateStart();
     debugln("Triggering color flash (accepting entanglement)");
 
     EspNowSensor<message>::Send(myData, target);
@@ -569,8 +569,7 @@ void StateMachine::update() {
 	this->updateEspNow();
 
 	// Periodically send watchdog to broadcast presence to nearby dice
-	if (this->currentState.mode != Mode::CLASSIC
-		&& (currentTime - lastWatchdogTime >= 500)) { // Send every 500ms
+	if (this->currentState.mode != Mode::CLASSIC && !this->colorFlash && (currentTime - lastWatchdogTime >= 500)) { // Send every 500ms
 		// Not sending in CLASSIC mode ensures we don't get contacted about entanglement
 		// and reduces power consumption and network traffic
 		sendWatchDog();
@@ -578,20 +577,11 @@ void StateMachine::update() {
 	}
 
 	// State-independent: Handle color flash timeout
-	const bool pressDouble = button_poll_press_double();
-	if (this->colorFlash) {
-		if (currentTime - this->colorFlashStartTime >= 5000) {
-			this->colorFlash = false;
-			refreshScreens();
-		} else {
-			animateUpdate();
-			delay(20);
-			animateUpdate();
-		}
-	} else if (pressDouble) {
+	this->colorFlash = animateIsRunning();
+	if (button_poll_press_double() && !animateIsRunning()) {
 		this->colorFlash = true;
 		this->colorFlashStartTime = millis();
-		animateRestart();
+		animateStart();
 	}
 
 	/*
@@ -673,6 +663,13 @@ void StateMachine::updateEspNow() {
 
             case message_type::MESSAGE_TYPE_ENTANGLE_REQUEST:
                 debugln("Entanglement request received - processing immediately");
+
+				// Check if we are in the animation, if so, then deny entanglement.
+				if (this->colorFlash) {
+					debugln("Animation busy - denying entanglement request");
+					sendEntangleDenied(source);
+					break;
+				}
 
                 // Check if we're in CLASSIC mode - deny entanglement
                 if (this->currentState.mode == Mode::CLASSIC) {
@@ -758,6 +755,7 @@ void StateMachine::updateEspNow() {
                     // Trigger color flash
                     this->colorFlash = true;
                     this->colorFlashStartTime = millis();
+					animateStart();
                     debugln("Triggering color flash (receiving entanglement)");
 
                     // Reset local measurement state for new entanglement
@@ -876,6 +874,7 @@ void StateMachine::updateEspNow() {
                         // Trigger color flash
                         this->colorFlash = true;
                         this->colorFlashStartTime = millis();
+						animateStart();
                         debugln("Triggering color flash (receiving teleportation)");
 
                         this->selfDiceNumber = DiceNumbers::NONE;
@@ -884,7 +883,7 @@ void StateMachine::updateEspNow() {
 
                         // Transition to ENTANGLED (use ENTANGLE_REQUEST trigger for this)
                         this->currentState.entanglementState = EntanglementState::ENTANGLED;
-                        refreshScreens();
+                        //refreshScreens();
 
                     } else if (teleported_state.throwState == ThrowState::OBSERVED) {
                         // M was in observed state - B receives teleported measurement
@@ -976,6 +975,10 @@ void StateMachine::checkTimeForDeepSleep() {
 }
 
 void StateMachine::checkCloseBy() {
+	if (this->colorFlash) {
+		return;
+	}
+
 	if (this->currentState.mode != Mode::QUANTUM) {
 		return;
 	}
@@ -1086,7 +1089,7 @@ void StateMachine::enterQuantumIdle() {
 
 void StateMachine::whileQuantumIdle() {
 	// Check if dice is being thrown
-	if (IMU.tumbled()) {
+	if (!this->colorFlash && IMU.tumbled()) {
 		debugln("Tumble detected - starting throw");
 		changeState(Trigger::START_ROLLING);
 		return;
