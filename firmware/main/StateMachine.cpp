@@ -916,14 +916,15 @@ void StateMachine::checkCloseBy() {
 		this->next_peer[5]
 	);
 
-	this->new_peer_rssi = INT32_MIN;
-
 	if (this->currentState.entanglementState == EntanglementState::ENTANGLED) {
 		sendTeleportRequest(this->new_peer, this->current_peer);
 	} else {
 		sendEntangleRequest(this->new_peer);
 		changeState(Trigger::CLOSE_BY);
 	}
+
+	this->new_peer_rssi = INT32_MIN;
+	memset(this->new_peer, 0xFF, MAC_ADDRESS_LENGTH);
 }
 
 // ============================================================================
@@ -961,6 +962,10 @@ void StateMachine::enterQuantumIdle() {
 
 	// Reset tumble detection for next throw
 	IMU.resetTumbleDetection();
+
+	// Reset new peer.
+	this->new_peer_rssi = INT32_MIN;
+	memset(this->new_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
 	sendWatchDog();
 	refreshScreens();
@@ -1162,6 +1167,10 @@ void StateMachine::enterObserved() {
 
 	// Reset tumble detection so we're ready for the next throw
 	IMU.resetTumbleDetection();
+
+	// Reset new peer.
+	this->new_peer_rssi = INT32_MIN;
+	memset(this->new_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
 	refreshScreens();
 	sendWatchDog();
