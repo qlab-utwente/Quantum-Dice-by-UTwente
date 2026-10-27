@@ -202,7 +202,7 @@ void DiceConfigManager::initDefaultConfig() {
     _config.colorFlashTimeout = 250;
 
     // Default RSSI
-    _config.rssiLimit = -35;
+    _config.rssiLimit = -25;
 
     // Default tumble constant
     _config.tumbleConstant = 45;
@@ -368,7 +368,7 @@ auto createDefaultConfigFile() -> bool {
     file.println("z_background=0");
     file.println("entang_colors=65504");
     file.println("colorFlashTimeout=1000");
-    file.println("rssiLimit=-35");
+    file.println("rssiLimit=-25");
     file.println("tumbleConstant=45");
     file.println("deepSleepTimeout=300000");
     file.println("checksum=0");

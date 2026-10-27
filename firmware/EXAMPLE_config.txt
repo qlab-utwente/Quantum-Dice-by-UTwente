@@ -41,9 +41,9 @@ entang_colors=65504
 # RSSI SETTINGS
 # ==========================================
 # Signal strength threshold for entanglement detection
-# Typical values: -40 (very close) to -80 (far)
 # More negative = weaker signal allowed
-rssiLimit=-35
+# rssiLimit=-35 (pre Gen 4.0)
+rssiLimit=-25
 
 # ==========================================
 # OPERATIONAL PARAMETERS
