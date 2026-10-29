@@ -579,10 +579,32 @@ void StateMachine::updateEspNow() {
 	int32_t current_rssi = INT32_MIN;
 
 	while (EspNowSensor<message>::Poll(&data, (unsigned char *)source, &current_rssi)) {
+		debugf(
+			"Message from %02X:%02X:%02X:%02X:%02X:%02X with RSSI %i\n",
+			source[0],
+			source[1],
+			source[2],
+			source[3],
+			source[4],
+			source[5],
+			current_rssi
+		);
+
 		// Update RSSI and source for ALL messages to track nearby dice
 		if (current_rssi > this->new_peer_rssi) {
 			this->new_peer_rssi = current_rssi;
 			memcpy((void *)this->new_peer, (void *)source, MAC_ADDRESS_LENGTH);
+
+			debugf(
+				"New peer is %02X:%02X:%02X:%02X:%02X:%02X with RSSI %i\n",
+				source[0],
+				source[1],
+				source[2],
+				source[3],
+				source[4],
+				source[5],
+				current_rssi
+			);
 		}
 
 		switch (data.type) {
@@ -595,6 +617,7 @@ void StateMachine::updateEspNow() {
 
                     // Clear current_peer so we can accept new entanglement requests
                     memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
+					debug("Current peer is reset\n");
 
                     // Trigger state transition
                     changeState(Trigger::MEASUREMENT_RECEIVED);
@@ -629,6 +652,15 @@ void StateMachine::updateEspNow() {
 
                     // Store M's address in next_peer for later reference
                     memcpy((void *)this->next_peer, (void *)source, MAC_ADDRESS_LENGTH);
+					debugf(
+						"Next peer is %02X:%02X:%02X:%02X:%02X:%02X\n",
+						this->next_peer[0],
+						this->next_peer[1],
+						this->next_peer[2],
+						this->next_peer[3],
+						this->next_peer[4],
+						this->next_peer[5]
+					);
 
                     // We'll transition to PURE after receiving TELEPORT_CONFIRM
                     // Don't change state yet - wait for confirmation
@@ -637,9 +669,15 @@ void StateMachine::updateEspNow() {
                     // Another dice wants to entangle with us
                     // Store their MAC and send confirmation with our chosen color
                     memcpy((void *)this->current_peer, (void *)source, MAC_ADDRESS_LENGTH);
-                    debugf("Adding peer (current_peer): %02X:%02X:%02X:%02X:%02X:%02X\n",
-                           this->current_peer[0], this->current_peer[1], this->current_peer[2],
-                           this->current_peer[3], this->current_peer[4], this->current_peer[5]);
+                    debugf(
+						"Current peer is %02X:%02X:%02X:%02X:%02X:%02X\n",
+                        this->current_peer[0],
+						this->current_peer[1],
+						this->current_peer[2],
+                        this->current_peer[3],
+						this->current_peer[4],
+						this->current_peer[5]
+					);
 
                     sendEntanglementConfirm((uint8_t *)source);
                     // Reset local measurement state for new entanglement
@@ -657,6 +695,16 @@ void StateMachine::updateEspNow() {
                 if (this->currentState.entanglementState == EntanglementState::ENTANGLE_REQUESTED) {
                     memcpy((void *)this->current_peer, (void *)this->next_peer, MAC_ADDRESS_LENGTH);
                     memset((void *)this->next_peer, 0xFF, MAC_ADDRESS_LENGTH);
+					debugf(
+						"Current peer is %02X:%02X:%02X:%02X:%02X:%02X\n",
+						this->current_peer[0],
+						this->current_peer[1],
+						this->current_peer[2],
+						this->current_peer[3],
+						this->current_peer[4],
+						this->current_peer[5]
+					);
+					debug("Next peer is reset\n");
 
                     // Store the entanglement color from the confirming dice
                     this->entanglement_color = data.data.entangleConfirm.color;
@@ -681,6 +729,7 @@ void StateMachine::updateEspNow() {
 
                 // Clear the peer we tried to entangle with
                 memset(this->next_peer, 0xFF, MAC_ADDRESS_LENGTH);
+				debug("Next peer is reset\n");
 
                 // If we're in ENTANGLE_REQUESTED state, go back to PURE
                 if (this->currentState.entanglementState == EntanglementState::ENTANGLE_REQUESTED) {
@@ -718,6 +767,7 @@ void StateMachine::updateEspNow() {
                     if (this->currentState.entanglementState == EntanglementState::ENTANGLED) {
                         // Remove old peer
                         memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
+						debug("Current peer is reset\n");
                     }
 
                     // M goes to quantum idle state (full superposition) after teleportation
@@ -739,6 +789,8 @@ void StateMachine::updateEspNow() {
                 // Clear entanglement
                 memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
                 memset(this->next_peer, 0xFF, MAC_ADDRESS_LENGTH);
+				debug("Current peer is reset\n");
+				debug("Next peer is reset\n");
 
                 // A goes to quantum idle state (full superposition)
                 // Clear measurement state and memoization
@@ -763,6 +815,7 @@ void StateMachine::updateEspNow() {
 
                     // Remove old peer (A) from peer list
                     memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
+					debug("Current peer is reset.");
 
                     // Check what state M was in
                     if (teleported_state.entanglementState == EntanglementState::ENTANGLED) {
@@ -770,6 +823,15 @@ void StateMachine::updateEspNow() {
                         debugln("Teleported state is ENTANGLED - B now entangled to N");
                         memcpy((void *)this->current_peer,
                                (void *)data.data.teleportPayload.entangled_peer, MAC_ADDRESS_LENGTH);
+						debugf(
+							"Current peer is %02X:%02X:%02X:%02X:%02X:%02X\n",
+							this->current_peer[0],
+							this->current_peer[1],
+							this->current_peer[2],
+							this->current_peer[3],
+							this->current_peer[4],
+							this->current_peer[5]
+						);
 
                         // Store the teleported entanglement color
                         this->entanglement_color = teleported_color;
@@ -822,6 +884,15 @@ void StateMachine::updateEspNow() {
 
                     // Update current_peer to B
                     memcpy((void *)this->current_peer, (void *)new_partner_b, MAC_ADDRESS_LENGTH);
+					debugf(
+						"Current peer is %02X:%02X:%02X:%02X:%02X:%02X\n",
+						this->current_peer[0],
+						this->current_peer[1],
+						this->current_peer[2],
+						this->current_peer[3],
+						this->current_peer[4],
+						this->current_peer[5]
+					);
 
                     // N stays in ENTANGLED state, just with a different partner
                     // No state transition needed
@@ -907,7 +978,7 @@ void StateMachine::checkCloseBy() {
 	debugln("Nearby dice detected - sending entanglement request and returning to IDLE.");
 	memcpy((void *)this->next_peer, (void *)this->new_peer, MAC_ADDRESS_LENGTH);
 	debugf(
-		"Adding peer (next_peer): %02X:%02X:%02X:%02X:%02X:%02X\n",
+		"Next peer is %02X:%02X:%02X:%02X:%02X:%02X\n",
 		this->next_peer[0],
 		this->next_peer[1],
 		this->next_peer[2],
@@ -923,6 +994,7 @@ void StateMachine::checkCloseBy() {
 		changeState(Trigger::CLOSE_BY);
 	}
 
+	debug("New peer is reset\n");
 	this->new_peer_rssi = INT32_MIN;
 	memset(this->new_peer, 0xFF, MAC_ADDRESS_LENGTH);
 }
@@ -964,6 +1036,7 @@ void StateMachine::enterQuantumIdle() {
 	IMU.resetTumbleDetection();
 
 	// Reset new peer.
+	debug("New peer is reset\n");
 	this->new_peer_rssi = INT32_MIN;
 	memset(this->new_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
@@ -1109,6 +1182,7 @@ void StateMachine::enterObserved() {
 			// Clear entanglement
 			this->currentState.entanglementState = EntanglementState::PURE;
 			memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
+			debug("Current peer is reset\n");
 			break;
 
 		case EntanglementState::POST_ENTANGLEMENT:
@@ -1169,6 +1243,7 @@ void StateMachine::enterObserved() {
 	IMU.resetTumbleDetection();
 
 	// Reset new peer.
+	debug("New peer is reset\n");
 	this->new_peer_rssi = INT32_MIN;
 	memset(this->new_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
