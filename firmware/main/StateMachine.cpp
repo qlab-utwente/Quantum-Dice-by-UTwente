@@ -328,12 +328,12 @@ const std::array<StateTransition, 37> StateMachine::stateTransitions = {
    StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::IDLE, std::nullopt,
                    EntanglementState::ENTANGLE_REQUESTED, EntanglementState::ENTANGLED,
                    Trigger::ENTANGLE_CONFIRM},
-   StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::IDLE, std::nullopt,
+   StateTransition{Mode::QUANTUM, std::nullopt, std::nullopt, std::nullopt,
                    EntanglementState::ENTANGLE_REQUESTED, EntanglementState::PURE,
                    Trigger::ENTANGLE_STOP},
    StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::IDLE, std::nullopt,
                    EntanglementState::ENTANGLE_REQUESTED, EntanglementState::PURE, Trigger::TIMED},
-   StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::IDLE, std::nullopt,
+   StateTransition{Mode::QUANTUM, std::nullopt, std::nullopt, std::nullopt,
                    EntanglementState::ENTANGLED, EntanglementState::PURE, Trigger::ENTANGLE_STOP},
    StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::IDLE, std::nullopt,
                    EntanglementState::ENTANGLED, EntanglementState::PURE, Trigger::TIMED},
@@ -367,7 +367,7 @@ const std::array<StateTransition, 37> StateMachine::stateTransitions = {
    // === QUANTUM MODE - THROWING TRANSITIONS ===
    StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::THROWING, ThrowState::OBSERVED,
                    std::nullopt, std::nullopt, Trigger::STOP_ROLLING},
-   StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::THROWING, ThrowState::IDLE,
+   StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::THROWING, std::nullopt,
                    EntanglementState::PURE, EntanglementState::ENTANGLE_REQUESTED,
                    Trigger::CLOSE_BY},
    StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::THROWING, ThrowState::IDLE,
@@ -383,7 +383,7 @@ const std::array<StateTransition, 37> StateMachine::stateTransitions = {
    // === QUANTUM MODE - OBSERVED TRANSITIONS ===
    StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::OBSERVED, ThrowState::THROWING,
                    EntanglementState::PURE, std::nullopt, Trigger::START_ROLLING},
-   StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::OBSERVED, ThrowState::IDLE,
+   StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::OBSERVED, std::nullopt,
                    EntanglementState::PURE, EntanglementState::ENTANGLE_REQUESTED,
                    Trigger::CLOSE_BY},
    StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::OBSERVED, ThrowState::IDLE,
@@ -426,9 +426,10 @@ StateMachine::StateMachine()
 		.entanglementState = EntanglementState::PURE
 	  },
 	  tryingToSleep(false),
-	  current_peer{ 0, 0, 0, 0, 0, 0 },
-	  next_peer{ 0, 0, 0, 0, 0, 0 },
-	  new_peer{ 0, 0, 0, 0, 0, 0 },
+	  current_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
+	  next_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
+	  new_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
+	  last_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
 	  new_peer_rssi(INT32_MIN),
 	  stateEntryTime(0),
 	  selfDiceNumber(DiceNumbers::NONE),
@@ -579,8 +580,24 @@ void StateMachine::updateEspNow() {
 	int32_t current_rssi = INT32_MIN;
 
 	while (EspNowSensor<message>::Poll(&data, (unsigned char *)source, &current_rssi)) {
-		// Update RSSI and source for ALL messages to track nearby dice
-		if (current_rssi > this->new_peer_rssi) {
+		const bool isLastPeer = memcmp(this->last_peer, source, MAC_ADDRESS_LENGTH) == 0;
+		const bool isLastTeleport = memcmp(this->last_teleport, source, MAC_ADDRESS_LENGTH) == 0;
+
+		// If this message was sent by our last peer, then we only check whether it has left the
+		// RSSI limit, in which case we forget it.
+		if (isLastPeer && current_rssi < currentConfig.rssiLimit) {
+			memset(this->last_peer, 0xFF, MAC_ADDRESS_LENGTH);
+		}
+
+		// If this message was sent by our last teleport partner, then we only check whether it has
+		// left the RSSI limit, in which case we forget it.
+		if (isLastTeleport && current_rssi < currentConfig.rssiLimit) {
+			memset(this->last_teleport, 0xFF, MAC_ADDRESS_LENGTH);
+		}
+
+		// Remember this source, if its RSSI is better than currently known and it is not our last
+		// peer.
+		if (!isLastTeleport && !isLastPeer && current_rssi > this->new_peer_rssi) {
 			this->new_peer_rssi = current_rssi;
 			memcpy((void *)this->new_peer, (void *)source, MAC_ADDRESS_LENGTH);
 		}
@@ -594,6 +611,7 @@ void StateMachine::updateEspNow() {
                     this->partnerMeasurementAxis = data.data.measurement.measureAxis;
 
                     // Clear current_peer so we can accept new entanglement requests
+					memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                     memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
                     // Trigger state transition
@@ -617,6 +635,20 @@ void StateMachine::updateEspNow() {
                     sendEntangleDenied(source);
                     break;
                 }
+
+				// Check if this is our last peer - deny to prevent reentanglement.
+				if (memcmp(this->last_peer, source, MAC_ADDRESS_LENGTH) == 0) {
+					debugln("Last peer - denying entanglement request");
+					sendEntangleDenied(source);
+					break;
+				}
+
+				// Check if this is our last teleport - deny to prevent reentanglement.
+				if (memcmp(this->last_teleport, source, MAC_ADDRESS_LENGTH) == 0) {
+					debugln("Last teleport - denying entanglement request");
+					sendEntangleDenied(source);
+					break;
+				}
 
                 // Check if we're already ENTANGLED - this means teleportation is being initiated
                 if (this->currentState.entanglementState == EntanglementState::ENTANGLED) {
@@ -693,6 +725,7 @@ void StateMachine::updateEspNow() {
                 // Dice M receives this from dice A with B's address
                 debugln("Teleport request received - M processing teleportation");
                 debugln("Teleport: Sending our state to target dice B");
+				memcpy(this->last_teleport, source, MAC_ADDRESS_LENGTH);
 
                 {
                     uint8_t target_b[MAC_ADDRESS_LENGTH];
@@ -717,6 +750,7 @@ void StateMachine::updateEspNow() {
                     // Clear our entanglement if we had one
                     if (this->currentState.entanglementState == EntanglementState::ENTANGLED) {
                         // Remove old peer
+						memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                         memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
                     }
 
@@ -735,8 +769,10 @@ void StateMachine::updateEspNow() {
             case message_type::MESSAGE_TYPE_TELEPORT_CONFIRM:
                 // Dice A receives confirmation from M that teleportation is complete
                 debugln("Teleport confirm received - A ending entanglement with B");
+				memcpy(this->last_teleport, source, MAC_ADDRESS_LENGTH);
 
                 // Clear entanglement
+				memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                 memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
                 memset(this->next_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
@@ -762,6 +798,7 @@ void StateMachine::updateEspNow() {
                     debugf("Received teleportation with color: 0x%04X\n", teleported_color);
 
                     // Remove old peer (A) from peer list
+					memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                     memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
                     // Check what state M was in
@@ -821,6 +858,7 @@ void StateMachine::updateEspNow() {
                            new_partner_b[5]);
 
                     // Update current_peer to B
+					memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                     memcpy((void *)this->current_peer, (void *)new_partner_b, MAC_ADDRESS_LENGTH);
 
                     // N stays in ENTANGLED state, just with a different partner
@@ -893,6 +931,14 @@ void StateMachine::checkCloseBy() {
 	}
 
 	if (this->new_peer_rssi > -1) {
+		return;
+	}
+
+	if (memcmp(this->new_peer, this->last_teleport, MAC_ADDRESS_LENGTH) == 0) {
+		return;
+	}
+
+	if (memcmp(this->new_peer, this->last_peer, MAC_ADDRESS_LENGTH) == 0) {
 		return;
 	}
 
@@ -1071,6 +1117,7 @@ void StateMachine::enterObserved() {
 
 	// Determine the dice number based on entanglement state
 	switch (this->currentState.entanglementState) {
+		case EntanglementState::ENTANGLE_REQUESTED: [[fallthrough]];
 		case EntanglementState::PURE:
 			// Check if we're measuring in the same basis as the last roll
 			if (this->selfMeasurementAxis == lastRollBasis && lastRollNumber != DiceNumbers::NONE) {
@@ -1108,6 +1155,7 @@ void StateMachine::enterObserved() {
 
 			// Clear entanglement
 			this->currentState.entanglementState = EntanglementState::PURE;
+			memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
 			memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
 			break;
 
@@ -1157,11 +1205,6 @@ void StateMachine::enterObserved() {
 			this->teleportedMeasurementAxis = MeasuredAxises::UNDEFINED;
 			this->teleportedDiceNumber = DiceNumbers::NONE;
 			this->currentState.entanglementState = EntanglementState::PURE;
-			break;
-
-		case EntanglementState::ENTANGLE_REQUESTED:
-			// Shouldn't happen, but treat as PURE
-			this->selfDiceNumber = static_cast<DiceNumbers>(generateDiceRoll());
 			break;
 	}
 
