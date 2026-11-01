@@ -238,24 +238,9 @@ void StateMachine::sendEntanglementConfirm(uint8_t *target) {
     message myData;
     myData.type = message_type::MESSAGE_TYPE_ENTANGLE_CONFIRM;
 
-    // Pick a random color from available colors
-    if (currentConfig.entang_colors_count > 0) {
-        uint8_t colorIndex                = random(0, currentConfig.entang_colors_count);
-        myData.data.entangleConfirm.color = currentConfig.entang_colors[colorIndex];
-        debugf("Selected entanglement color: 0x%04X (index %d of %d)\n",
-               myData.data.entangleConfirm.color, colorIndex, currentConfig.entang_colors_count);
-    } else {
-        myData.data.entangleConfirm.color = 0xFFE0; // Default yellow if no colors configured
-        debugln("No colors configured, using default yellow");
-    }
-
-    this->entanglement_color = myData.data.entangleConfirm.color;
-
-    // Trigger color flash
-    this->colorFlash = true;
-    this->colorFlashStartTime = millis();
+    // Trigger animation
 	animateStart();
-    debugln("Triggering color flash (accepting entanglement)");
+    debugln("Triggering animation (accepting entanglement)");
 
     EspNowSensor<message>::Send(myData, target);
 }
@@ -287,16 +272,16 @@ void StateMachine::sendTeleportConfirm(uint8_t *target) {
 
 void StateMachine::sendTeleportPayload(uint8_t *target, State state, DiceNumbers diceNumber,
                                        UpSide upSide, MeasuredAxises measureAxis,
-                                       uint8_t *entangled_peer, uint16_t color) {
+                                       uint8_t *entangled_peer) {
     EspNowSensor<message>::AddPeer(target);
-    debugf("Send teleport payload with colour 0x%04X\n", color);
+    debug("Send teleport payload\n");
     message myData;
     myData.type                             = message_type::MESSAGE_TYPE_TELEPORT_PAYLOAD;
     myData.data.teleportPayload.state       = state;
     myData.data.teleportPayload.measureAxis = measureAxis;
     myData.data.teleportPayload.diceNumber  = diceNumber;
     myData.data.teleportPayload.upSide      = upSide;
-    myData.data.teleportPayload.color       = color;
+    myData.data.teleportPayload.color       = 0xFFE0;
     memcpy((void *)myData.data.teleportPayload.entangled_peer, (void *)entangled_peer, 6);
     EspNowSensor<message>::Send(myData, target);
 }
@@ -461,11 +446,8 @@ StateMachine::StateMachine()
 	  partnerDiceNumber(DiceNumbers::NONE),
 	  teleportedMeasurementAxis(MeasuredAxises::UNDEFINED),
 	  teleportedDiceNumber(DiceNumbers::NONE),
-	  entanglement_color(0xFFE0),
 	  lastRollBasis(MeasuredAxises::UNDEFINED),
-	  lastRollNumber(DiceNumbers::NONE),
-	  colorFlash(false),
-	  colorFlashStartTime(0) {}
+	  lastRollNumber(DiceNumbers::NONE) {}
 
 void StateMachine::begin() {
 	// USB Voltage divider.
@@ -569,28 +551,12 @@ void StateMachine::update() {
 	this->updateEspNow();
 
 	// Periodically send watchdog to broadcast presence to nearby dice
-	if (this->currentState.mode != Mode::CLASSIC && !this->colorFlash && (currentTime - lastWatchdogTime >= 500)) { // Send every 500ms
+	if (this->currentState.mode != Mode::CLASSIC && !animateIsRunning() && (currentTime - lastWatchdogTime >= 500)) { // Send every 500ms
 		// Not sending in CLASSIC mode ensures we don't get contacted about entanglement
 		// and reduces power consumption and network traffic
 		sendWatchDog();
 		lastWatchdogTime = currentTime;
 	}
-
-	// State-independent: Handle color flash timeout
-	this->colorFlash = animateIsRunning();
-	if (button_poll_press_double() && !animateIsRunning()) {
-		this->colorFlash = true;
-		this->colorFlashStartTime = millis();
-		animateStart();
-	}
-
-	/*
-	if (this->colorFlash && (currentTime - this->colorFlashStartTime >= currentConfig.colorFlashTimeout)) {
-		debugln("Color flash timeout - refreshing screens to show white");
-		this->colorFlash = false;
-		refreshScreens(); // Update display to show white instead of color
-	}
-	*/
 
 	// Call whileInState function for current state
 	auto it = stateFunctions.find(this->currentState);
@@ -665,7 +631,7 @@ void StateMachine::updateEspNow() {
                 debugln("Entanglement request received - processing immediately");
 
 				// Check if we are in the animation, if so, then deny entanglement.
-				if (this->colorFlash) {
+				if (animateIsRunning()) {
 					debugln("Animation busy - denying entanglement request");
 					sendEntangleDenied(source);
 					break;
@@ -725,7 +691,7 @@ void StateMachine::updateEspNow() {
                 } else {
                     // Normal entanglement request
                     // Another dice wants to entangle with us
-                    // Store their MAC and send confirmation with our chosen color
+                    // Store their MAC and send confirmation
                     memcpy((void *)this->current_peer, (void *)source, MAC_ADDRESS_LENGTH);
                     debugf("Adding peer (current_peer): %02X:%02X:%02X:%02X:%02X:%02X\n",
                            this->current_peer[0], this->current_peer[1], this->current_peer[2],
@@ -748,15 +714,9 @@ void StateMachine::updateEspNow() {
                     memcpy((void *)this->current_peer, (void *)this->next_peer, MAC_ADDRESS_LENGTH);
                     memset((void *)this->next_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
-                    // Store the entanglement color from the confirming dice
-                    this->entanglement_color = data.data.entangleConfirm.color;
-                    debugf("Received entanglement color: 0x%04X\n", this->entanglement_color);
-
-                    // Trigger color flash
-                    this->colorFlash = true;
-                    this->colorFlashStartTime = millis();
+                    // Trigger animation
 					animateStart();
-                    debugln("Triggering color flash (receiving entanglement)");
+                    debugln("Triggering animation (receiving entanglement)");
 
                     // Reset local measurement state for new entanglement
                     this->selfDiceNumber = DiceNumbers::NONE;
@@ -801,9 +761,7 @@ void StateMachine::updateEspNow() {
                     }
 
                     // Send TELEPORT_PAYLOAD to B with our current state
-                    sendTeleportPayload(target_b, this->currentState, this->selfDiceNumber, this->selfUpSide,
-                                        this->selfMeasurementAxis, this->current_peer,
-                                        this->entanglement_color);
+                    sendTeleportPayload(target_b, this->currentState, this->selfDiceNumber, this->selfUpSide, this->selfMeasurementAxis, this->current_peer);
                     sendTeleportConfirm(source);
 
                     // Clear our entanglement if we had one
@@ -851,10 +809,9 @@ void StateMachine::updateEspNow() {
                 debugln("Teleport payload received - B receiving M's state");
 
                 {
-                    State    teleported_state = data.data.teleportPayload.state;
-                    uint16_t teleported_color = data.data.teleportPayload.color;
+                    State teleported_state = data.data.teleportPayload.state;
 
-                    debugf("Received teleportation with color: 0x%04X\n", teleported_color);
+                    debug("Received teleportation\n");
 
                     // Remove old peer (A) from peer list
 					memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
@@ -867,15 +824,9 @@ void StateMachine::updateEspNow() {
                         memcpy((void *)this->current_peer,
                                (void *)data.data.teleportPayload.entangled_peer, MAC_ADDRESS_LENGTH);
 
-                        // Store the teleported entanglement color
-                        this->entanglement_color = teleported_color;
-                        debugf("Inherited entanglement color: 0x%04X\n", this->entanglement_color);
-
-                        // Trigger color flash
-                        this->colorFlash = true;
-                        this->colorFlashStartTime = millis();
+                        // Trigger animation
 						animateStart();
-                        debugln("Triggering color flash (receiving teleportation)");
+                        debugln("Triggering animation (receiving teleportation)");
 
                         this->selfDiceNumber = DiceNumbers::NONE;
                         this->selfUpSide = UpSide::NONE;
@@ -975,7 +926,7 @@ void StateMachine::checkTimeForDeepSleep() {
 }
 
 void StateMachine::checkCloseBy() {
-	if (this->colorFlash) {
+	if (animateIsRunning()) {
 		return;
 	}
 
@@ -1089,7 +1040,7 @@ void StateMachine::enterQuantumIdle() {
 
 void StateMachine::whileQuantumIdle() {
 	// Check if dice is being thrown
-	if (!this->colorFlash && IMU.tumbled()) {
+	if (!animateIsRunning() && IMU.tumbled()) {
 		debugln("Tumble detected - starting throw");
 		changeState(Trigger::START_ROLLING);
 		return;

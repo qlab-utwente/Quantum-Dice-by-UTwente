@@ -31,11 +31,14 @@ x_background=0 # Black
 y_background=0 # Black
 z_background=0 # Black
 
-# Entanglement colors (16-bit RGB565 format)
-# This dice will randomly pick from these colors when accepting an entanglement request
-# You can add multiple colors separated by commas
-# Examples: Yellow=65504, Green=2016, Cyan=2047, Magenta=63519, Red=63488, Blue=31
-entang_colors=65504
+# ==========================================
+# ENTANGLEMENT ANIMATION
+# ==========================================
+# The duration of the animation is milliseconds.
+animationDuration=2000
+
+# The number of spins done during the animation.
+animationSpins=2
 
 # ==========================================
 # RSSI SETTINGS

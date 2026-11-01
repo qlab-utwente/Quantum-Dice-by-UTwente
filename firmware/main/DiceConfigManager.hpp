@@ -1,20 +1,16 @@
 #ifndef DICE_CONFIG_MANAGER_H
 #define DICE_CONFIG_MANAGER_H
 
-#include <Arduino.h>
-#include <array>
-
-constexpr uint8_t MAX_ENTANGLEMENT_COLORS = 8;
+#include "Arduino.h"
 
 // Configuration structure
 struct DiceConfig {
-    String   diceId;   // "TEST1", "BART1", etc.
+    String diceId; // "TEST1", "BART1", etc.
     uint16_t x_background; // Display background colors
     uint16_t y_background;
     uint16_t z_background;
-    std::array<uint16_t, MAX_ENTANGLEMENT_COLORS> entang_colors;    // Available entanglement colors (RGB565)
-    uint8_t  entang_colors_count; // Number of colors in array
-    uint16_t colorFlashTimeout;   // Color flash duration in milliseconds
+    uint16_t animationDuration; // Animation duration in milliseconds.
+	uint8_t animationSpins; // The number of spins during an animation.
 	uint16_t observedTime;        // Minimum time to remain in observed state in milliseconds.
     int8_t   rssiClose;           // RSSI value when to entangle.
 	int8_t   rssiFar;             // RSSI value when to forget past peers.
@@ -55,15 +51,15 @@ class DiceConfigManager {
 
   private:
     DiceConfig _config;
-    String     _configPath = "/config.txt";
-    String     _lastError  = "";
+    String _configPath = "/config.txt";
+    String _lastError  = "";
 
     // Internal parsing functions
     static auto parseBool(String str) -> bool;
     static void trim(String &str);
     static void calculateChecksum(DiceConfig &config);
     static auto validateChecksum(const DiceConfig &config) -> bool;
-    void        setError(String error);
+    void setError(String error);
 
     // Default configuration values
     void initDefaultConfig();

@@ -86,7 +86,7 @@ void initDisplays() {
 
     selectScreens(ALL); // Select all screens
     delay(500);
-    tft.begin(40'000'000);
+    tft.begin();
     delay(1000);
     tft.fillScreen(GC9A01A_BLACK);
 
@@ -500,14 +500,13 @@ static constexpr uint16_t ANIMATE_COLOR2 = blendColor(GC9A01A_WHITE, GC9A01A_BLA
 static constexpr uint16_t ANIMATE_COLOR3 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, 0.2F);
 static constexpr uint16_t ANIMATE_COLOR4 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (5.0F * 0.16F) + 0.2F);
 static constexpr uint16_t ANIMATE_COLOR5 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, 3.0F * 0.2F);
-static constexpr float ANIMATE_FULL_ROTATION_TIME = 1.25F;
 static unsigned long animateStartTime = NAN;
 static float animatePreviousAngleCos = NAN;
 static float animatePreviousAngleSin = NAN;
 static const char *TASK_NAME = "animateTask";
 static const char *TIMER_NAME = "animateTimer";
 static constexpr uint32_t TASK_STACK_SIZE = 8192;
-static constexpr UBaseType_t TASK_PRIORITY = 10;
+static constexpr UBaseType_t TASK_PRIORITY = 0;
 static constexpr BaseType_t TASK_CORE = ARDUINO_RUNNING_CORE;
 static constexpr uint32_t NOTIFICATION_UPDATE = 0x01;
 static constexpr uint64_t ANIMATION_FPS = 60;
@@ -639,33 +638,33 @@ static void animateUpdateDot(const int offsetX, const int offsetY, const uint16_
 
 	animateDrawDotMask(newDot, oldDot, color);
 	animateDrawDotMask(oldDot, newDot, GC9A01A_BLACK);
+}
 
-	/* tft.startWrite();
-	for (int i = 0; i < (2 * DOT_RADIUS + 1); i++) {
-		tft.writeFastVLine(oldDot[i].x, oldDot[i].y, oldDot[i].height, GC9A01A_BLACK);
-	}
-	for (int i = 0; i < (2 * DOT_RADIUS + 1); i++) {
-		tft.writeFastVLine(newDot[i].x, newDot[i].y, newDot[i].height, color);
-	}
-	tft.endWrite(); */
+static float animateCalculateAngle(const unsigned long timeElapsedMillis) {
+	const float timeElapsed = static_cast<float>(timeElapsedMillis) / 1000.0F;
+	const float time01 = timeElapsed / (static_cast<float>(currentConfig.animationDuration) / 1000.0F);
+	const float angle01 = 0.5F * (1.0F - cosf(time01 * PI));
+	const float angle = TWO_PI * angle01 * static_cast<float>(currentConfig.animationSpins);
+	return fmodf(angle, TWO_PI);
 }
 
 static void animateUpdate() {
+	// Stop the animation if the duration has expired.
 	const unsigned long now = millis();
 	const unsigned long timeElapsedMillis = now - animateStartTime;
-	if (timeElapsedMillis >= 5'000) {
+	if (timeElapsedMillis >= currentConfig.animationDuration) {
 		esp_timer_stop(animateTimer);
 		animateRunning = false;
 		refreshScreens();
 		return;
 	}
 
-	const float timeElapsed = static_cast<float>(now - animateStartTime) / 1000.0F;
-	const float angle = fmod(TWO_PI * timeElapsed / ANIMATE_FULL_ROTATION_TIME, TWO_PI);
-
+	// Calculate the angle and the cosine and sine of the angle.
+	const float angle = animateCalculateAngle(timeElapsedMillis);
 	const float angleCos = cosf(angle);
 	const float angleSin = sinf(angle);
 
+	// Update all the dots, only changes pixels that have changed.
 	animateUpdateDot(-DOT_OFFSET, -DOT_OFFSET, ANIMATE_COLOR0, angleCos, angleSin);
 	animateUpdateDot( DOT_OFFSET, -DOT_OFFSET, ANIMATE_COLOR1, angleCos, angleSin);
 	animateUpdateDot(-DOT_OFFSET,  0, ANIMATE_COLOR2, angleCos, angleSin);
@@ -673,10 +672,9 @@ static void animateUpdate() {
 	animateUpdateDot(-DOT_OFFSET,  DOT_OFFSET, ANIMATE_COLOR1, angleCos, angleSin);
 	animateUpdateDot( DOT_OFFSET,  DOT_OFFSET, ANIMATE_COLOR0, angleCos, angleSin);
 
+	// Store the cosine and sine of the angle, for future updates.
 	animatePreviousAngleCos = angleCos;
 	animatePreviousAngleSin = angleSin;
-	const float timeToRender = static_cast<float>(millis() - now) / 1000.0F;
-	debugf("Time to render: %.2f\n", timeToRender);
 }
 
 static void animateTaskFunction(void *parameter) noexcept {

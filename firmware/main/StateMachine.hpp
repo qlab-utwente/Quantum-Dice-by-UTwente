@@ -159,14 +159,6 @@ class StateMachine {
 		return this->selfUpSide;
 	}
 
-	[[nodiscard]] inline uint16_t getEntanglementColor() const __attribute__((always_inline)) {
-		return this->entanglement_color;
-	}
-
-	[[nodiscard]] inline bool isColorFlash() const __attribute__((always_inline)) {
-		return this->colorFlash;
-	}
-
     static auto getStateTransition(State state, Trigger trigger) -> StateTransition;
 
   private:
@@ -199,13 +191,13 @@ class StateMachine {
     static void sendMeasurements(uint8_t *target, State state, DiceNumbers diceNumber,
                                  UpSide upSide, MeasuredAxises measureAxis);
     static void sendEntangleRequest(uint8_t *target);
-    void sendEntanglementConfirm(uint8_t *target); // non-static to access entanglement_color
+    static void sendEntanglementConfirm(uint8_t *target);
     static void sendEntangleDenied(uint8_t *target);
     static void sendTeleportRequest(uint8_t *target_m, uint8_t *target_b);
     static void sendTeleportConfirm(uint8_t *target);
     static void sendTeleportPayload(uint8_t *target, State state, DiceNumbers diceNumber,
                                     UpSide upSide, MeasuredAxises measureAxis,
-                                    uint8_t *entangled_peer, uint16_t color);
+                                    uint8_t *entangled_peer);
     static void sendTeleportPartner(uint8_t *target_n, uint8_t *new_partner_b);
 
 	static constexpr float BATTERY_MINIMUM_CHARGE = 20.0f;
@@ -245,16 +237,9 @@ class StateMachine {
 	MeasuredAxises teleportedMeasurementAxis;
 	DiceNumbers teleportedDiceNumber;
 
-	// Current entanglement color (RGB565)
-	uint16_t entanglement_color;
-
 	// Memorization for basis and roll results.
 	MeasuredAxises lastRollBasis;
 	DiceNumbers lastRollNumber;
-
-	// Entanglement color flash.
-	bool colorFlash;
-	uint64_t colorFlashStartTime;
 };
 
 #endif // STATEMACHINE_H
