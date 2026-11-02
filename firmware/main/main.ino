@@ -18,13 +18,10 @@
 #include "IMU.hpp"
 #include "power.h"
 
-constexpr uint16_t UPDATE_INTERVAL = 50;  //loop functions
-constexpr uint8_t SECOND = 1000;
-
 StateMachine stateMachine;
 
-constexpr TickType_t TICK_INTERVAL = pdMS_TO_TICKS(50);
-static TickType_t lastWake;
+static constexpr TickType_t TICK_INTERVAL = pdMS_TO_TICKS(50);
+static constexpr uint32_t SECOND = 1000;
 
 void setup() {
 	// Prepare the power pins.
@@ -105,12 +102,13 @@ void setup() {
 	infoln("╔════════════════════════════════════════╗");
 	infoln("║       SETUP COMPLETE - READY!          ║");
 	infoln("╚════════════════════════════════════════╝\n");
-
-	lastWake = xTaskGetTickCount();
 }
 
 void loop() {
+	static TickType_t lastWake = xTaskGetTickCount();;
+
 	IMU.update();
 	stateMachine.update();
+
 	vTaskDelayUntil(&lastWake, TICK_INTERVAL);
 }
