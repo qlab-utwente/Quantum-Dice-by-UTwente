@@ -465,3 +465,15 @@ void showConfigMode(screenselections screens) {
 
     drawStringCentered(tft, "Setup Mode", (tft.height() / 2) + 9);
 }
+
+void rssiScreen(int32_t rssi) {
+	size_t length = snprintf(nullptr, 0, "RSSI: %d", rssi);
+	char *buffer = (char *)malloc(sizeof(char) * (length + 1));
+	sprintf(buffer, "RSSI: %d", rssi);
+
+	selectScreens(X1);
+	tft.fillScreen(GC9A01A_BLACK);
+	drawStringCentered(tft, buffer, (tft.height() / 2));
+
+	free((void *)buffer);
+}

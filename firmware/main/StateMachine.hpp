@@ -57,6 +57,7 @@ enum class ThrowState : uint8_t {
 	IDLE,
 	THROWING,
 	OBSERVED,
+	OBSERVED_WAIT
 };
 
 enum class EntanglementState : uint8_t {
@@ -187,6 +188,9 @@ class StateMachine {
     void enterObserved();
     void whileObserved();
 
+	void enterObservedWait();
+	void whileObservedWait();
+
     void enterLowBattery();
     void whileLowBattery();
 
@@ -215,6 +219,8 @@ class StateMachine {
 	uint8_t last_peer[MAC_ADDRESS_LENGTH];
 	uint8_t last_teleport[MAC_ADDRESS_LENGTH];
 	int32_t new_peer_rssi;
+	int32_t closest_rssi;
+	uint64_t closest_rssi_time;
 
 	unsigned long stateEntryTime;
 
@@ -224,7 +230,7 @@ class StateMachine {
 	};
 
 	static const std::map<State, StateFunction>  stateFunctions;
-	static const std::array<StateTransition, 37> stateTransitions;
+	static const std::array<StateTransition, 39> stateTransitions;
 
 	// Self measurement info.
 	DiceNumbers selfDiceNumber;

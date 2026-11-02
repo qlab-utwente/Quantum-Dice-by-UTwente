@@ -15,7 +15,10 @@ struct DiceConfig {
     std::array<uint16_t, MAX_ENTANGLEMENT_COLORS> entang_colors;    // Available entanglement colors (RGB565)
     uint8_t  entang_colors_count; // Number of colors in array
     uint16_t colorFlashTimeout;   // Color flash duration in milliseconds
-    int8_t   rssiLimit;           // RSSI limit for entanglement detection
+	uint16_t observedTime;        // Minimum time to remain in observed state in milliseconds.
+    int8_t   rssiClose;           // RSSI value when to entangle.
+	int8_t   rssiFar;             // RSSI value when to forget past peers.
+	bool     rssiScreen;          // Whether to show closest RSSI value.
     float    tumbleConstant;      // Number of tumbles to detect tumbling
     uint32_t deepSleepTimeout;    // Deep sleep timeout in milliseconds
     uint8_t  checksum;            // Simple checksum for validation

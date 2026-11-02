@@ -71,7 +71,7 @@ inline auto determineScreens(State state, DiceNumbers diceNumber, UpSide upSide)
     }
 
     // OBSERVED STATE - measurement complete
-    if (state.throwState == ThrowState::OBSERVED) {
+    if (state.throwState == ThrowState::OBSERVED || state.throwState == ThrowState::OBSERVED_WAIT) {
         // Show the measured value on the top face, superposition on others
 
         // Determine which screen shows the measured number

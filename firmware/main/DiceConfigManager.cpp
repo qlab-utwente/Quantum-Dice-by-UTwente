@@ -104,8 +104,14 @@ auto DiceConfigManager::load(const String &filename) -> bool {
             }
         } else if (key == "colorFlashTimeout") {
             _config.colorFlashTimeout = (uint16_t) strtoul(value.c_str(), nullptr, 0);
-        } else if (key == "rssiLimit") {
-            _config.rssiLimit = (int8_t) strtol(value.c_str(), nullptr, 0);
+		} else if (key == "observedTime") {
+			_config.observedTime = (uint16_t) strtoul(value.c_str(), nullptr, 0);
+        } else if (key == "rssiClose") {
+            _config.rssiClose = (int8_t) strtol(value.c_str(), nullptr, 0);
+		} else if (key == "rssiFar") {
+			_config.rssiFar = (int8_t) strtol(value.c_str(), nullptr, 0);
+		} else if (key == "rssiScreen") {
+			_config.rssiScreen = parseBool(value.c_str());
         } else if (key == "tumbleConstant") {
             _config.tumbleConstant = (float) strtod(value.c_str(), nullptr);
         } else if (key == "deepSleepTimeout") {
@@ -198,11 +204,16 @@ void DiceConfigManager::initDefaultConfig() {
     _config.entang_colors[0]    = 0xFFE0; // Yellow
     _config.entang_colors_count = 1;
 
-    // Default color flash timeout (250ms)
-    _config.colorFlashTimeout = 250;
+    // Default color flash timeout (1000ms)
+    _config.colorFlashTimeout = 1000;
 
-    // Default RSSI
-    _config.rssiLimit = -25;
+	// Default time in observed state (2000ms)
+	_config.observedTime = 2000;
+
+    // Default RSSI values.
+    _config.rssiClose = -20;
+	_config.rssiFar = 0;
+	_config.rssiScreen = false;
 
     // Default tumble constant
     _config.tumbleConstant = 45;
@@ -249,7 +260,14 @@ void printGlobalConfig() {
     }
     infof("Entangle Colors (%d): %s\n", currentConfig.entang_colors_count, colours.c_str());
     infof("Color Flash Timeout: %d ms\n", currentConfig.colorFlashTimeout);
-    infof("RSSI Limit: %d dBm\n", currentConfig.rssiLimit);
+	infof("Observed time: %d ms\n", currentConfig.observedTime);
+    infof("RSSI Close: %d dBm\n", currentConfig.rssiClose);
+	if (currentConfig.rssiFar == 0) {
+		info("RSSI Far: disabled\n");
+	} else {
+		infof("RSSI Far: %d dBm\n", currentConfig.rssiFar);
+	}
+	infof("RSSI Screens: %s\n", currentConfig.rssiScreen ? "true" : "false");
     infof("Tumble Constant: %d\n", currentConfig.tumbleConstant);
     infof("Deep Sleep Timeout: %u ms\n", currentConfig.deepSleepTimeout);
     infof("Checksum: 0x%02X\n", currentConfig.checksum);
@@ -368,7 +386,10 @@ auto createDefaultConfigFile() -> bool {
     file.println("z_background=0");
     file.println("entang_colors=65504");
     file.println("colorFlashTimeout=1000");
-    file.println("rssiLimit=-25");
+	file.println("observedTime=2000");
+    file.println("rssiClose=-20");
+	file.println("rssiFar=0");
+	file.println("rssiScreen=false");
     file.println("tumbleConstant=45");
     file.println("deepSleepTimeout=300000");
     file.println("checksum=0");

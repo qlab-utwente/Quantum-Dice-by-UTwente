@@ -146,6 +146,18 @@ const std::map<State, StateMachine::StateFunction> StateMachine::stateFunctions 
    {&StateMachine::enterObserved, &StateMachine::whileObserved}      },
   {State{Mode::QUANTUM, ThrowState::OBSERVED, EntanglementState::TELEPORTED},
    {&StateMachine::enterObserved, &StateMachine::whileObserved}      },
+
+  // === QUANTUM MODE - OBSERVED WAIT ===
+  {State{Mode::QUANTUM, ThrowState::OBSERVED_WAIT, EntanglementState::PURE},
+   {&StateMachine::enterObservedWait, &StateMachine::whileObservedWait}      },
+  {State{Mode::QUANTUM, ThrowState::OBSERVED_WAIT, EntanglementState::ENTANGLE_REQUESTED},
+   {&StateMachine::enterObservedWait, &StateMachine::whileObservedWait}      },
+  {State{Mode::QUANTUM, ThrowState::OBSERVED_WAIT, EntanglementState::ENTANGLED},
+   {&StateMachine::enterObservedWait, &StateMachine::whileObservedWait}      },
+  {State{Mode::QUANTUM, ThrowState::OBSERVED_WAIT, EntanglementState::POST_ENTANGLEMENT},
+   {&StateMachine::enterObservedWait, &StateMachine::whileObservedWait}      },
+  {State{Mode::QUANTUM, ThrowState::OBSERVED_WAIT, EntanglementState::TELEPORTED},
+   {&StateMachine::enterObservedWait, &StateMachine::whileObservedWait}      },
 };
 
 namespace {
@@ -162,6 +174,7 @@ namespace {
             case ThrowState::IDLE:     return "IDLE";
             case ThrowState::THROWING: return "THROWING";
             case ThrowState::OBSERVED: return "OBSERVED";
+			case ThrowState::OBSERVED_WAIT: return "OBSERVED_WAIT";
             default:                   return "UNKNOWN";
         }
     }
@@ -298,7 +311,7 @@ void StateMachine::sendTeleportPartner(uint8_t *target_n, uint8_t *new_partner_b
 
 // State transitions for the quantum dice system
 // Note: This must be accessible by getStateTransition function
-const std::array<StateTransition, 37> StateMachine::stateTransitions = {
+const std::array<StateTransition, 39> StateMachine::stateTransitions = {
   {// Order: currentMode, nextMode, currentThrowState, nextThrowState, currentEntanglementState,
    // nextEntanglementState, trigger
 
@@ -365,7 +378,7 @@ const std::array<StateTransition, 37> StateMachine::stateTransitions = {
    // B receives teleport from M that was ENTANGLED covered by message handler
 
    // === QUANTUM MODE - THROWING TRANSITIONS ===
-   StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::THROWING, ThrowState::OBSERVED,
+   StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::THROWING, ThrowState::OBSERVED_WAIT,
                    std::nullopt, std::nullopt, Trigger::STOP_ROLLING},
    StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::THROWING, std::nullopt,
                    EntanglementState::PURE, EntanglementState::ENTANGLE_REQUESTED,
@@ -379,6 +392,12 @@ const std::array<StateTransition, 37> StateMachine::stateTransitions = {
    StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::THROWING, std::nullopt,
                    EntanglementState::ENTANGLED, EntanglementState::POST_ENTANGLEMENT,
                    Trigger::MEASUREMENT_RECEIVED},
+
+   // === QUANTUM MODE - OBSERVED WAIT TRANSITIONS ===
+	StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::OBSERVED_WAIT, ThrowState::OBSERVED,
+					EntanglementState::PURE, std::nullopt, Trigger::TIMED},
+   StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::OBSERVED_WAIT, ThrowState::THROWING,
+                   std::nullopt, std::nullopt, Trigger::MEASURE_FAIL},
 
    // === QUANTUM MODE - OBSERVED TRANSITIONS ===
    StateTransition{Mode::QUANTUM, std::nullopt, ThrowState::OBSERVED, ThrowState::THROWING,
@@ -431,6 +450,8 @@ StateMachine::StateMachine()
 	  new_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
 	  last_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
 	  new_peer_rssi(INT32_MIN),
+	  closest_rssi(INT32_MIN),
+	  closest_rssi_time(0),
 	  stateEntryTime(0),
 	  selfDiceNumber(DiceNumbers::NONE),
 	  selfMeasurementAxis(MeasuredAxises::UNDEFINED),
@@ -570,6 +591,13 @@ void StateMachine::update() {
 		errorf("ERROR: No state function found for state: %s\n", getStateName(this->currentState));
 	}
 
+	// Display the closest RSSI.
+	if (currentConfig.rssiScreen && (currentTime - closest_rssi_time) >= 500) {
+		rssiScreen(closest_rssi);
+		closest_rssi = INT32_MIN;
+		closest_rssi_time = currentTime;
+	}
+
 	// Check for any nearby dice to entangle with.
 	this->checkCloseBy();
 }
@@ -580,24 +608,29 @@ void StateMachine::updateEspNow() {
 	int32_t current_rssi = INT32_MIN;
 
 	while (EspNowSensor<message>::Poll(&data, (unsigned char *)source, &current_rssi)) {
+		if (current_rssi > closest_rssi) {
+			closest_rssi = current_rssi;
+		}
+
 		const bool isLastPeer = memcmp(this->last_peer, source, MAC_ADDRESS_LENGTH) == 0;
 		const bool isLastTeleport = memcmp(this->last_teleport, source, MAC_ADDRESS_LENGTH) == 0;
 
 		// If this message was sent by our last peer, then we only check whether it has left the
 		// RSSI limit, in which case we forget it.
-		if (isLastPeer && current_rssi < currentConfig.rssiLimit) {
+		if (isLastPeer && current_rssi < currentConfig.rssiFar) {
 			memset(this->last_peer, 0xFF, MAC_ADDRESS_LENGTH);
 		}
 
 		// If this message was sent by our last teleport partner, then we only check whether it has
 		// left the RSSI limit, in which case we forget it.
-		if (isLastTeleport && current_rssi < currentConfig.rssiLimit) {
+		if (isLastTeleport && current_rssi < currentConfig.rssiFar) {
 			memset(this->last_teleport, 0xFF, MAC_ADDRESS_LENGTH);
 		}
 
 		// Remember this source, if its RSSI is better than currently known and it is not our last
 		// peer.
-		if (!isLastTeleport && !isLastPeer && current_rssi > this->new_peer_rssi) {
+		const bool isValidPeer = (!isLastTeleport && !isLastPeer) || (currentConfig.rssiFar == 0);
+		if (isValidPeer && current_rssi > this->new_peer_rssi) {
 			this->new_peer_rssi = current_rssi;
 			memcpy((void *)this->new_peer, (void *)source, MAC_ADDRESS_LENGTH);
 		}
@@ -629,6 +662,13 @@ void StateMachine::updateEspNow() {
                     break;
                 }
 
+				// Check if we're in OBSERVED_WAIT state - deny entanglement.
+				if (this->currentState.throwState == ThrowState::OBSERVED_WAIT) {
+					debugln("OBSERVED_WAIT - denying entanglement request");
+					sendEntangleDenied(source);
+					break;
+				}
+
                 // Check if we're already waiting for confirmation - deny to prevent race condition
                 if (this->currentState.entanglementState == EntanglementState::ENTANGLE_REQUESTED) {
                     debugln("Already in ENTANGLE_REQUESTED - denying to prevent symmetric entanglement");
@@ -637,10 +677,12 @@ void StateMachine::updateEspNow() {
                 }
 
 				// Check if this is our last peer - deny to prevent reentanglement.
-				if (memcmp(this->last_peer, source, MAC_ADDRESS_LENGTH) == 0) {
-					debugln("Last peer - denying entanglement request");
-					sendEntangleDenied(source);
-					break;
+				if (currentConfig.rssiFar != 0) {
+					if (memcmp(this->last_peer, source, MAC_ADDRESS_LENGTH) == 0) {
+						debugln("Last peer - denying entanglement request");
+						sendEntangleDenied(source);
+						break;
+					}
 				}
 
 				// Check if this is our last teleport - deny to prevent reentanglement.
@@ -919,6 +961,10 @@ void StateMachine::checkCloseBy() {
 		return;
 	}
 
+	if (this->currentState.throwState == ThrowState::OBSERVED_WAIT) {
+		return;
+	}
+
 	if (this->currentState.entanglementState != EntanglementState::PURE
 		&& this->currentState.entanglementState != EntanglementState::POST_ENTANGLEMENT
 		&& this->currentState.entanglementState != EntanglementState::TELEPORTED
@@ -926,7 +972,7 @@ void StateMachine::checkCloseBy() {
 		return;
 	}
 
-	if (this->new_peer_rssi < currentConfig.rssiLimit) {
+	if (this->new_peer_rssi < currentConfig.rssiClose) {
 		return;
 	}
 
@@ -934,12 +980,14 @@ void StateMachine::checkCloseBy() {
 		return;
 	}
 
-	if (memcmp(this->new_peer, this->last_teleport, MAC_ADDRESS_LENGTH) == 0) {
-		return;
-	}
+	if (currentConfig.rssiFar != 0) {
+		if (memcmp(this->new_peer, this->last_teleport, MAC_ADDRESS_LENGTH) == 0) {
+			return;
+		}
 
-	if (memcmp(this->new_peer, this->last_peer, MAC_ADDRESS_LENGTH) == 0) {
-		return;
+		if (memcmp(this->new_peer, this->last_peer, MAC_ADDRESS_LENGTH) == 0) {
+			return;
+		}
 	}
 
 	if (memcmp((void *)this->new_peer, (void *)this->current_peer, MAC_ADDRESS_LENGTH) == 0) {
@@ -1059,6 +1107,27 @@ void StateMachine::whileThrowing() {
 
 void StateMachine::enterObserved() {
 	debugln("=== Dice OBSERVED - Processing measurement ===");
+	stateEntryTime = millis();
+
+	// Reset new peer.
+	this->new_peer_rssi = INT32_MIN;
+	memset(this->new_peer, 0xFF, MAC_ADDRESS_LENGTH);
+
+	refreshScreens();
+	sendWatchDog();
+}
+
+void StateMachine::whileObserved() {
+	// Check if dice is being thrown again
+	if (IMU.tumbled()) {
+		debugln("Tumble detected - starting new throw");
+		changeState(Trigger::START_ROLLING);
+		return;
+	}
+}
+
+void StateMachine::enterObservedWait() {
+	debugln("=== Dice OBSERVED WAIT - Processing measurement ===");
 	stateEntryTime = millis();
 
 	// Check if dice is still moving (measurement failure)
@@ -1219,11 +1288,10 @@ void StateMachine::enterObserved() {
 	sendWatchDog();
 }
 
-void StateMachine::whileObserved() {
-	// Check if dice is being thrown again
-	if (IMU.tumbled()) {
-		debugln("Tumble detected - starting new throw");
-		changeState(Trigger::START_ROLLING);
+void StateMachine::whileObservedWait() {
+	if (millis() - stateEntryTime >= currentConfig.observedTime) {
+		debugln("Observed timeout.");
+		changeState(Trigger::TIMED);
 		return;
 	}
 }
