@@ -16,7 +16,7 @@
 #include "Battery.hpp"
 #include "button.h"
 #include "IMU.hpp"
-#include "power.h"
+#include "Power.hpp"
 
 StateMachine stateMachine;
 
@@ -26,7 +26,7 @@ static constexpr uint32_t SECOND = 1000;
 void setup() {
 	// Prepare the power pins.
 	// This should be done first, as the old PCBs have a SHUTDOWN pin that needs to be set to LOW.
-	power_prepare();
+	Power.prepare();
 
 	// Start the battery monitoring.
 	Battery.begin();
@@ -67,7 +67,7 @@ void setup() {
 	infoln("Step 2: Initializing displays...\n");
 
     // Initialize displays and show UTwente QLab logo.
-	power_on_screens();
+	Power.screensOn();
 	initDisplays();
 	displayQLab(ALL);
 

@@ -13,7 +13,7 @@
 #include "Battery.hpp"
 #include "button.h"
 #include "IMU.hpp"
-#include "power.h"
+#include "Power.hpp"
 
 constexpr gpio_num_t PIN_VIDV_USB = GPIO_NUM_13;
 static bool usbConnected = false;
@@ -528,8 +528,8 @@ void StateMachine::update() {
 		(void)pollUsbConnected();
 		this->tryingToSleep = true;
 		IMU.sleep();
-		power_shutdown();
-		power_off_screens();
+		Power.shutdown();
+		Power.screensOff();
 	}
 
 	if (this->tryingToSleep) {
@@ -920,8 +920,8 @@ void StateMachine::checkTimeForDeepSleep() {
 		(void)pollUsbConnected();
 		this->tryingToSleep = true;
 		IMU.sleep();
-		power_shutdown();
-		power_off_screens();
+		Power.shutdown();
+		Power.screensOff();
 	}
 }
 
