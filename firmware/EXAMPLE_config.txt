@@ -41,12 +41,23 @@ animationDuration=2000
 animationSpins=2
 
 # ==========================================
+# OBSERVED TIME
+# ==========================================
+# The time after a measurement has been made during which the dice does not do anything, but display the measurement.
+# Time in milliseconds.
+observedTime=2000
+
+# ==========================================
 # RSSI SETTINGS
 # ==========================================
-# Signal strength threshold for entanglement detection
-# More negative = weaker signal allowed
-# rssiLimit=-35 (pre Gen 4.0)
-rssiLimit=-25
+# The RSSI close threshold determines when a dice is willing to entangle to another.
+# More negative = weaker signal allowed.
+# rssiClose=-35 (pre Gen 4.0)
+rssiClose=-10
+
+# The RSSI far threshold indicates how far two dice need to be before they can interact again.
+# Set to 0 to disable.
+rssiFar=0
 
 # ==========================================
 # OPERATIONAL PARAMETERS

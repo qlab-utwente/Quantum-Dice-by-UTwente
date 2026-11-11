@@ -199,7 +199,7 @@ void DiceConfigManager::initDefaultConfig() {
 	_config.observedTime = 2000;
 
     // Default RSSI values.
-    _config.rssiClose = -20;
+    _config.rssiClose = -10;
 	_config.rssiFar = 0;
 	_config.rssiScreen = false;
 
@@ -368,7 +368,7 @@ auto createDefaultConfigFile() -> bool {
     file.println("animationDuration=2000");
 	file.println("animationSpins=2");
 	file.println("observedTime=2000");
-    file.println("rssiClose=-20");
+    file.println("rssiClose=-10");
 	file.println("rssiFar=0");
 	file.println("rssiScreen=false");
     file.println("tumbleConstant=45");
