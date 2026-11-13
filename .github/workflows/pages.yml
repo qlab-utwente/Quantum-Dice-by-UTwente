@@ -36,7 +36,9 @@ jobs:
         run: python3 web/tools/build_firmware_manifest.py
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          QD_REPO: ${{ github.repository }}
+          # Releases are not copied to forks, so always use the main repository
+          # unless the repository variable FIRMWARE_REPO says otherwise.
+          QD_REPO: ${{ vars.FIRMWARE_REPO || 'qlab-utwente/Quantum-Dice-by-UTwente' }}
 
       - uses: actions/configure-pages@v5
 
