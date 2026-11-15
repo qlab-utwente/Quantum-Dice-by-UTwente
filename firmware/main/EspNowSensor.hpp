@@ -167,14 +167,7 @@ template<typename T> void EspNowSensor<T>::getMacAddress(uint8_t *addr) {
 }
 
 template<typename T> auto EspNowSensor<T>::send(T message, uint8_t *target) -> bool {
-    T *toSend = (T *) malloc(sizeof(T));
-    if (toSend == nullptr) {
-        return false;
-    }
-
-    memcpy(toSend, &message, sizeof(T));
-
-    esp_err_t result = esp_now_send(target, (uint8_t *)toSend, sizeof(T));
+    esp_err_t result = esp_now_send(target, (uint8_t *)&message, sizeof(T));
     return result == ESP_OK;
 }
 
