@@ -208,11 +208,7 @@ class StateMachine {
 	uint8_t current_peer[MAC_ADDRESS_LENGTH];
 	uint8_t next_peer[MAC_ADDRESS_LENGTH];
 	uint8_t new_peer[MAC_ADDRESS_LENGTH];
-	uint8_t last_peer[MAC_ADDRESS_LENGTH];
-	uint8_t last_teleport[MAC_ADDRESS_LENGTH];
 	int32_t new_peer_rssi;
-	int32_t closest_rssi;
-	uint64_t closest_rssi_time;
 
 	unsigned long stateEntryTime;
 

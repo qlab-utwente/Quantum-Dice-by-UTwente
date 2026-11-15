@@ -50,14 +50,10 @@ observedTime=2000
 # ==========================================
 # RSSI SETTINGS
 # ==========================================
-# The RSSI close threshold determines when a dice is willing to entangle to another.
+# The RSSI threshold determines when a dice is willing to entangle to another.
 # More negative = weaker signal allowed.
-# rssiClose=-35 (pre Gen 4.0)
-rssiClose=-10
-
-# The RSSI far threshold indicates how far two dice need to be before they can interact again.
-# Set to 0 to disable.
-rssiFar=0
+# rssiLimit=-35 (pre Gen 4.0)
+rssiLimit=-10
 
 # ==========================================
 # OPERATIONAL PARAMETERS

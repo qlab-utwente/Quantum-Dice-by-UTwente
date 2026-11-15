@@ -12,9 +12,7 @@ struct DiceConfig {
     uint16_t animationDuration; // Animation duration in milliseconds.
 	uint8_t animationSpins; // The number of spins during an animation.
 	uint16_t observedTime;        // Minimum time to remain in observed state in milliseconds.
-    int8_t   rssiClose;           // RSSI value when to entangle.
-	int8_t   rssiFar;             // RSSI value when to forget past peers.
-	bool     rssiScreen;          // Whether to show closest RSSI value.
+    int8_t   rssiLimit;           // RSSI value when to entangle.
     float    tumbleConstant;      // Number of tumbles to detect tumbling
     uint32_t deepSleepTimeout;    // Deep sleep timeout in milliseconds
     uint8_t  checksum;            // Simple checksum for validation

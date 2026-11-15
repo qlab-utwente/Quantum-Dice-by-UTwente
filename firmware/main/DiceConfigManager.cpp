@@ -97,12 +97,8 @@ auto DiceConfigManager::load(const String &filename) -> bool {
 			_config.animationSpins = (uint8_t) strtoul(value.c_str(), nullptr, 0);
 		} else if (key == "observedTime") {
 			_config.observedTime = (uint16_t) strtoul(value.c_str(), nullptr, 0);
-        } else if (key == "rssiClose") {
-            _config.rssiClose = (int8_t) strtol(value.c_str(), nullptr, 0);
-		} else if (key == "rssiFar") {
-			_config.rssiFar = (int8_t) strtol(value.c_str(), nullptr, 0);
-		} else if (key == "rssiScreen") {
-			_config.rssiScreen = parseBool(value.c_str());
+        } else if (key == "rssiLimit") {
+            _config.rssiLimit = (int8_t) strtol(value.c_str(), nullptr, 0);
         } else if (key == "tumbleConstant") {
             _config.tumbleConstant = (float) strtod(value.c_str(), nullptr);
         } else if (key == "deepSleepTimeout") {
@@ -199,9 +195,7 @@ void DiceConfigManager::initDefaultConfig() {
 	_config.observedTime = 2000;
 
     // Default RSSI values.
-    _config.rssiClose = -10;
-	_config.rssiFar = 0;
-	_config.rssiScreen = false;
+    _config.rssiLimit = -10;
 
     // Default tumble constant
     _config.tumbleConstant = 45;
@@ -242,13 +236,7 @@ void printGlobalConfig() {
     infof("Animation duration: %d ms\n", currentConfig.animationDuration);
 	infof("Animation spins: %d spins\n", currentConfig.animationSpins);
 	infof("Observed time: %d ms\n", currentConfig.observedTime);
-    infof("RSSI Close: %d dBm\n", currentConfig.rssiClose);
-	if (currentConfig.rssiFar == 0) {
-		info("RSSI Far: disabled\n");
-	} else {
-		infof("RSSI Far: %d dBm\n", currentConfig.rssiFar);
-	}
-	infof("RSSI Screens: %s\n", currentConfig.rssiScreen ? "true" : "false");
+    infof("RSSI Limit: %d dBm\n", currentConfig.rssiLimit);
     infof("Tumble Constant: %d\n", currentConfig.tumbleConstant);
     infof("Deep Sleep Timeout: %u ms\n", currentConfig.deepSleepTimeout);
     infof("Checksum: 0x%02X\n", currentConfig.checksum);
@@ -285,7 +273,7 @@ auto findConfigFile(String &foundPath) -> bool {
             if (firstMatch == "") {
                 firstMatch = filename;
             } else {
-                if (firstMatch == "/DEFAULT_config.txt") {
+                if (firstMatch == "DEFAULT_config.txt") {
                     warnln("Default config found earlier, preferring non-default");
                     firstMatch = filename; // Prefer non-default over default
                     break;
@@ -368,9 +356,7 @@ auto createDefaultConfigFile() -> bool {
     file.println("animationDuration=2000");
 	file.println("animationSpins=2");
 	file.println("observedTime=2000");
-    file.println("rssiClose=-10");
-	file.println("rssiFar=0");
-	file.println("rssiScreen=false");
+    file.println("rssiLimit=-10");
     file.println("tumbleConstant=45");
     file.println("deepSleepTimeout=300000");
     file.println("checksum=0");

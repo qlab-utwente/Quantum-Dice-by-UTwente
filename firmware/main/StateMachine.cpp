@@ -434,10 +434,7 @@ StateMachine::StateMachine()
 	  current_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
 	  next_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
 	  new_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
-	  last_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
 	  new_peer_rssi(INT32_MIN),
-	  closest_rssi(INT32_MIN),
-	  closest_rssi_time(0),
 	  stateEntryTime(0),
 	  selfDiceNumber(DiceNumbers::NONE),
 	  selfMeasurementAxis(MeasuredAxises::UNDEFINED),
@@ -566,13 +563,6 @@ void StateMachine::update() {
 		errorf("ERROR: No state function found for state: %s\n", getStateName(this->currentState));
 	}
 
-	// Display the closest RSSI.
-	if (currentConfig.rssiScreen && (currentTime - closest_rssi_time) >= 500) {
-		rssiScreen(closest_rssi);
-		closest_rssi = INT32_MIN;
-		closest_rssi_time = currentTime;
-	}
-
 	// Check for any nearby dice to entangle with.
 	this->checkCloseBy();
 }
@@ -581,31 +571,12 @@ void StateMachine::updateEspNow() {
 	message data;
 	uint8_t source[MAC_ADDRESS_LENGTH];
 	int32_t current_rssi = INT32_MIN;
+	memset(source, 0xFF, MAC_ADDRESS_LENGTH);
 
 	while (EspNowSensor<message>::Poll(&data, (unsigned char *)source, &current_rssi)) {
-		if (current_rssi > closest_rssi) {
-			closest_rssi = current_rssi;
-		}
-
-		const bool isLastPeer = memcmp(this->last_peer, source, MAC_ADDRESS_LENGTH) == 0;
-		const bool isLastTeleport = memcmp(this->last_teleport, source, MAC_ADDRESS_LENGTH) == 0;
-
-		// If this message was sent by our last peer, then we only check whether it has left the
-		// RSSI limit, in which case we forget it.
-		if (isLastPeer && current_rssi < currentConfig.rssiFar) {
-			memset(this->last_peer, 0xFF, MAC_ADDRESS_LENGTH);
-		}
-
-		// If this message was sent by our last teleport partner, then we only check whether it has
-		// left the RSSI limit, in which case we forget it.
-		if (isLastTeleport && current_rssi < currentConfig.rssiFar) {
-			memset(this->last_teleport, 0xFF, MAC_ADDRESS_LENGTH);
-		}
-
 		// Remember this source, if its RSSI is better than currently known and it is not our last
 		// peer.
-		const bool isValidPeer = (!isLastTeleport && !isLastPeer) || (currentConfig.rssiFar == 0);
-		if (isValidPeer && current_rssi > this->new_peer_rssi) {
+		if (current_rssi > this->new_peer_rssi) {
 			this->new_peer_rssi = current_rssi;
 			memcpy((void *)this->new_peer, (void *)source, MAC_ADDRESS_LENGTH);
 		}
@@ -619,7 +590,6 @@ void StateMachine::updateEspNow() {
                     this->partnerMeasurementAxis = data.data.measurement.measureAxis;
 
                     // Clear current_peer so we can accept new entanglement requests
-					memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                     memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
                     // Trigger state transition
@@ -657,22 +627,6 @@ void StateMachine::updateEspNow() {
                     sendEntangleDenied(source);
                     break;
                 }
-
-				// Check if this is our last peer - deny to prevent reentanglement.
-				if (currentConfig.rssiFar != 0) {
-					if (memcmp(this->last_peer, source, MAC_ADDRESS_LENGTH) == 0) {
-						debugln("Last peer - denying entanglement request");
-						sendEntangleDenied(source);
-						break;
-					}
-				}
-
-				// Check if this is our last teleport - deny to prevent reentanglement.
-				if (memcmp(this->last_teleport, source, MAC_ADDRESS_LENGTH) == 0) {
-					debugln("Last teleport - denying entanglement request");
-					sendEntangleDenied(source);
-					break;
-				}
 
                 // Check if we're already ENTANGLED - this means teleportation is being initiated
                 if (this->currentState.entanglementState == EntanglementState::ENTANGLED) {
@@ -744,7 +698,6 @@ void StateMachine::updateEspNow() {
                 // Dice M receives this from dice A with B's address
                 debugln("Teleport request received - M processing teleportation");
                 debugln("Teleport: Sending our state to target dice B");
-				memcpy(this->last_teleport, source, MAC_ADDRESS_LENGTH);
 
                 {
                     uint8_t target_b[MAC_ADDRESS_LENGTH];
@@ -767,7 +720,6 @@ void StateMachine::updateEspNow() {
                     // Clear our entanglement if we had one
                     if (this->currentState.entanglementState == EntanglementState::ENTANGLED) {
                         // Remove old peer
-						memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                         memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
                     }
 
@@ -786,10 +738,8 @@ void StateMachine::updateEspNow() {
             case message_type::MESSAGE_TYPE_TELEPORT_CONFIRM:
                 // Dice A receives confirmation from M that teleportation is complete
                 debugln("Teleport confirm received - A ending entanglement with B");
-				memcpy(this->last_teleport, source, MAC_ADDRESS_LENGTH);
 
                 // Clear entanglement
-				memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                 memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
                 memset(this->next_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
@@ -814,7 +764,6 @@ void StateMachine::updateEspNow() {
                     debug("Received teleportation\n");
 
                     // Remove old peer (A) from peer list
-					memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                     memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
                     // Check what state M was in
@@ -869,7 +818,6 @@ void StateMachine::updateEspNow() {
                            new_partner_b[5]);
 
                     // Update current_peer to B
-					memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                     memcpy((void *)this->current_peer, (void *)new_partner_b, MAC_ADDRESS_LENGTH);
 
                     // N stays in ENTANGLED state, just with a different partner
@@ -945,22 +893,12 @@ void StateMachine::checkCloseBy() {
 		return;
 	}
 
-	if (this->new_peer_rssi < currentConfig.rssiClose) {
+	if (this->new_peer_rssi < currentConfig.rssiLimit) {
 		return;
 	}
 
 	if (this->new_peer_rssi > -1) {
 		return;
-	}
-
-	if (currentConfig.rssiFar != 0) {
-		if (memcmp(this->new_peer, this->last_teleport, MAC_ADDRESS_LENGTH) == 0) {
-			return;
-		}
-
-		if (memcmp(this->new_peer, this->last_peer, MAC_ADDRESS_LENGTH) == 0) {
-			return;
-		}
 	}
 
 	if (memcmp((void *)this->new_peer, (void *)this->current_peer, MAC_ADDRESS_LENGTH) == 0) {
@@ -1197,7 +1135,6 @@ void StateMachine::enterObservedWait() {
 
 			// Clear entanglement
 			this->currentState.entanglementState = EntanglementState::PURE;
-			memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
 			memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
 			break;
 
