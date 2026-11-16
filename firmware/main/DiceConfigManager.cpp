@@ -191,8 +191,8 @@ void DiceConfigManager::initDefaultConfig() {
     _config.animationDuration = 2'000;
 	_config.animationSpins = 2;
 
-	// Default time in observed state (2000ms)
-	_config.observedTime = 2000;
+	// Default time in observed state (500ms)
+	_config.observedTime = 500;
 
     // Default RSSI values.
     _config.rssiLimit = -10;
@@ -355,7 +355,7 @@ auto createDefaultConfigFile() -> bool {
     file.println("z_background=0");
     file.println("animationDuration=2000");
 	file.println("animationSpins=2");
-	file.println("observedTime=2000");
+	file.println("observedTime=500");
     file.println("rssiLimit=-10");
     file.println("tumbleConstant=45");
     file.println("deepSleepTimeout=300000");

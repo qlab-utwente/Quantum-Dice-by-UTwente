@@ -45,7 +45,7 @@ animationSpins=2
 # ==========================================
 # The time after a measurement has been made during which the dice does not do anything, but display the measurement.
 # Time in milliseconds.
-observedTime=2000
+observedTime=500
 
 # ==========================================
 # RSSI SETTINGS
