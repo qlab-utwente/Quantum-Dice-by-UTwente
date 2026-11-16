@@ -26,8 +26,10 @@ Plain HTML, CSS and JavaScript modules: there is no build step and no npm.
 The browser is not allowed to download release files directly from github.com,
 so the workflow `.github/workflows/pages.yml` runs `tools/build_firmware_manifest.py`
 and publishes the files together with the page. It runs when a release is
-published, changed or deleted, when `web/` changes on `main`, and by hand from
-the Actions tab.
+published, changed or deleted, when `web/` changes on `main`, every 6 hours,
+and by hand from the Actions tab. On a fork the release trigger never fires
+(releases of the main repository are not copied), so there a new release
+appears after the next scheduled run, or right away with **Run workflow**.
 
 Release rules (enforced by the script):
 

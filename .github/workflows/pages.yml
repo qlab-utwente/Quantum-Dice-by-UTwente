@@ -10,6 +10,10 @@ on:
   # A firmware release is published, changed or removed
   release:
     types: [published, edited, deleted]
+  # Every 6 hours, so a fork also picks up new releases of the main repository
+  # (the release trigger above only fires for releases in this repository).
+  schedule:
+    - cron: '17 */6 * * *'
   # Manual run from the Actions tab
   workflow_dispatch:
 
