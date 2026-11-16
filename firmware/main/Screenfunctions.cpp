@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <Arduino.h>
 #include <driver/gpio.h>
+#include <cmath>
 
 #include "Battery.hpp"
 
@@ -44,7 +45,7 @@ static void selectScreens(screenselections screens) {
 }
 
 // Function to blend colors with transparency
-static uint16_t blendColor(const uint16_t foreground, const uint16_t background, float alpha) noexcept {
+static constexpr uint16_t blendColor(const uint16_t foreground, const uint16_t background, float alpha) noexcept {
     // Constrain alpha between 0 and 1
     alpha = constrain(alpha, 0.0, 1.0);
 
@@ -72,6 +73,8 @@ static void drawDot(const int x, const int y, const float alpha = 1.0F, const ui
 	dotsCanvas.fillCircle(x, y, DOT_RADIUS, blendedColor);
 }
 
+static void animateInit() noexcept;
+
 void initDisplays() {
     Serial.println("Initializing displays...");
 
@@ -95,6 +98,8 @@ void initDisplays() {
 
     selectScreens(NO_ONE); // Deactivate all screens
     delay(100);
+
+	animateInit();
 
     Serial.println("Displays initialized successfully!");
 }
@@ -337,26 +342,6 @@ void displayMix1to6(screenselections screens) {
 	tft.drawRGBBitmap(0, 0, dotsCanvas.getBuffer(), dotsCanvas.width(), dotsCanvas.height());
 }
 
-void displayMix1to6_entangled(screenselections screens) {
-	constexpr int CENTER_X = (WIDTH / 2);
-	constexpr int CENTER_Y = (HEIGHT / 2);
-	const uint16_t color = stateMachine.isColorFlash() ? stateMachine.getEntanglementColor() : GC9A01A_WHITE;
-
-	// Draw to the canvas.
-    dotsCanvas.fillScreen(GC9A01A_BLACK);
-    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y - DOT_OFFSET, (3 * 0.16) + 0.2, color);
-    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y - DOT_OFFSET, (5 * 0.16) + 0.2, color);
-    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y, (1 * 0.16) + 0.2, color);
-    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y, (1 * 0.16) + 0.2, color);
-    drawDot(CENTER_X - DOT_OFFSET, CENTER_Y + DOT_OFFSET, (5 * 0.16) + 0.2, color);
-    drawDot(CENTER_X + DOT_OFFSET, CENTER_Y + DOT_OFFSET, (3 * 0.16) + 0.2, color);
-    drawDot(CENTER_X, CENTER_Y, (3 * 0.16) + 0.2, color);
-
-	// Select screens and draw dots to screen.
-    selectScreens(screens);
-	tft.drawRGBBitmap(0, 0, dotsCanvas.getBuffer(), dotsCanvas.width(), dotsCanvas.height());
-}
-
 void printChar(screenselections screens, char *letters, uint16_t fontcolor, uint16_t bckcolor, int x,
                int y) {
     selectScreens(screens);
@@ -437,14 +422,13 @@ void voltageIndicator(screenselections screens) {
 }
 
 void welcomeInfo(screenselections screens) {
-    const char *generationText = "GEN 4.0.1";
     char displayText2[20];
     selectScreens(screens);
     tft.fillScreen(GC9A01A_BLACK);
     tft.setTextSize(1);
     tft.setFont(&FreeSans18pt7b);
 
-    drawStringCentered(tft, (char *)generationText, 62);
+    drawStringCentered(tft, VERSION, 62);
 
     // Use DICE_ID from config
     strcpy((char *)displayText2, (char *)currentConfig.diceId.c_str());
@@ -466,14 +450,262 @@ void showConfigMode(screenselections screens) {
     drawStringCentered(tft, "Setup Mode", (tft.height() / 2) + 9);
 }
 
-void rssiScreen(int32_t rssi) {
-	size_t length = snprintf(nullptr, 0, "RSSI: %d", rssi);
-	char *buffer = (char *)malloc(sizeof(char) * (length + 1));
-	sprintf(buffer, "RSSI: %d", rssi);
+struct verticalLine {
+	int16_t x;
+	int16_t y;
+	int16_t height;
+};
 
-	selectScreens(X1);
+static const struct verticalLine DOT_LINES[21] = {
+	{ -20, -4,  9 },
+	{ -19, -7,  15 },
+	{ -18, -9,  19 },
+	{ -17, -11, 23 },
+	{ -16, -12, 25 },
+	{ -15, -13, 27 },
+	{ -14, -14, 29 },
+	{ -13, -15, 31 },
+	{ -12, -16, 33 },
+	{ -11, -17, 35 },
+	{ -10, -17, 35 },
+	{  -9, -18, 37 },
+	{  -8, -18, 37 },
+	{  -7, -19, 39 },
+	{  -6, -19, 39 },
+	{  -5, -19, 39 },
+	{  -4, -20, 41 },
+	{  -3, -20, 41 },
+	{  -2, -20, 41 },
+	{  -1, -20, 41 },
+	{   0, -20, 41 }
+};
+static constexpr int ANIMATE_CENTER_X = (WIDTH / 2);
+static constexpr int ANIMATE_CENTER_Y = (HEIGHT / 2);
+static constexpr uint16_t ANIMATE_COLOR0 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (3.0F * 0.16F) + 0.2F);
+static constexpr uint16_t ANIMATE_COLOR1 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (5.0F * 0.16F) + 0.2F);
+static constexpr uint16_t ANIMATE_COLOR2 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (1.0F * 0.16F) + 0.2F);
+static constexpr uint16_t ANIMATE_COLOR3 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, 0.2F);
+static constexpr uint16_t ANIMATE_COLOR4 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, (5.0F * 0.16F) + 0.2F);
+static constexpr uint16_t ANIMATE_COLOR5 = blendColor(GC9A01A_WHITE, GC9A01A_BLACK, 3.0F * 0.2F);
+static unsigned long animateStartTime = NAN;
+static float animatePreviousAngleCos = NAN;
+static float animatePreviousAngleSin = NAN;
+static const char *TASK_NAME = "animateTask";
+static const char *TIMER_NAME = "animateTimer";
+static constexpr uint32_t TASK_STACK_SIZE = 8192;
+static constexpr UBaseType_t TASK_PRIORITY = 0;
+static constexpr BaseType_t TASK_CORE = ARDUINO_RUNNING_CORE;
+static constexpr uint32_t NOTIFICATION_UPDATE = 0x01;
+static constexpr uint64_t ANIMATION_FPS = 60;
+static constexpr uint64_t TIMER_PERIOD = 1'000'000 / ANIMATION_FPS;
+static esp_timer_handle_t animateTimer;
+static StackType_t animateStack[TASK_STACK_SIZE];
+static TaskHandle_t animateTaskHandle;
+static StaticTask_t animateTaskBuffer;
+static bool animateRunning = false;
+
+void animateStart() {
+	selectScreens(ALL);
+	animateStartTime = millis();
+	animatePreviousAngleCos = 1.0F;
+	animatePreviousAngleSin = 0.0F;
+
 	tft.fillScreen(GC9A01A_BLACK);
-	drawStringCentered(tft, buffer, (tft.height() / 2));
+	tft.fillCircle(ANIMATE_CENTER_X - DOT_OFFSET, ANIMATE_CENTER_Y - DOT_OFFSET, DOT_RADIUS, ANIMATE_COLOR0);
+	tft.fillCircle(ANIMATE_CENTER_X + DOT_OFFSET, ANIMATE_CENTER_Y - DOT_OFFSET, DOT_RADIUS, ANIMATE_COLOR1);
+	tft.fillCircle(ANIMATE_CENTER_X - DOT_OFFSET, ANIMATE_CENTER_Y, DOT_RADIUS, ANIMATE_COLOR2);
+	tft.fillCircle(ANIMATE_CENTER_X + DOT_OFFSET, ANIMATE_CENTER_Y, DOT_RADIUS, ANIMATE_COLOR3);
+	tft.fillCircle(ANIMATE_CENTER_X - DOT_OFFSET, ANIMATE_CENTER_Y + DOT_OFFSET, DOT_RADIUS, ANIMATE_COLOR1);
+	tft.fillCircle(ANIMATE_CENTER_X + DOT_OFFSET, ANIMATE_CENTER_Y + DOT_OFFSET, DOT_RADIUS, ANIMATE_COLOR0);
+    tft.fillCircle(ANIMATE_CENTER_X, ANIMATE_CENTER_Y, DOT_RADIUS, ANIMATE_COLOR5);
 
-	free((void *)buffer);
+	animateRunning = true;
+	esp_timer_start_periodic(animateTimer, TIMER_PERIOD);
+}
+
+bool animateIsRunning() {
+	return animateRunning;
+}
+
+static void animatePlaceDot(const int dotX, const int dotY, struct verticalLine *output) noexcept {
+	static constexpr int lastIndex = 2 * DOT_RADIUS;
+	for (int i = 0; i < (DOT_RADIUS + 1); i++) {
+		const int inverseI = lastIndex - i;
+		output[i].x = dotX + DOT_LINES[i].x;
+		output[i].y = dotY + DOT_LINES[i].y;
+		output[i].height = DOT_LINES[i].height;
+		if (inverseI != i) {
+			output[inverseI].x = dotX - DOT_LINES[i].x;
+			output[inverseI].y = dotY + DOT_LINES[i].y;
+			output[inverseI].height = DOT_LINES[i].height;
+		}
+	}
+}
+
+static void animateDrawDotMask(const struct verticalLine *dotToDraw, const struct verticalLine *mask, const uint16_t color) noexcept {
+	tft.startWrite();
+
+	// i is iterator for dotToDraw.
+	// j is iterator for mask.
+	int i = 0, j = 0;
+
+	// Skip over mask lines that are to the left of the dotToDraw lines.
+	while (j < (2 * DOT_RADIUS + 1)) {
+		if (mask[j].x >= dotToDraw[i].x) {
+			break;
+		}
+		j++;
+	}
+
+	// Quickly do dotToDraw lines that are to the left of mask lines.
+	while (i < (2 * DOT_RADIUS + 1)) {
+		if (mask[j].x <= dotToDraw[i].x) {
+			break;
+		}
+		tft.writeFastVLine(dotToDraw[i].x, dotToDraw[i].y, dotToDraw[i].height, color);
+		i++;
+	}
+
+	// Loop over the lines where there are dotToDraw lines and mask lines.
+	while (i < (2 * DOT_RADIUS + 1) && (j < 2 * DOT_RADIUS + 1)) {
+		const int16_t maskLow = mask[j].y;
+		const int16_t maskHigh = maskLow + mask[j].height - 1;
+
+		const int16_t dotLow = dotToDraw[i].y;
+		const int16_t dotHigh = dotLow + dotToDraw[i].height - 1;
+
+		if (maskHigh < dotLow || maskLow > dotHigh) {
+			tft.writeFastVLine(dotToDraw[i].x, dotToDraw[i].y, dotToDraw[i].height, color);
+		} else if (maskLow <= dotLow && maskHigh < dotHigh) {
+			const int16_t y = maskHigh + 1;
+			const int16_t height = dotHigh - maskHigh;
+			tft.writeFastVLine(dotToDraw[i].x, y, height, color);
+		} else if (maskLow > dotLow && maskHigh >= dotHigh) {
+			const int16_t y = dotLow;
+			const int16_t height = maskLow - y;
+			tft.writeFastVLine(dotToDraw[i].x, y, height, color);
+		} else if (maskLow > dotLow && maskHigh < dotHigh) {
+			const int16_t y0 = dotLow;
+			const int16_t height0 = maskLow - y0;
+
+			const int16_t y1 = maskHigh + 1;
+			const int16_t height1 = dotHigh - maskHigh;
+
+			const int16_t x = dotToDraw[i].x;
+
+			tft.writeFastVLine(x, y0, height0, color);
+			tft.writeFastVLine(x, y1, height1, color);
+		}
+
+		i++;
+		j++;
+	}
+
+	// Quickly do dotToDraw lines that are to the right of mask lines.
+	while (i < (2 * DOT_RADIUS + 1)) {
+		tft.writeFastVLine(dotToDraw[i].x, dotToDraw[i].y, dotToDraw[i].height, color);
+		i++;
+	}
+
+	tft.endWrite();
+}
+
+static void animateUpdateDot(const int offsetX, const int offsetY, const uint16_t color, const float angleCos, const float angleSin) noexcept {
+	const int dotX = static_cast<int>(static_cast<float>(offsetX) * angleCos - static_cast<float>(offsetY) * angleSin) + ANIMATE_CENTER_X;
+	const int dotY = static_cast<int>(static_cast<float>(offsetX) * angleSin + static_cast<float>(offsetY) * angleCos) + ANIMATE_CENTER_Y;
+
+	const int previousDotX = static_cast<int>(static_cast<float>(offsetX) * animatePreviousAngleCos - static_cast<float>(offsetY) * animatePreviousAngleSin) + ANIMATE_CENTER_X;
+	const int previousDotY = static_cast<int>(static_cast<float>(offsetX) * animatePreviousAngleSin + static_cast<float>(offsetY) * animatePreviousAngleCos) + ANIMATE_CENTER_Y;
+
+	struct verticalLine oldDot[2 * DOT_RADIUS + 1];
+	animatePlaceDot(previousDotX, previousDotY, oldDot);
+
+	struct verticalLine newDot[2 * DOT_RADIUS + 1];
+	animatePlaceDot(dotX, dotY, newDot);
+
+	animateDrawDotMask(newDot, oldDot, color);
+	animateDrawDotMask(oldDot, newDot, GC9A01A_BLACK);
+}
+
+static float animateCalculateAngle(const unsigned long timeElapsedMillis) {
+	const float timeElapsed = static_cast<float>(timeElapsedMillis) / 1000.0F;
+	const float time01 = timeElapsed / (static_cast<float>(currentConfig.animationDuration) / 1000.0F);
+	const float angle01 = 0.5F * (1.0F - cosf(time01 * PI));
+	const float angle = TWO_PI * angle01 * static_cast<float>(currentConfig.animationSpins);
+	return fmodf(angle, TWO_PI);
+}
+
+static void animateUpdate() {
+	// Stop the animation if the duration has expired.
+	const unsigned long now = millis();
+	const unsigned long timeElapsedMillis = now - animateStartTime;
+	if (timeElapsedMillis >= currentConfig.animationDuration) {
+		esp_timer_stop(animateTimer);
+		animateRunning = false;
+		refreshScreens();
+		return;
+	}
+
+	// Calculate the angle and the cosine and sine of the angle.
+	const float angle = animateCalculateAngle(timeElapsedMillis);
+	const float angleCos = cosf(angle);
+	const float angleSin = sinf(angle);
+
+	// Update all the dots, only changes pixels that have changed.
+	animateUpdateDot(-DOT_OFFSET, -DOT_OFFSET, ANIMATE_COLOR0, angleCos, angleSin);
+	animateUpdateDot( DOT_OFFSET, -DOT_OFFSET, ANIMATE_COLOR1, angleCos, angleSin);
+	animateUpdateDot(-DOT_OFFSET,  0, ANIMATE_COLOR2, angleCos, angleSin);
+	animateUpdateDot( DOT_OFFSET,  0, ANIMATE_COLOR3, angleCos, angleSin);
+	animateUpdateDot(-DOT_OFFSET,  DOT_OFFSET, ANIMATE_COLOR1, angleCos, angleSin);
+	animateUpdateDot( DOT_OFFSET,  DOT_OFFSET, ANIMATE_COLOR0, angleCos, angleSin);
+
+	// Store the cosine and sine of the angle, for future updates.
+	animatePreviousAngleCos = angleCos;
+	animatePreviousAngleSin = angleSin;
+}
+
+static void animateTaskFunction(void *parameter) noexcept {
+	uint32_t notificationValue = 0;
+	while (true) {
+		xTaskNotifyWait(
+			0,
+			UINT32_MAX,
+			&notificationValue,
+			portMAX_DELAY
+		);
+
+		if ((notificationValue & NOTIFICATION_UPDATE) != 0) {
+			animateUpdate();
+		}
+	}
+}
+
+static void animateTimerCallback(void *parameter) noexcept {
+	xTaskNotify(
+		animateTaskHandle,
+		NOTIFICATION_UPDATE,
+		eSetBits
+	);
+}
+
+static void animateInit() noexcept {
+	animateTaskHandle = xTaskCreateStaticPinnedToCore(
+		animateTaskFunction,
+		TASK_NAME,
+		TASK_STACK_SIZE,
+		nullptr,
+		TASK_PRIORITY,
+		animateStack,
+		&animateTaskBuffer,
+		TASK_CORE
+	);
+
+	static const esp_timer_create_args_t TIMER_CREATE_ARGS = {
+		.callback = animateTimerCallback,
+		.arg = nullptr,
+		.dispatch_method = ESP_TIMER_TASK,
+		.name = TIMER_NAME,
+	};
+
+	esp_timer_create(&TIMER_CREATE_ARGS, &animateTimer);
 }

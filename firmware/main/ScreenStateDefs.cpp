@@ -55,10 +55,6 @@ static void callFunction(ScreenStates result, screenselections screens) {
             debugln("Entering MIX1TO6 case");
             displayMix1to6(screens);
             return;
-        case ScreenStates::MIX1TO6_ENTANGLED:
-            debugln("Entering MIX1TO6_ENTANGLED case");
-            displayMix1to6_entangled(screens);
-            return;
         case ScreenStates::LOWBATTERY:
             debugln("Entering LOWBATTERY case");
             displayLowBattery(screens);
@@ -100,77 +96,9 @@ void checkAndCallFunctions(ScreenStates x0, ScreenStates x1, ScreenStates y0, Sc
     static ScreenStates prevY1 = ScreenStates::BLANC;
     static ScreenStates prevZ1 = ScreenStates::BLANC;
 
-    // Check if color changed - if so, force refresh of all entangled screens
-    bool colorChanged = (stateMachine.getEntanglementColor() != prev_entanglement_color);
-    bool flashColorChanged = (stateMachine.isColorFlash() != prev_flashColor);
-
-    if (colorChanged || flashColorChanged) {
-        if (colorChanged) {
-			debugf(
-				"Entanglement color changed from 0x%04X to 0x%04X - forcing screen refresh\n",
-				prev_entanglement_color,
-				stateMachine.getEntanglementColor()
-			);
-			prev_entanglement_color = stateMachine.getEntanglementColor();
-        }
-        // Force refresh of any entangled screens by resetting their prev state
-        if (x0 == ScreenStates::MIX1TO6_ENTANGLED) {
-            prevX0 = ScreenStates::BLANC;
-        }
-        if (y0 == ScreenStates::MIX1TO6_ENTANGLED) {
-            prevY0 = ScreenStates::BLANC;
-        }
-        if (z0 == ScreenStates::MIX1TO6_ENTANGLED) {
-            prevZ0 = ScreenStates::BLANC;
-        }
-        if (x1 == ScreenStates::MIX1TO6_ENTANGLED) {
-            prevX1 = ScreenStates::BLANC;
-        }
-        if (y1 == ScreenStates::MIX1TO6_ENTANGLED) {
-            prevY1 = ScreenStates::BLANC;
-        }
-        if (z1 == ScreenStates::MIX1TO6_ENTANGLED) {
-            prevZ1 = ScreenStates::BLANC;
-        }
-
-        if (flashColorChanged) {
-            debugf(
-				"Flash color toggled from %s to %s - forcing screen refresh\n",
-                prev_flashColor ? "ON" : "OFF",
-				stateMachine.isColorFlash() ? "ON" : "OFF"
-			);
-            prev_flashColor = stateMachine.isColorFlash();
-
-            if (x0 == ScreenStates::MIX1TO6_ENTANGLED) {
-                prevX0 = ScreenStates::BLANC;
-            }
-            if (y0 == ScreenStates::MIX1TO6_ENTANGLED) {
-                prevY0 = ScreenStates::BLANC;
-            }
-            if (z0 == ScreenStates::MIX1TO6_ENTANGLED) {
-                prevZ0 = ScreenStates::BLANC;
-            }
-            if (x1 == ScreenStates::MIX1TO6_ENTANGLED) {
-                prevX1 = ScreenStates::BLANC;
-            }
-            if (y1 == ScreenStates::MIX1TO6_ENTANGLED) {
-                prevY1 = ScreenStates::BLANC;
-            }
-            if (z1 == ScreenStates::MIX1TO6_ENTANGLED) {
-                prevZ1 = ScreenStates::BLANC;
-            }
-
-            if (!stateMachine.isColorFlash()) { // Flash ended, refresh to normal color
-                debugln("Flash ended - refreshing entangled screens to normal color");
-                x0 = ScreenStates::MIX1TO6;
-                y0 = ScreenStates::MIX1TO6;
-                z0 = ScreenStates::MIX1TO6;
-                x1 = ScreenStates::MIX1TO6;
-                y1 = ScreenStates::MIX1TO6;
-                z1 = ScreenStates::MIX1TO6;
-            }
-        }
-    }
+	if (animateIsRunning()) {
+		return;
+	}
 
     if (x0 != prevX0) {
         // debug("X0:");

@@ -13,7 +13,7 @@
 #include "Battery.hpp"
 #include "button.h"
 #include "IMU.hpp"
-#include "power.h"
+#include "Power.hpp"
 
 constexpr gpio_num_t PIN_VIDV_USB = GPIO_NUM_13;
 static bool usbConnected = false;
@@ -238,23 +238,9 @@ void StateMachine::sendEntanglementConfirm(uint8_t *target) {
     message myData;
     myData.type = message_type::MESSAGE_TYPE_ENTANGLE_CONFIRM;
 
-    // Pick a random color from available colors
-    if (currentConfig.entang_colors_count > 0) {
-        uint8_t colorIndex                = random(0, currentConfig.entang_colors_count);
-        myData.data.entangleConfirm.color = currentConfig.entang_colors[colorIndex];
-        debugf("Selected entanglement color: 0x%04X (index %d of %d)\n",
-               myData.data.entangleConfirm.color, colorIndex, currentConfig.entang_colors_count);
-    } else {
-        myData.data.entangleConfirm.color = 0xFFE0; // Default yellow if no colors configured
-        debugln("No colors configured, using default yellow");
-    }
-
-    this->entanglement_color = myData.data.entangleConfirm.color;
-
-    // Trigger color flash
-    this->colorFlash = true;
-    this->colorFlashStartTime = millis();
-    debugln("Triggering color flash (accepting entanglement)");
+    // Trigger animation
+	animateStart();
+    debugln("Triggering animation (accepting entanglement)");
 
     EspNowSensor<message>::Send(myData, target);
 }
@@ -286,16 +272,16 @@ void StateMachine::sendTeleportConfirm(uint8_t *target) {
 
 void StateMachine::sendTeleportPayload(uint8_t *target, State state, DiceNumbers diceNumber,
                                        UpSide upSide, MeasuredAxises measureAxis,
-                                       uint8_t *entangled_peer, uint16_t color) {
+                                       uint8_t *entangled_peer) {
     EspNowSensor<message>::AddPeer(target);
-    debugf("Send teleport payload with colour 0x%04X\n", color);
+    debug("Send teleport payload\n");
     message myData;
     myData.type                             = message_type::MESSAGE_TYPE_TELEPORT_PAYLOAD;
     myData.data.teleportPayload.state       = state;
     myData.data.teleportPayload.measureAxis = measureAxis;
     myData.data.teleportPayload.diceNumber  = diceNumber;
     myData.data.teleportPayload.upSide      = upSide;
-    myData.data.teleportPayload.color       = color;
+    myData.data.teleportPayload.color       = 0xFFE0;
     memcpy((void *)myData.data.teleportPayload.entangled_peer, (void *)entangled_peer, 6);
     EspNowSensor<message>::Send(myData, target);
 }
@@ -448,10 +434,7 @@ StateMachine::StateMachine()
 	  current_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
 	  next_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
 	  new_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
-	  last_peer{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
 	  new_peer_rssi(INT32_MIN),
-	  closest_rssi(INT32_MIN),
-	  closest_rssi_time(0),
 	  stateEntryTime(0),
 	  selfDiceNumber(DiceNumbers::NONE),
 	  selfMeasurementAxis(MeasuredAxises::UNDEFINED),
@@ -460,11 +443,8 @@ StateMachine::StateMachine()
 	  partnerDiceNumber(DiceNumbers::NONE),
 	  teleportedMeasurementAxis(MeasuredAxises::UNDEFINED),
 	  teleportedDiceNumber(DiceNumbers::NONE),
-	  entanglement_color(0xFFE0),
 	  lastRollBasis(MeasuredAxises::UNDEFINED),
-	  lastRollNumber(DiceNumbers::NONE),
-	  colorFlash(false),
-	  colorFlashStartTime(0) {}
+	  lastRollNumber(DiceNumbers::NONE) {}
 
 void StateMachine::begin() {
 	// USB Voltage divider.
@@ -545,8 +525,8 @@ void StateMachine::update() {
 		(void)pollUsbConnected();
 		this->tryingToSleep = true;
 		IMU.sleep();
-		power_shutdown();
-		power_off_screens();
+		Power.shutdown();
+		Power.screensOff();
 	}
 
 	if (this->tryingToSleep) {
@@ -568,19 +548,11 @@ void StateMachine::update() {
 	this->updateEspNow();
 
 	// Periodically send watchdog to broadcast presence to nearby dice
-	if (this->currentState.mode != Mode::CLASSIC
-		&& (currentTime - lastWatchdogTime >= 500)) { // Send every 500ms
+	if (this->currentState.mode != Mode::CLASSIC && !animateIsRunning() && (currentTime - lastWatchdogTime >= 500)) { // Send every 500ms
 		// Not sending in CLASSIC mode ensures we don't get contacted about entanglement
 		// and reduces power consumption and network traffic
 		sendWatchDog();
 		lastWatchdogTime = currentTime;
-	}
-
-	// State-independent: Handle color flash timeout
-	if (this->colorFlash && (currentTime - this->colorFlashStartTime >= currentConfig.colorFlashTimeout)) {
-		debugln("Color flash timeout - refreshing screens to show white");
-		this->colorFlash = false;
-		refreshScreens(); // Update display to show white instead of color
 	}
 
 	// Call whileInState function for current state
@@ -591,13 +563,6 @@ void StateMachine::update() {
 		errorf("ERROR: No state function found for state: %s\n", getStateName(this->currentState));
 	}
 
-	// Display the closest RSSI.
-	if (currentConfig.rssiScreen && (currentTime - closest_rssi_time) >= 500) {
-		rssiScreen(closest_rssi);
-		closest_rssi = INT32_MIN;
-		closest_rssi_time = currentTime;
-	}
-
 	// Check for any nearby dice to entangle with.
 	this->checkCloseBy();
 }
@@ -606,31 +571,12 @@ void StateMachine::updateEspNow() {
 	message data;
 	uint8_t source[MAC_ADDRESS_LENGTH];
 	int32_t current_rssi = INT32_MIN;
+	memset(source, 0xFF, MAC_ADDRESS_LENGTH);
 
 	while (EspNowSensor<message>::Poll(&data, (unsigned char *)source, &current_rssi)) {
-		if (current_rssi > closest_rssi) {
-			closest_rssi = current_rssi;
-		}
-
-		const bool isLastPeer = memcmp(this->last_peer, source, MAC_ADDRESS_LENGTH) == 0;
-		const bool isLastTeleport = memcmp(this->last_teleport, source, MAC_ADDRESS_LENGTH) == 0;
-
-		// If this message was sent by our last peer, then we only check whether it has left the
-		// RSSI limit, in which case we forget it.
-		if (isLastPeer && current_rssi < currentConfig.rssiFar) {
-			memset(this->last_peer, 0xFF, MAC_ADDRESS_LENGTH);
-		}
-
-		// If this message was sent by our last teleport partner, then we only check whether it has
-		// left the RSSI limit, in which case we forget it.
-		if (isLastTeleport && current_rssi < currentConfig.rssiFar) {
-			memset(this->last_teleport, 0xFF, MAC_ADDRESS_LENGTH);
-		}
-
 		// Remember this source, if its RSSI is better than currently known and it is not our last
 		// peer.
-		const bool isValidPeer = (!isLastTeleport && !isLastPeer) || (currentConfig.rssiFar == 0);
-		if (isValidPeer && current_rssi > this->new_peer_rssi) {
+		if (current_rssi > this->new_peer_rssi) {
 			this->new_peer_rssi = current_rssi;
 			memcpy((void *)this->new_peer, (void *)source, MAC_ADDRESS_LENGTH);
 		}
@@ -644,7 +590,6 @@ void StateMachine::updateEspNow() {
                     this->partnerMeasurementAxis = data.data.measurement.measureAxis;
 
                     // Clear current_peer so we can accept new entanglement requests
-					memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                     memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
                     // Trigger state transition
@@ -654,6 +599,13 @@ void StateMachine::updateEspNow() {
 
             case message_type::MESSAGE_TYPE_ENTANGLE_REQUEST:
                 debugln("Entanglement request received - processing immediately");
+
+				// Check if we are in the animation, if so, then deny entanglement.
+				if (animateIsRunning()) {
+					debugln("Animation busy - denying entanglement request");
+					sendEntangleDenied(source);
+					break;
+				}
 
                 // Check if we're in CLASSIC mode - deny entanglement
                 if (this->currentState.mode == Mode::CLASSIC) {
@@ -676,22 +628,6 @@ void StateMachine::updateEspNow() {
                     break;
                 }
 
-				// Check if this is our last peer - deny to prevent reentanglement.
-				if (currentConfig.rssiFar != 0) {
-					if (memcmp(this->last_peer, source, MAC_ADDRESS_LENGTH) == 0) {
-						debugln("Last peer - denying entanglement request");
-						sendEntangleDenied(source);
-						break;
-					}
-				}
-
-				// Check if this is our last teleport - deny to prevent reentanglement.
-				if (memcmp(this->last_teleport, source, MAC_ADDRESS_LENGTH) == 0) {
-					debugln("Last teleport - denying entanglement request");
-					sendEntangleDenied(source);
-					break;
-				}
-
                 // Check if we're already ENTANGLED - this means teleportation is being initiated
                 if (this->currentState.entanglementState == EntanglementState::ENTANGLED) {
                     debugln("Already ENTANGLED - initiating TELEPORTATION protocol");
@@ -709,7 +645,7 @@ void StateMachine::updateEspNow() {
                 } else {
                     // Normal entanglement request
                     // Another dice wants to entangle with us
-                    // Store their MAC and send confirmation with our chosen color
+                    // Store their MAC and send confirmation
                     memcpy((void *)this->current_peer, (void *)source, MAC_ADDRESS_LENGTH);
                     debugf("Adding peer (current_peer): %02X:%02X:%02X:%02X:%02X:%02X\n",
                            this->current_peer[0], this->current_peer[1], this->current_peer[2],
@@ -732,14 +668,9 @@ void StateMachine::updateEspNow() {
                     memcpy((void *)this->current_peer, (void *)this->next_peer, MAC_ADDRESS_LENGTH);
                     memset((void *)this->next_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
-                    // Store the entanglement color from the confirming dice
-                    this->entanglement_color = data.data.entangleConfirm.color;
-                    debugf("Received entanglement color: 0x%04X\n", this->entanglement_color);
-
-                    // Trigger color flash
-                    this->colorFlash = true;
-                    this->colorFlashStartTime = millis();
-                    debugln("Triggering color flash (receiving entanglement)");
+                    // Trigger animation
+					animateStart();
+                    debugln("Triggering animation (receiving entanglement)");
 
                     // Reset local measurement state for new entanglement
                     this->selfDiceNumber = DiceNumbers::NONE;
@@ -767,7 +698,6 @@ void StateMachine::updateEspNow() {
                 // Dice M receives this from dice A with B's address
                 debugln("Teleport request received - M processing teleportation");
                 debugln("Teleport: Sending our state to target dice B");
-				memcpy(this->last_teleport, source, MAC_ADDRESS_LENGTH);
 
                 {
                     uint8_t target_b[MAC_ADDRESS_LENGTH];
@@ -784,15 +714,12 @@ void StateMachine::updateEspNow() {
                     }
 
                     // Send TELEPORT_PAYLOAD to B with our current state
-                    sendTeleportPayload(target_b, this->currentState, this->selfDiceNumber, this->selfUpSide,
-                                        this->selfMeasurementAxis, this->current_peer,
-                                        this->entanglement_color);
+                    sendTeleportPayload(target_b, this->currentState, this->selfDiceNumber, this->selfUpSide, this->selfMeasurementAxis, this->current_peer);
                     sendTeleportConfirm(source);
 
                     // Clear our entanglement if we had one
                     if (this->currentState.entanglementState == EntanglementState::ENTANGLED) {
                         // Remove old peer
-						memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                         memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
                     }
 
@@ -811,10 +738,8 @@ void StateMachine::updateEspNow() {
             case message_type::MESSAGE_TYPE_TELEPORT_CONFIRM:
                 // Dice A receives confirmation from M that teleportation is complete
                 debugln("Teleport confirm received - A ending entanglement with B");
-				memcpy(this->last_teleport, source, MAC_ADDRESS_LENGTH);
 
                 // Clear entanglement
-				memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                 memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
                 memset(this->next_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
@@ -834,13 +759,11 @@ void StateMachine::updateEspNow() {
                 debugln("Teleport payload received - B receiving M's state");
 
                 {
-                    State    teleported_state = data.data.teleportPayload.state;
-                    uint16_t teleported_color = data.data.teleportPayload.color;
+                    State teleported_state = data.data.teleportPayload.state;
 
-                    debugf("Received teleportation with color: 0x%04X\n", teleported_color);
+                    debug("Received teleportation\n");
 
                     // Remove old peer (A) from peer list
-					memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                     memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
 
                     // Check what state M was in
@@ -850,14 +773,9 @@ void StateMachine::updateEspNow() {
                         memcpy((void *)this->current_peer,
                                (void *)data.data.teleportPayload.entangled_peer, MAC_ADDRESS_LENGTH);
 
-                        // Store the teleported entanglement color
-                        this->entanglement_color = teleported_color;
-                        debugf("Inherited entanglement color: 0x%04X\n", this->entanglement_color);
-
-                        // Trigger color flash
-                        this->colorFlash = true;
-                        this->colorFlashStartTime = millis();
-                        debugln("Triggering color flash (receiving teleportation)");
+                        // Trigger animation
+						animateStart();
+                        debugln("Triggering animation (receiving teleportation)");
 
                         this->selfDiceNumber = DiceNumbers::NONE;
                         this->selfUpSide = UpSide::NONE;
@@ -865,7 +783,7 @@ void StateMachine::updateEspNow() {
 
                         // Transition to ENTANGLED (use ENTANGLE_REQUEST trigger for this)
                         this->currentState.entanglementState = EntanglementState::ENTANGLED;
-                        refreshScreens();
+                        //refreshScreens();
 
                     } else if (teleported_state.throwState == ThrowState::OBSERVED) {
                         // M was in observed state - B receives teleported measurement
@@ -900,7 +818,6 @@ void StateMachine::updateEspNow() {
                            new_partner_b[5]);
 
                     // Update current_peer to B
-					memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
                     memcpy((void *)this->current_peer, (void *)new_partner_b, MAC_ADDRESS_LENGTH);
 
                     // N stays in ENTANGLED state, just with a different partner
@@ -951,12 +868,16 @@ void StateMachine::checkTimeForDeepSleep() {
 		(void)pollUsbConnected();
 		this->tryingToSleep = true;
 		IMU.sleep();
-		power_shutdown();
-		power_off_screens();
+		Power.shutdown();
+		Power.screensOff();
 	}
 }
 
 void StateMachine::checkCloseBy() {
+	if (animateIsRunning()) {
+		return;
+	}
+
 	if (this->currentState.mode != Mode::QUANTUM) {
 		return;
 	}
@@ -972,22 +893,12 @@ void StateMachine::checkCloseBy() {
 		return;
 	}
 
-	if (this->new_peer_rssi < currentConfig.rssiClose) {
+	if (this->new_peer_rssi < currentConfig.rssiLimit) {
 		return;
 	}
 
 	if (this->new_peer_rssi > -1) {
 		return;
-	}
-
-	if (currentConfig.rssiFar != 0) {
-		if (memcmp(this->new_peer, this->last_teleport, MAC_ADDRESS_LENGTH) == 0) {
-			return;
-		}
-
-		if (memcmp(this->new_peer, this->last_peer, MAC_ADDRESS_LENGTH) == 0) {
-			return;
-		}
 	}
 
 	if (memcmp((void *)this->new_peer, (void *)this->current_peer, MAC_ADDRESS_LENGTH) == 0) {
@@ -1067,7 +978,7 @@ void StateMachine::enterQuantumIdle() {
 
 void StateMachine::whileQuantumIdle() {
 	// Check if dice is being thrown
-	if (IMU.tumbled()) {
+	if (!animateIsRunning() && IMU.tumbled()) {
 		debugln("Tumble detected - starting throw");
 		changeState(Trigger::START_ROLLING);
 		return;
@@ -1224,7 +1135,6 @@ void StateMachine::enterObservedWait() {
 
 			// Clear entanglement
 			this->currentState.entanglementState = EntanglementState::PURE;
-			memcpy(this->last_peer, this->current_peer, MAC_ADDRESS_LENGTH);
 			memset(this->current_peer, 0xFF, MAC_ADDRESS_LENGTH);
 			break;
 

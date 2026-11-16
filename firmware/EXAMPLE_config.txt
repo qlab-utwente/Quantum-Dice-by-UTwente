@@ -31,19 +31,29 @@ x_background=0 # Black
 y_background=0 # Black
 z_background=0 # Black
 
-# Entanglement colors (16-bit RGB565 format)
-# This dice will randomly pick from these colors when accepting an entanglement request
-# You can add multiple colors separated by commas
-# Examples: Yellow=65504, Green=2016, Cyan=2047, Magenta=63519, Red=63488, Blue=31
-entang_colors=65504
+# ==========================================
+# ENTANGLEMENT ANIMATION
+# ==========================================
+# The duration of the animation is milliseconds.
+animationDuration=2000
+
+# The number of spins done during the animation.
+animationSpins=2
+
+# ==========================================
+# OBSERVED TIME
+# ==========================================
+# The time after a measurement has been made during which the dice does not do anything, but display the measurement.
+# Time in milliseconds.
+observedTime=2000
 
 # ==========================================
 # RSSI SETTINGS
 # ==========================================
-# Signal strength threshold for entanglement detection
-# More negative = weaker signal allowed
+# The RSSI threshold determines when a dice is willing to entangle to another.
+# More negative = weaker signal allowed.
 # rssiLimit=-35 (pre Gen 4.0)
-rssiLimit=-25
+rssiLimit=-10
 
 # ==========================================
 # OPERATIONAL PARAMETERS

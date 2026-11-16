@@ -91,27 +91,14 @@ auto DiceConfigManager::load(const String &filename) -> bool {
             _config.y_background = (uint16_t) strtoul(value.c_str(), nullptr, 0);
         } else if (key == "z_background") {
             _config.z_background = (uint16_t) strtoul(value.c_str(), nullptr, 0);
-        } else if (key == "entang_colors") {
-            // Parse comma-separated color values
-            _config.entang_colors_count = 0;
-            String token = strtok(value.begin(), ",");
-            while (token != nullptr && _config.entang_colors_count < MAX_ENTANGLEMENT_COLORS) {
-                trim(token);
-                _config.entang_colors[_config.entang_colors_count]
-                  = (uint16_t) strtoul(token.c_str(), nullptr, 0);
-                _config.entang_colors_count++;
-                token = strtok(nullptr, ",");
-            }
-        } else if (key == "colorFlashTimeout") {
-            _config.colorFlashTimeout = (uint16_t) strtoul(value.c_str(), nullptr, 0);
+        } else if (key == "animationDuration") {
+            _config.animationDuration = (uint16_t) strtoul(value.c_str(), nullptr, 0);
+		} else if (key == "animationSpins") {
+			_config.animationSpins = (uint8_t) strtoul(value.c_str(), nullptr, 0);
 		} else if (key == "observedTime") {
 			_config.observedTime = (uint16_t) strtoul(value.c_str(), nullptr, 0);
-        } else if (key == "rssiClose") {
-            _config.rssiClose = (int8_t) strtol(value.c_str(), nullptr, 0);
-		} else if (key == "rssiFar") {
-			_config.rssiFar = (int8_t) strtol(value.c_str(), nullptr, 0);
-		} else if (key == "rssiScreen") {
-			_config.rssiScreen = parseBool(value.c_str());
+        } else if (key == "rssiLimit") {
+            _config.rssiLimit = (int8_t) strtol(value.c_str(), nullptr, 0);
         } else if (key == "tumbleConstant") {
             _config.tumbleConstant = (float) strtod(value.c_str(), nullptr);
         } else if (key == "deepSleepTimeout") {
@@ -200,20 +187,15 @@ void DiceConfigManager::initDefaultConfig() {
     _config.y_background = 0x0; // Black
     _config.z_background = 0x0; // Black
 
-    // Default entanglement colors: Yellow, Green, Cyan, Magenta
-    _config.entang_colors[0]    = 0xFFE0; // Yellow
-    _config.entang_colors_count = 1;
-
-    // Default color flash timeout (1000ms)
-    _config.colorFlashTimeout = 1000;
+    // Default animation settings.
+    _config.animationDuration = 2'000;
+	_config.animationSpins = 2;
 
 	// Default time in observed state (2000ms)
 	_config.observedTime = 2000;
 
     // Default RSSI values.
-    _config.rssiClose = -20;
-	_config.rssiFar = 0;
-	_config.rssiScreen = false;
+    _config.rssiLimit = -10;
 
     // Default tumble constant
     _config.tumbleConstant = 45;
@@ -251,23 +233,10 @@ void printGlobalConfig() {
     infof("X Background: 0x%04X (%u)\n", currentConfig.x_background, currentConfig.x_background);
     infof("Y Background: 0x%04X (%u)\n", currentConfig.y_background, currentConfig.y_background);
     infof("Z Background: 0x%04X (%u)\n", currentConfig.z_background, currentConfig.z_background);
-    String colours = "";
-    for (uint8_t i = 0; i < currentConfig.entang_colors_count; i++) {
-        colours += String(currentConfig.entang_colors[i], HEX);
-        if (i < currentConfig.entang_colors_count - 1) {
-            colours += ", ";
-        }
-    }
-    infof("Entangle Colors (%d): %s\n", currentConfig.entang_colors_count, colours.c_str());
-    infof("Color Flash Timeout: %d ms\n", currentConfig.colorFlashTimeout);
+    infof("Animation duration: %d ms\n", currentConfig.animationDuration);
+	infof("Animation spins: %d spins\n", currentConfig.animationSpins);
 	infof("Observed time: %d ms\n", currentConfig.observedTime);
-    infof("RSSI Close: %d dBm\n", currentConfig.rssiClose);
-	if (currentConfig.rssiFar == 0) {
-		info("RSSI Far: disabled\n");
-	} else {
-		infof("RSSI Far: %d dBm\n", currentConfig.rssiFar);
-	}
-	infof("RSSI Screens: %s\n", currentConfig.rssiScreen ? "true" : "false");
+    infof("RSSI Limit: %d dBm\n", currentConfig.rssiLimit);
     infof("Tumble Constant: %d\n", currentConfig.tumbleConstant);
     infof("Deep Sleep Timeout: %u ms\n", currentConfig.deepSleepTimeout);
     infof("Checksum: 0x%02X\n", currentConfig.checksum);
@@ -304,7 +273,7 @@ auto findConfigFile(String &foundPath) -> bool {
             if (firstMatch == "") {
                 firstMatch = filename;
             } else {
-                if (firstMatch == "/DEFAULT_config.txt") {
+                if (firstMatch == "DEFAULT_config.txt") {
                     warnln("Default config found earlier, preferring non-default");
                     firstMatch = filename; // Prefer non-default over default
                     break;
@@ -384,12 +353,10 @@ auto createDefaultConfigFile() -> bool {
     file.println("x_background=0");
     file.println("y_background=0");
     file.println("z_background=0");
-    file.println("entang_colors=65504");
-    file.println("colorFlashTimeout=1000");
+    file.println("animationDuration=2000");
+	file.println("animationSpins=2");
 	file.println("observedTime=2000");
-    file.println("rssiClose=-20");
-	file.println("rssiFar=0");
-	file.println("rssiScreen=false");
+    file.println("rssiLimit=-10");
     file.println("tumbleConstant=45");
     file.println("deepSleepTimeout=300000");
     file.println("checksum=0");
