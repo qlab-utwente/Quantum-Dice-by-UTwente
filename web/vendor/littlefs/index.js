@@ -52,10 +52,12 @@ export class LittleFSError extends Error {
     }
 }
 
-function createModuleConfig(wasmURL) {
+function createModuleConfig(wasmURL, wasmBinary) {
     const wasmURLStr = wasmURL instanceof URL ? wasmURL.href : wasmURL;
     
     return {
+        // Quantum Dice Tool patch: use preloaded WASM bytes when given, so no fetch is needed here.
+        ...(wasmBinary ? { wasmBinary } : {}),
         locateFile: (path) => {
             if (path.endsWith('.wasm')) {
                 console.info("[littlefs-wasm] locateFile:", path, "->", wasmURLStr);
@@ -82,7 +84,7 @@ export async function createLittleFS(options = {}) {
     // Configure module with custom locateFile for WASM
     // Always set locateFile to ensure correct WASM path resolution
     const wasmURL = options.wasmURL ?? new URL('./littlefs.wasm', import.meta.url).href;
-    const moduleConfig = createModuleConfig(wasmURL);
+    const moduleConfig = createModuleConfig(wasmURL, options.wasmBinary);
 
     // Initialize Emscripten module
     const Module = await createLittleFSModule(moduleConfig);
@@ -158,7 +160,7 @@ export async function createLittleFSFromImage(image, options = {}) {
     // Configure module with custom locateFile for WASM
     // Always set locateFile to ensure correct WASM path resolution
     const wasmURL = options.wasmURL ?? new URL('./littlefs.wasm', import.meta.url).href;
-    const moduleConfig = createModuleConfig(wasmURL);
+    const moduleConfig = createModuleConfig(wasmURL, options.wasmBinary);
 
     // Initialize Emscripten module
     const Module = await createLittleFSModule(moduleConfig);

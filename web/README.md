@@ -16,7 +16,7 @@ Plain HTML, CSS and JavaScript modules: there is no build step and no npm.
 | `js/config.js` | Reading and checking `*_config.txt` the same way the firmware does |
 | `js/storage.js` | Opening and changing the LittleFS settings storage |
 | `vendor/esptool/` | [tasmota-webserial-esptool](https://github.com/Jason2866/WebSerial_ESPTool) 7.3.10 (MIT), the flashing library used by ESPConnect |
-| `vendor/littlefs/` | LittleFS WebAssembly module from [ESPConnect](https://github.com/thelastoutpostworkshop/ESPConnect) (MIT) |
+| `vendor/littlefs/` | LittleFS WebAssembly module from [ESPConnect](https://github.com/thelastoutpostworkshop/ESPConnect) (MIT); `index.js` is patched to accept preloaded WASM bytes (`wasmBinary`) |
 | `tools/build_firmware_manifest.py` | Copies the release `.bin` files into `firmware/` and writes `firmware/manifest.json` |
 | `firmware/` | Generated, not in git |
 | `tests/` | Browser tests for everything that does not need a dice |

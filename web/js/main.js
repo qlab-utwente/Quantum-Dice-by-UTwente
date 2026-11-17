@@ -3,7 +3,7 @@ import {
   loadManifest, versionLabel, downloadVerified, checkAppImage, inspectDice, installChecks, hasBlocking,
 } from './firmware.js';
 import { validateConfig, findActiveConfig, worstLevel, CONFIG_SUFFIX } from './config.js';
-import { openImage, emptyFilesystem, rootFiles, replaceConfig, isBlank } from './storage.js';
+import { openImage, emptyFilesystem, rootFiles, replaceConfig, isBlank, prepareStorage } from './storage.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -408,6 +408,7 @@ async function install() {
     const appPart = mode === 'full' ? data.subarray(state.manifest.app0Offset) : data;
     const problem = checkAppImage(appPart);
     if (problem) throw new Error(`${problem} Nothing was written to the dice.`);
+    if (mode === 'full') await prepareStorage(); // needed to save and restore the settings
 
     p.step('Switching the dice to programming mode…');
     terminalNote('dice switched to programming mode');
@@ -599,6 +600,7 @@ function showConfigResult({ title, text, issues = [], preview = null, actions = 
 async function readSettings() {
   state.pendingConfig = null;
   const { result, error, dlg } = await runBusy('Reading settings', {}, async (p) => {
+    await prepareStorage();
     p.step('Switching the dice to programming mode…');
     terminalNote('dice switched to programming mode');
     const res = await dice.withBootloader(async (s) => {
@@ -715,6 +717,7 @@ async function writeSettings() {
   if (!ok) return;
 
   const { error, dlg } = await runBusy('Writing settings', { dangerous: true }, async (p) => {
+    await prepareStorage();
     p.step('Switching the dice to programming mode…');
     terminalNote('dice switched to programming mode');
     await dice.withBootloader(async (s) => {
@@ -778,6 +781,8 @@ async function init() {
   if (!isWebSerialSupported()) {
     $('unsupported').hidden = false;
   }
+  // Load the settings-storage code now, while nothing is happening on the dice.
+  prepareStorage().catch((err) => techlog(err.message));
 
   dice.addEventListener('serial', (e) => onSerialText(e.detail));
   dice.addEventListener('log', (e) => techlog(e.detail));
