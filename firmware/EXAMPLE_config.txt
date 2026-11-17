@@ -2,8 +2,9 @@
 # Lines starting with # are comments
 # Edit values after the = sign
 # Save this file as XXXXX_config.txt (XXXXX is diceID), there is no character limit
-# upload to your Quantum Dice (See instructions in the Github)
-# https://thelastoutpostworkshop.github.io/ESPConnect/
+# Upload it to your Quantum Dice with the Quantum Dice Tool:
+# https://qlab-utwente.github.io/Quantum-Dice-by-UTwente/
+# Instructions: FIRMWARE_UPDATE_GUIDE.md in the GitHub repository
 
 # ==========================================
 # DEVICE IDENTIFICATION

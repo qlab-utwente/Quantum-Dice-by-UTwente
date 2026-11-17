@@ -36,19 +36,12 @@
 - [8. Final Test and Completion](#8-final-test-and-completion)
 - [9. Firmware Installation, Configuration and Updates](#9-firmware-installation-configuration-and-updates)
   - [9.1 Initial Firmware Installation and Configuration](#91-initial-firmware-installation-and-configuration)
-    - [9.1.1 What You Need](#911-what-you-need)
-    - [9.1.2 Download the Firmware Files](#912-download-the-firmware-files)
-    - [9.1.3 Connect the PCB to ESPConnect](#913-connect-the-pcb-to-espconnect)
-    - [9.1.4 Flash a New PCB (First Installation Only)](#914-flash-a-new-pcb-first-installation-only)
-    - [9.1.5 Prepare a Configuration File (Optional)](#915-prepare-a-configuration-file-optional)
-    - [9.1.6 Upload a Configuration File (Optional)](#916-upload-a-configuration-file-optional)
-    - [9.1.7 Verify the Firmware and Configuration](#917-verify-the-firmware-and-configuration)
   - [9.2 Updating the Firmware](#92-updating-the-firmware)
-  - [9.3 Updating the Configuration File](#93-updating-the-configuration-file)
+  - [9.3 Changing the Configuration File](#93-changing-the-configuration-file)
 - [10. Troubleshooting and Support](#10-troubleshooting-and-support)
   - [10.1 The Browser Does Not Support WebSerial](#101-the-browser-does-not-support-webserial)
-  - [10.2 Cannot Connect to the Serial Port](#102-cannot-connect-to-the-serial-port)
-  - [10.3 Firmware Flash Fails](#103-firmware-flash-fails)
+  - [10.2 Cannot Connect to the Die](#102-cannot-connect-to-the-die)
+  - [10.3 Firmware Installation Fails](#103-firmware-installation-fails)
   - [10.4 Configuration File Does Not Load](#104-configuration-file-does-not-load)
   - [10.5 Errors in the Serial Monitor](#105-errors-in-the-serial-monitor)
   - [10.6 Getting Help](#106-getting-help)
@@ -118,7 +111,7 @@ More information about obtaining the PCB, either as a ready-to-use board from th
 
 All parts required to construct the Quantum Dice are listed in the **Bill of Materials (BOM)**.
 
-The BOM can be found here: [Bill of Materials](<Bill of Material quantum dice.xlsx>).
+The BOM can be found here: [Bill of Materials](<3D print files/Bill of Material quantum dice.xlsx>).
 
 In the BOM, you can specify the number of Quantum Dice you wish to build. The required quantities of all components are then calculated automatically.
 
@@ -522,140 +515,67 @@ If you are using a PCB supplied by the **University of Twente**, the firmware an
 
 ## 9. Firmware Installation, Configuration and Updates
 
-This chapter covers the **first firmware installation**, **configuration**, **firmware updates**, and **subsequent configuration changes**. A PCB supplied by the University of Twente already comes with firmware installed and tested, so you can skip Section 9.1 unless you need to change its configuration. The firmware automatically calibrates the IMU, so no separate calibration procedure is required.
+The firmware is installed, updated and configured with the **[Quantum Dice Tool](https://qlab-utwente.github.io/Quantum-Dice-by-UTwente/)**, a web page that connects to the die over USB. Nothing needs to be downloaded or installed: the tool always offers the published firmware versions and checks the die before it writes anything. The step-by-step instructions, including the messages the tool can show, are in the **[Firmware Update Guide](FIRMWARE_UPDATE_GUIDE.md)**. This chapter summarises what is needed during construction.
 
-**For independently assembled PCBs:** Complete Section 9.1 **before the initial display test in Section 7.7**, preferably while the USB-C connection is still readily accessible. You can then return to Chapter 7 to finish assembly. Once assembled, the external USB-C port supports both charging and direct communication with the ESP32-S3.
+A PCB supplied by the **University of Twente** already has firmware installed and has been tested. You can skip Section 9.1 and only need Sections 9.2 and 9.3 for later updates or a different configuration. The firmware calibrates the IMU automatically; no separate calibration procedure is required.
+
+**What you need:**
+
+- A computer with **Google Chrome** or **Microsoft Edge**. Safari, Firefox, phones and tablets do not support the USB connection used by the tool.
+- A **USB-C data cable**, not a charging-only cable.
+- The PCB or the assembled die. On a Generation 4 die the external USB-C connector is used for both charging and firmware installation.
 
 ### 9.1 Initial Firmware Installation and Configuration
 
-A PCB supplied by the **University of Twente** already has firmware installed and has been tested. If you are using such a PCB, **skip the initial firmware installation** and continue with Chapter 7. Firmware updates and later configuration changes are covered in Sections 9.2 and 9.3.
+Use this section only for a PCB you **ordered and assembled yourself**. Install the firmware **before the initial display test in Section 7.7**, so you can check the displays afterwards. Prepare each PCB separately.
 
-If you ordered and assembled the PCB yourself, install the firmware before closing the Quantum Die. The procedure below starts with a new PCB. **You must prepare each PCB separately.**
+1. Connect the PCB to your computer with the USB-C data cable.
+2. Open the [Quantum Dice Tool](https://qlab-utwente.github.io/Quantum-Dice-by-UTwente/) and click **Connect**. Select the device, usually called **USB JTAG/serial debug unit**.
+3. In **step 2, Install firmware**, select the newest **Firmware version** and choose **Complete install**. A new PCB has no firmware and no memory layout yet; the tool therefore does not allow a normal update and tells you to choose Complete install.
+4. Click **Install firmware**, confirm with **Erase and install**, and wait until the tool reports **Done!** (one to two minutes). Do not unplug the PCB during the installation.
+5. After this first installation the die is called *DEFAULT*. To give it its own name or colours, continue with Section 9.3.
+6. Check the result in **step 4, Serial monitor**: click **Restart dice** and look for `FW:` with the installed version and `Dice ID:` with the name of the die.
 
-> **Important:** The initial installation and later updates use different firmware files and flash offsets. Do not follow the initial-installation procedure to update a configured PCB, as this can erase its stored configuration.
+> **Note:** Some I2C warnings during startup are harmless if the sensor initialises successfully afterward. See Section 10.5.
 
-#### 9.1.1 What You Need
-
-- An assembled **PCB** with an accessible USB-C connection (the displays do not need to be connected).
-- A computer with internet access and a **USB-C data cable**, not a charging-only cable.
-- A current **Chromium-based browser**, such as Chrome, Edge or Opera. Safari and Firefox do not support the WebSerial connection used here.
-- The latest Quantum Dice firmware files.
-
-#### 9.1.2 Download the Firmware Files
-
-1. Open the [Quantum Dice firmware releases](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/releases).
-2. Find the release intended for your PCB and download these files, where `X.X.X` represents the version number:
-   - `QuantumDice.vX.X.X.merged.bin`: for the **first installation on a new PCB**.
-   - `QuantumDice.vX.X.X.bin`: for **later firmware updates**.
-3. Keep the files in a location you can find again, such as your Downloads folder.
-
-![Quantum Dice firmware files on GitHub](<images/Github binaries.png>)
-
-#### 9.1.3 Connect the PCB to ESPConnect
-
-1. Connect the PCB to your computer using the USB-C data cable.
-2. In your browser, open [ESPConnect](https://thelastoutpostworkshop.github.io/ESPConnect/).
-3. Click **Connect**, select the serial device corresponding to your PCB, and grant the browser permission to use it.
-4. Wait until ESPConnect recognises the board and makes its tools available.
-
-> **Note:** Only one application can use the serial port at a time. If you cannot connect, close the Arduino IDE, any serial monitor, or other application using the device. See Chapter 10 for troubleshooting.
-
-#### 9.1.4 Flash a New PCB (First Installation Only)
-
-Use these instructions **only for a new PCB that has not yet been configured**.
-
-1. In ESPConnect, open **Flash Tools**.
-2. Scroll to **Flash Firmware** and select **Firmware binary (.bin)**.
-3. Select `QuantumDice.vX.X.X.merged.bin`.
-4. Set the **Flash Offset** to **`0x0`**.
-5. Click **Flash firmware** and wait for the operation to finish. It typically takes around 30 seconds to one minute.
-6. Check that ESPConnect reports **Flash complete**.
-7. Repeat the procedure for any other new PCBs.
-
-> **Warning:** Do not use the `merged.bin` file for a normal update to a PCB that already contains a configuration. For that, follow Section 9.2.
-
-#### 9.1.5 Prepare a Configuration File (Optional)
-
-The firmware uses a configuration file to define settings such as colours and timeouts. If the default settings meet your needs, you may leave them unchanged.
-
-1. Obtain the [example configuration file](firmware/EXAMPLE_config.txt).
-2. Open it in a plain-text editor and read the comments explaining each setting.
-3. Make any necessary changes and save the file as plain text.
-4. Keep the original example filename, **`EXAMPLE_config.txt`**, unless you have checked which filenames are accepted by the firmware version you are using.
-
-> **Filename note:** The earlier Setup Guide specifies a five-character prefix (`XXXXX_config.txt`), but also provides the longer example `YOURNAME_config.txt`. Because these examples conflict, the required naming rule should be checked in the current firmware before renaming a configuration file.
-
-#### 9.1.6 Upload a Configuration File (Optional)
-
-1. Keep the PCB connected in ESPConnect and open **LittleFS Tools**.
-2. Click **Download Backup** and allow the backup to finish. This safety step also makes the file-upload controls available in the workflow described by the original Setup Guide.
-3. Click **Choose File**, select your configuration text file, and click **Upload**.
-4. The file is now staged in your browser. Click **SAVE TO FLASH** to write it to the PCB.
-5. Confirm the operation and wait for it to finish.
-6. If the interface offers an eye or preview icon, use it to open the file on the board and verify its contents.
-7. Repeat for other PCBs if needed.
-
-![ESPConnect LittleFS tools](<images/littlefs screen.png>)
-
-> **Note:** Quantum Dice used together do not necessarily need identical configuration files. For example, they can have different colours configured for entanglement and still cooperate correctly.
-
-#### 9.1.7 Verify the Firmware and Configuration
-
-The firmware can be checked before the displays are attached.
-
-1. In ESPConnect, open **Serial Monitor** and click **Start**.
-2. Observe the startup messages. Depending on the installed firmware version, they should indicate that the filesystem mounted, the configuration was loaded, and ESP-NOW communication initialised.
-3. Check whether the log ends with a successful setup message and whether the reported die ID is correct.
-4. If a configuration file is missing or fails to load, check Section 10.4.
-
-![ESPConnect serial monitor](images/Serial_monitor.png)
-
-> **Note:** Some I2C warnings during startup may be temporary if the corresponding sensor initialises successfully afterward. Persistent failures or an incomplete setup require troubleshooting.
-
-Once the firmware installation and configuration have been verified, continue with the assembly in Chapter 7. The visual display test is described in Section 7.7, and the completed device is checked in Chapter 8.
-
-**Automatic IMU calibration:** The firmware handles IMU calibration automatically. No separate manual calibration procedure is required, including for independently assembled PCBs.
+Once the firmware is installed, continue with the assembly in Chapter 7. The visual display test is described in Section 7.7 and the completed device is checked in Chapter 8.
 
 ### 9.2 Updating the Firmware
 
-1. Download the latest appropriate **`QuantumDice.vX.X.X.bin`** file from the [Quantum Dice releases page](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente/releases).
-2. Connect the die to your computer and open [ESPConnect](https://thelastoutpostworkshop.github.io/ESPConnect/).
-3. Click **Connect** and select the correct device.
-4. Open **Flash Tools** and go to **Flash Firmware**.
-5. Select **`QuantumDice.vX.X.X.bin`**, **not** the `merged.bin` file.
-6. Set the **Flash Offset** to **`0x10000`**, or select **`app0`** if that recommended offset is shown.
-7. **Do not erase the flash.** A full erase can delete the stored configuration.
-8. Click **Flash firmware** and wait until the update is complete.
-9. Repeat for the other die.
+1. Switch on the die and connect it with the USB-C data cable.
+2. Open the [Quantum Dice Tool](https://qlab-utwente.github.io/Quantum-Dice-by-UTwente/) and click **Connect**.
+3. In **step 2, Install firmware**, select the newest version and choose **Update firmware**. This replaces only the program; the configuration file on the die is kept.
+4. Check the **Safety checks**, click **Install firmware** and confirm with **Update now**. Wait until the tool reports **Done!**
+5. Repeat for the other dice.
 
-This update procedure is intended to leave the existing configuration intact. Afterward, switch on the dice and check that they start correctly.
+If the tool reports that the memory layout is different, or if the die does not work properly after an update, use **Complete install** with **Keep my settings** ticked. The tool then saves the configuration first and puts it back afterwards.
 
-> **Important:** For a **new**, unconfigured PCB use `merged.bin` at **`0x0`** as explained in Section 9.1.4. For a **normal update** use the standard `.bin` at **`0x10000`** and do not erase the flash.
+### 9.3 Changing the Configuration File
 
-### 9.3 Updating the Configuration File
+The firmware reads its settings, such as the name of the die, the background colours and the entanglement animation, from a file called `<name>_config.txt`. Each setting is explained in the [example configuration file](firmware/EXAMPLE_config.txt). Dice that are used together do not need identical configurations.
 
-1. Edit your existing configuration file on your computer, keeping a copy of the previous version.
-2. Connect the die to ESPConnect as in Section 9.1.3.
-3. Use **LittleFS Tools** and follow the backup, upload and **SAVE TO FLASH** instructions in Section 9.1.6.
-4. Verify the file contents using the preview function, if available.
-5. Repeat for the other die if that die also needs an update.
-
-Two cooperating dice are not required to have identical configurations.
+1. Connect the die to the Quantum Dice Tool as in Section 9.2.
+2. In **step 3, Settings file**, click **Read settings from dice** and save the current file to your computer. Keep this copy.
+3. Edit the file in a plain-text editor. Set `diceId=` to the name of the die and give the file the same name, for example `diceId=ALICE` in `ALICE_config.txt`.
+4. Click **Choose file…** and select the edited file. The tool checks it against the example file of the installed firmware and reports errors and warnings before anything is written.
+5. Click **Write to dice** and confirm with **Write settings**. The die restarts with the new settings.
 
 ## 10. Troubleshooting and Support
 
+Problems with the Quantum Dice Tool and their solutions are described in more detail in the [troubleshooting section of the Firmware Update Guide](FIRMWARE_UPDATE_GUIDE.md#8-troubleshooting).
+
 ### 10.1 The Browser Does Not Support WebSerial
 
-If ESPConnect reports **"WebSerial API is not supported"**, open it in a current version of **Chrome, Edge, Opera or another supported Chromium browser**. Safari and Firefox do not support this connection method.
+If the Quantum Dice Tool shows **"This browser cannot connect to the Quantum Dice"**, open it in a current version of **Google Chrome** or **Microsoft Edge** on a computer. Safari, Firefox, phones and tablets do not support this connection method.
 
-### 10.2 Cannot Connect to the Serial Port
+### 10.2 Cannot Connect to the Die
 
-If you see **"Cannot connect to serial port"** or **"Port is not available"**:
+If the die does not appear in the list after clicking **Connect**, or the tool reports that the die did not answer:
 
-1. Close the Arduino IDE, serial monitors and other applications that might be using the port.
-2. Disconnect and reconnect the USB-C cable.
-3. Try another USB port or a different **data-capable** USB-C cable.
-4. If communication repeatedly fails, try a lower connection baud rate, such as **115200**, in ESPConnect.
+1. Make sure the die is switched on and awake. It goes to sleep after a few minutes without movement; press the button briefly to wake it.
+2. Close the Arduino IDE, ESPConnect, serial monitors and other browser tabs that might be using the USB connection.
+3. Disconnect and reconnect the USB-C cable.
+4. Try another USB port or a different **data-capable** USB-C cable.
 5. Restart your computer if necessary.
 
 To see whether your computer detects the device:
@@ -664,25 +584,21 @@ To see whether your computer detects the device:
 - **macOS:** Open Terminal and run `ls /dev/tty.*`.
 - **Linux:** Open Terminal and run `ls /dev/tty*`.
 
-### 10.3 Firmware Flash Fails
+### 10.3 Firmware Installation Fails
 
-If ESPConnect reports **"Flash failed"** or **"Upload failed"**:
+If the tool reports **"Installation did not finish"**, the die has not been damaged:
 
-1. Check that the USB cable supports data transfer and that no other application is using the port.
-2. Confirm the firmware file and **Flash Offset**:
-   - First installation: **`QuantumDice.vX.X.X.merged.bin`** at **`0x0`**.
-   - Normal update: **`QuantumDice.vX.X.X.bin`** at **`0x10000`** (or `app0`).
-3. Try reconnecting the board and using a different USB port.
-4. If the device does not enter flashing mode automatically, follow the BOOT/RESET instructions in the [ESPConnect documentation](https://github.com/thelastoutpostworkshop/ESPConnect#tips--troubleshooting).
+1. Check the cable and make sure the die is awake, then try again.
+2. If the **Safety checks** show a red ✕, follow the instruction in the message. *"Choose Complete install instead"* means the PCB is new or has a different memory layout; see Section 9.1.
+3. If an update keeps failing, use **Complete install** with **Keep my settings** ticked.
 
 ### 10.4 Configuration File Does Not Load
 
-If the Serial Monitor reports **"No config file found"**, the firmware may create and use `DEFAULT_config.txt` instead.
+If the die is called *DEFAULT* or the Serial Monitor reports **"No config file found"**, the firmware did not find a valid configuration file and uses its default settings.
 
-1. Check the filename expected by your firmware. The original Setup Guide describes the pattern `XXXXX_config.txt`, while its examples are inconsistent. The supplied example is `EXAMPLE_config.txt`.
-2. In ESPConnect, open **LittleFS Tools** and use the file preview to check that your configuration is present on the PCB.
-3. If necessary, upload it again using Section 9.1.6.
-4. If the configuration disappeared after a firmware update, check whether the wrong firmware image or flash option was used. See Sections 9.1.4 and 9.2.
+1. In the Quantum Dice Tool, click **Read settings from dice** (step 3) to see which file is on the die and whether it contains errors.
+2. Check that the filename ends in `_config.txt` and contains only letters, digits, `-`, `_` and `.`; the tool suggests a correct name if needed.
+3. Upload the file again as described in Section 9.3.
 
 ### 10.5 Errors in the Serial Monitor
 
@@ -690,15 +606,15 @@ An occasional I2C message such as `I2C transaction unexpected nack detected` may
 
 Messages that require attention include:
 
-- **"LittleFS mount failed"**: the file system could not be mounted. Check the firmware installation and available recovery options before reflashing; a full reflash may remove configuration data.
-- **"Config load failed"**: check the configuration contents and the uploaded file.
+- **"LittleFS mount failed"**: the storage for the configuration file could not be opened. Use **Complete install** with **Keep my settings** ticked (Section 9.2).
+- **"Config load failed"**: check the configuration file as described in Section 10.4.
 - **Setup never completes**: review the preceding log messages and check the board and cable connections.
 
 ### 10.6 Getting Help
 
 If a problem persists, first check the steps relevant to the failed operation and review the Serial Monitor output. You can also try the procedure with the other die to determine whether the issue is device-specific.
 
-For support, consult the [Quantum Dice GitHub repository](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente) or create a GitHub issue. Include the step where the problem occurs, the complete error message or relevant serial log, and what you have already tried.
+For support, consult the [Quantum Dice GitHub repository](https://github.com/qlab-utwente/Quantum-Dice-by-UTwente) or create a GitHub issue. Include the step where the problem occurs, the complete error message or relevant serial log (**Save to file** in the Quantum Dice Tool), and what you have already tried.
 
 ---
 

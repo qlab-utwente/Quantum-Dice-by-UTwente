@@ -4,8 +4,8 @@ This guide explains how to install new software (firmware) on a Quantum Dice and
 
 The procedure is the same for every generation of the Quantum Dice. Only the way you connect the USB cable is different:
 
-- **Generation 4:** the USB-C connector is on the outside of the dice. You do not need to open it.
-- **Generation 2:** the USB-C connector is on the processor board inside the dice. You first remove one display to reach it.
+- **Generation 4:** the USB-C connector on the outside of the dice is used for both charging and firmware installation. You do not need to open the dice.
+- **Generation 2:** the USB-C connector on the outside is **only for charging**. For the firmware you use the USB-C connector on the processor board inside the dice. You first remove the blue bottom display cup to reach it.
 
 ## Contents
 
@@ -26,7 +26,7 @@ The procedure is the same for every generation of the Quantum Dice. Only the way
 - **Google Chrome** or **Microsoft Edge**. Safari, Firefox, phones and tablets cannot connect to the dice.
 - A **USB-C cable that can transfer data**. Many cables that come with chargers can only charge. If the dice does not appear on the computer, try another cable first.
 - The **Quantum Dice**, with a charged battery.
-- For a **Generation 2** dice: a small flat screwdriver or a hobby knife to remove a display.
+- For a **Generation 2** dice: a screwdriver that fits the bolts of the display cups.
 
 You do not need to download anything. The Quantum Dice Tool always offers the published firmware versions.
 
@@ -59,22 +59,21 @@ You do not have to work out which one is needed yourself. When the dice is conne
 ### Generation 4
 
 1. **Switch the dice on** by briefly pressing the button on one of the yellow sides. The displays light up.
-2. Plug the USB-C cable into the connector on the **yellow side** of the dice and into your computer.
+2. Plug the USB-C cable into the connector on the **yellow side** of the dice and into your computer. This is the same connector you use for charging.
 
 Continue with [Open the Quantum Dice Tool](#open-the-quantum-dice-tool).
 
 ### Generation 2
 
-On a Generation 2 dice the USB-C connector is mounted directly on the processor board (ESP32) inside the dice. Remove one display to reach it:
+On a Generation 2 dice the USB-C connector on the outside is only connected to the charger. The firmware is installed through the USB-C connector on the processor board (ESP32) inside the dice. To reach it:
 
-1. Make sure the dice is **switched off**.
-2. Find the display behind which the processor board with the USB-C connector sits (the **bottom** side of the dice).
-3. Carefully remove this display from the frame. Lift it evenly and do not pull on the flat cable that connects it.
-4. If the flat cable is too short to put the display aside, disconnect it from the board. Remember how it was connected: the dice also works for the update without this display.
-5. **Switch the dice on.** The remaining displays light up.
-6. Plug the USB-C cable into the connector on the processor board and into your computer.
+1. Unscrew the bolts of the **blue display cup on the bottom** of the dice.
+2. Carefully lift the display cup and put it aside next to the dice. **Leave the flat cable connected**, and do not pull or bend it: it is easily damaged.
+3. Plug the USB-C cable into the connector on the processor board and into your computer.
 
-> **After the update:** switch the dice off, reconnect the flat cable if you removed it, and put the display back in its place.
+You do not need to switch the dice on: the USB cable powers the processor board.
+
+> **After the update:** unplug the USB cable, put the display cup back without pinching the flat cable, and tighten the bolts.
 
 ### Open the Quantum Dice Tool
 
@@ -178,7 +177,7 @@ No settings file yet? In **step 3, Settings file**, click **Download the example
 3. Check that you see:
    - `FW: Gen 4.1` (or the version you installed)
    - `Dice ID: ...` with the name of your dice
-4. Unplug the dice. For a Generation 2 dice: switch it off and put the display back.
+4. Unplug the dice. For a Generation 2 dice: put the blue display cup back and tighten the bolts.
 5. Switch the dice on and check that all displays light up.
 
 If you need help, click **Save to file** in the serial monitor and send this file with your question.
@@ -193,7 +192,8 @@ Open the page in **Google Chrome** or **Microsoft Edge** on a computer. Safari, 
 
 ### The dice does not appear in the list after clicking Connect
 
-- Is the dice **switched on and awake**? Press the button briefly; the displays must be on.
+- **Generation 4:** is the dice **switched on and awake**? Press the button briefly; the displays must be on.
+- **Generation 2:** is the cable plugged into the connector on the **processor board** inside the dice? The outside connector is only for charging.
 - Try **another USB-C cable**. Many cables can only charge.
 - Try another USB port on your computer, directly on the computer instead of through a hub.
 - Close other programs that may be using the dice, such as the Arduino IDE, ESPConnect or another browser tab with the Quantum Dice Tool.
