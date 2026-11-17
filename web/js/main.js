@@ -291,7 +291,7 @@ function onSerialText(text) {
   const lines = lineBuffer.split('\n');
   lineBuffer = lines.pop();
   for (const line of lines) {
-    const fw = /FW:\s*(\S+)/.exec(line);
+    const fw = /FW:\s*(.+?)\s*$/.exec(line);
     if (fw) { state.reportedFw = fw[1]; renderDeviceInfo(); }
     const id = /Dice ID:\s*(.+?)\s*$/.exec(line);
     if (id) { state.reportedName = id[1]; renderDeviceInfo(); }

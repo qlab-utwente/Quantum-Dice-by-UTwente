@@ -97,6 +97,8 @@ const RULES = {
   },
   colorFlashTimeout: millis16,
   observedTime: millis16,
+  animationDuration: millis16,
+  animationSpins: intRule({ min: 0, max: 255, what: 'Use a whole number of spins, such as 2.' }),
   rssiLimit: rssi,
   rssiClose: rssi,
   rssiFar: rssi,

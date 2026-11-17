@@ -84,8 +84,12 @@ async function run() {
   ok(levels(v).includes('error'), 'binary file rejected');
   v = validateConfig('MyDice_config.txt', enc('diceId=MyDice\nx_background=010\n'), refText, rel.tag);
   ok(v.issues.some((i) => /octal/.test(i.msg)), 'leading zero (octal) warned');
-  v = validateConfig('MyDice_config.txt', enc('diceId=MyDice\nentang_colors=1,2,3,4,5,6,7,8,9\n'), refText, rel.tag);
+  // entang_colors is only read by Gen4.0, so check the rule without a release reference.
+  v = validateConfig('MyDice_config.txt', enc('diceId=MyDice\nentang_colors=1,2,3,4,5,6,7,8,9\n'), null, 'none');
   ok(v.issues.some((i) => /first 8/.test(i.msg)), 'more than 8 colours warned');
+  v = validateConfig('MyDice_config.txt', enc('diceId=MyDice\nanimationDuration=70000\nanimationSpins=300\n'), null, 'none');
+  ok(v.issues.filter((i) => i.level === 'error' && /animation(Duration|Spins)/.test(i.msg)).length === 2, 'animation settings out of range');
+  ok(/FW:\s*(.+?)\s*$/.exec('FW: Gen 4.1\r')?.[1] === 'Gen 4.1', 'firmware version with a space is read completely');
   v = validateConfig('MyDice_config.txt', enc('diceId=MyDice\ndeepSleepTimeout=1000\n'), refText, rel.tag);
   ok(v.issues.some((i) => i.level === 'warning' && /sleep/.test(i.msg)), 'very short sleep time warned');
 
