@@ -20,7 +20,7 @@ We have been working on improving the design, functionality, and accessibility o
 - **Firmware changes** to create a more reliable detection of when the dice are being rolled, measured, or entangled with another die.
 - Every Quantum Die can entangle with another. No need to use pairs of QD's
 
-The Gen4 firmware is backwards compatible with Gen2 version of the Quantum Dice. Follow [Setup Firmware Gen2.0](old/SETUP_Firmware_Gen2.0.md) instructions
+The Gen4 firmware is backwards compatible with Gen2 version of the Quantum Dice. To install or update the firmware of a Gen2 or Gen4 dice, use the [Quantum Dice Tool](https://qlab-utwente.github.io/Quantum-Dice-by-UTwente/) and follow the [Firmware Update Guide](FIRMWARE_UPDATE_GUIDE.md).
 
 <img src="images/Quantum_Dice_Flyer.png" alt="flyer" width="600"/>
 
@@ -32,11 +32,13 @@ You can find more information about the Dice in our article, including didactica
 
 Content of this repo:
 
-- [Construction manual](/3D%20print%20files/ConstructionManual.md) (incl. firmware)
+- [Construction manual](Construction_Manual_Generation_4.md) (incl. firmware)
+- [User Guide](USER_GUIDE.md)
+- [Firmware Update Guide](FIRMWARE_UPDATE_GUIDE.md) and the [Quantum Dice Tool](https://qlab-utwente.github.io/Quantum-Dice-by-UTwente/)
 - [Bill of Materials](/3D%20print%20files/Bill%20of%20Material%20quantum%20dice.xlsx) (incl. parts sourcing calculator)
 - [3D print files](/3D%20print%20files/)
 - [Firmware Source Code](/firmware/)
-- [Firmware Technical documentation](/firmware/technical%20documentation.md)
+- [Firmware Technical documentation](/firmware/TECHNICAL_DOCUMENTATION.md)
 
 ### Demo Video
 
