@@ -1,0 +1,61 @@
+name: Deploy Quantum Dice Tool to GitHub Pages
+
+on:
+  # Website changes on main
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - '.github/workflows/pages.yml'
+  # A firmware release is published, changed or removed
+  release:
+    types: [published, edited, deleted]
+  # Every 6 hours, so a fork also picks up new releases of the main repository
+  # (the release trigger above only fires for releases in this repository).
+  schedule:
+    - cron: '17 */6 * * *'
+  # Manual run from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Copy firmware releases into the website
+        run: python3 web/tools/build_firmware_manifest.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Releases are not copied to forks, so always use the main repository
+          # unless the repository variable FIRMWARE_REPO says otherwise.
+          QD_REPO: ${{ vars.FIRMWARE_REPO || 'qlab-utwente/Quantum-Dice-by-UTwente' }}
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

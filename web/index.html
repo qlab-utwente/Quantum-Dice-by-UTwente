@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quantum Dice Tool</title>
+  <meta name="description" content="Install firmware, manage settings and view the serial output of your Quantum Dice, directly from your browser.">
+  <link rel="icon" type="image/png" href="assets/qlab-logo.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <div class="logos">
+        <a href="https://www.utwente.nl/en/mesaplus/education/quantum-dice/" title="Quantum Dice at the University of Twente">
+          <img src="assets/ut-logo.svg" alt="University of Twente" class="logo-ut">
+        </a>
+        <img src="assets/qlab-logo.png" alt="Quantum Labs" class="logo-qlab">
+      </div>
+      <nav class="header-links">
+        <a href="https://github.com/qlab-utwente/Quantum-Dice-by-UTwente">GitHub</a>
+      </nav>
+    </div>
+    <div class="title-band">
+      <div class="wrap">
+        <h1>Quantum Dice Tool</h1>
+        <p>Install new firmware, back up or change your dice's settings, and see what your dice is doing.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="unsupported" class="banner banner-error" hidden>
+      <h2>This browser cannot connect to the Quantum Dice</h2>
+      <p>This page talks to the dice over USB, which only works in <strong>Google Chrome</strong> or
+        <strong>Microsoft Edge</strong> on a computer (Windows, macOS, Linux or ChromeOS).
+        Safari, Firefox and phones or tablets are not supported.</p>
+      <p>Please open this page again in Chrome or Edge.</p>
+    </section>
+
+    <!-- Step 1: connect -->
+    <section class="card" id="step-connect">
+      <div class="card-head">
+        <span class="step-no">1</span>
+        <h2>Connect your dice</h2>
+      </div>
+      <div id="connect-intro">
+        <ol class="howto">
+          <li>Switch the dice on and make sure it is awake (the screens are on).</li>
+          <li>Connect it to this computer with a USB-C cable. Some cables can only charge; if nothing shows up, try another cable.</li>
+          <li>Click <strong>Connect</strong> and choose the dice in the list that appears (it is usually called <em>USB JTAG/serial debug unit</em>).</li>
+        </ol>
+      </div>
+      <div class="actions">
+        <button id="btn-connect" class="btn btn-primary">Connect</button>
+        <button id="btn-recheck" class="btn" hidden>Check dice again</button>
+        <button id="btn-disconnect" class="btn" hidden>Disconnect</button>
+      </div>
+      <div id="conn-message" class="note" hidden></div>
+      <dl id="device-info" class="facts" hidden>
+        <dt>Status</dt><dd id="di-status">–</dd>
+        <dt>Processor</dt><dd id="di-chip">–</dd>
+        <dt>Memory</dt><dd id="di-flash">–</dd>
+        <dt>Installed firmware</dt><dd id="di-firmware">–</dd>
+        <dt>Dice name</dt><dd id="di-name">–</dd>
+        <dt>Serial number</dt><dd id="di-mac">–</dd>
+      </dl>
+    </section>
+
+    <!-- Step 2: firmware -->
+    <section class="card" id="step-firmware">
+      <div class="card-head">
+        <span class="step-no">2</span>
+        <h2>Install firmware</h2>
+      </div>
+      <p id="fw-load-error" class="banner banner-error" hidden></p>
+      <div class="field">
+        <label for="fw-version">Firmware version</label>
+        <select id="fw-version" disabled></select>
+        <p id="fw-release-info" class="muted"></p>
+      </div>
+
+      <fieldset class="choice-group">
+        <legend>What do you want to do?</legend>
+        <label class="choice">
+          <input type="radio" name="fw-mode" value="update" checked>
+          <span class="choice-body">
+            <span class="choice-title">Update firmware <span class="tag">Recommended</span></span>
+            <span class="choice-text">Replaces only the program on the dice. Your settings (name, colours, …) are kept.</span>
+          </span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="fw-mode" value="full">
+          <span class="choice-body">
+            <span class="choice-title">Complete install</span>
+            <span class="choice-text">Erases the whole dice and installs everything from scratch. Use this for a new dice, or when an update does not help.</span>
+            <span class="choice-extra">
+              <label class="check"><input type="checkbox" id="fw-backup" checked> Keep my settings (they are saved first and put back afterwards)</label>
+            </span>
+          </span>
+        </label>
+      </fieldset>
+
+      <h3 class="sub">Safety checks</h3>
+      <ul id="fw-checks" class="checks"><li class="lvl-info">Connect your dice to run the checks.</li></ul>
+
+      <div class="actions">
+        <button id="btn-install" class="btn btn-primary" disabled>Install firmware</button>
+      </div>
+    </section>
+
+    <!-- Step 3: settings -->
+    <section class="card" id="step-settings">
+      <div class="card-head">
+        <span class="step-no">3</span>
+        <h2>Settings file</h2>
+      </div>
+      <p>The dice keeps its settings (its name, colours and a few advanced values) in a small text file called
+        <code>&lt;name&gt;_config.txt</code>. Here you can save it to your computer, or put a changed file back on the dice.</p>
+
+      <div class="two-col">
+        <div class="panel">
+          <h3>Save settings to this computer</h3>
+          <p class="muted">Reads the settings file from the dice (takes up to a minute).</p>
+          <button id="btn-read-config" class="btn" disabled>Read settings from dice</button>
+        </div>
+        <div class="panel">
+          <h3>Put a settings file on the dice</h3>
+          <p class="muted">Choose a <code>…_config.txt</code> file. It is checked before anything is written.</p>
+          <label class="btn file-btn" id="lbl-config-file" aria-disabled="true">
+            Choose file…
+            <input type="file" id="config-file" accept=".txt,text/plain" disabled>
+          </label>
+        </div>
+      </div>
+
+      <div id="config-result" class="result" hidden>
+        <h3 id="config-result-title"></h3>
+        <p id="config-result-text"></p>
+        <ul id="config-issues" class="checks"></ul>
+        <details id="config-preview-wrap">
+          <summary>Show file contents</summary>
+          <pre id="config-preview" class="file-preview"></pre>
+        </details>
+        <div class="actions" id="config-actions"></div>
+      </div>
+      <p class="muted small" id="config-reference"></p>
+    </section>
+
+    <!-- Step 4: serial monitor -->
+    <section class="card" id="step-monitor">
+      <div class="card-head">
+        <span class="step-no">4</span>
+        <h2>Serial monitor</h2>
+        <span id="mon-status" class="pill pill-off">Not connected</span>
+      </div>
+      <p class="muted">Shows the messages the dice sends over USB. Useful to see its firmware version and settings when it starts.</p>
+      <div class="toolbar">
+        <button id="btn-mon-restart" class="btn btn-small" disabled>Restart dice</button>
+        <button id="btn-mon-clear" class="btn btn-small">Clear</button>
+        <button id="btn-mon-save" class="btn btn-small">Save to file</button>
+        <label class="check"><input type="checkbox" id="mon-autoscroll" checked> Auto-scroll</label>
+      </div>
+      <pre id="terminal" class="terminal" aria-live="off"></pre>
+      <details class="techlog">
+        <summary>Technical log</summary>
+        <pre id="techlog" class="terminal terminal-small"></pre>
+      </details>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Quantum Dice · Quantum Labs, MESA+ Institute, University of Twente ·
+        <a href="https://github.com/qlab-utwente/Quantum-Dice-by-UTwente">Source code and documentation</a></p>
+      <p class="small">Built on <a href="https://github.com/thelastoutpostworkshop/ESPConnect">ESPConnect</a> and
+        <a href="https://github.com/Jason2866/WebSerial_ESPTool">WebSerial ESPTool</a> (MIT licence).</p>
+    </div>
+  </footer>
+
+  <!-- Progress dialog -->
+  <dialog id="busy" class="dialog">
+    <h2 id="busy-title">Working…</h2>
+    <div id="busy-unplug" class="banner banner-warning" hidden>
+      <strong>Do not unplug the dice and do not close this page</strong> until this is finished.
+    </div>
+    <p id="busy-step"></p>
+    <div class="progress"><div id="busy-bar" class="progress-bar"></div></div>
+    <p id="busy-percent" class="muted small"></p>
+    <div id="busy-result" hidden></div>
+    <div class="actions" id="busy-actions" hidden>
+      <button id="btn-busy-close" class="btn btn-primary">Close</button>
+    </div>
+  </dialog>
+
+  <!-- Confirmation dialog -->
+  <dialog id="confirm" class="dialog">
+    <h2 id="confirm-title"></h2>
+    <div id="confirm-body"></div>
+    <label class="check" id="confirm-check-wrap" hidden><input type="checkbox" id="confirm-check"> <span id="confirm-check-text"></span></label>
+    <div class="actions">
+      <button id="btn-confirm-cancel" class="btn">Cancel</button>
+      <button id="btn-confirm-ok" class="btn btn-primary"></button>
+    </div>
+  </dialog>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
