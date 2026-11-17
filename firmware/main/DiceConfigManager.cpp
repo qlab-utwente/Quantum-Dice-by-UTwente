@@ -99,8 +99,6 @@ auto DiceConfigManager::load(const String &filename) -> bool {
 			_config.observedTime = (uint16_t) strtoul(value.c_str(), nullptr, 0);
         } else if (key == "rssiLimit") {
             _config.rssiLimit = (int8_t) strtol(value.c_str(), nullptr, 0);
-        } else if (key == "tumbleConstant") {
-            _config.tumbleConstant = (float) strtod(value.c_str(), nullptr);
         } else if (key == "deepSleepTimeout") {
             _config.deepSleepTimeout = strtoul(value.c_str(), nullptr, 0);
         } else if (key == "checksum") {
@@ -191,14 +189,11 @@ void DiceConfigManager::initDefaultConfig() {
     _config.animationDuration = 2'000;
 	_config.animationSpins = 2;
 
-	// Default time in observed state (2000ms)
-	_config.observedTime = 2000;
+	// Default time in observed state (500ms)
+	_config.observedTime = 500;
 
     // Default RSSI values.
     _config.rssiLimit = -10;
-
-    // Default tumble constant
-    _config.tumbleConstant = 45;
 
     // Default operational parameters
     _config.deepSleepTimeout = 300000; // 5 minutes
@@ -237,7 +232,6 @@ void printGlobalConfig() {
 	infof("Animation spins: %d spins\n", currentConfig.animationSpins);
 	infof("Observed time: %d ms\n", currentConfig.observedTime);
     infof("RSSI Limit: %d dBm\n", currentConfig.rssiLimit);
-    infof("Tumble Constant: %d\n", currentConfig.tumbleConstant);
     infof("Deep Sleep Timeout: %u ms\n", currentConfig.deepSleepTimeout);
     infof("Checksum: 0x%02X\n", currentConfig.checksum);
     infoln("============================");
@@ -355,9 +349,8 @@ auto createDefaultConfigFile() -> bool {
     file.println("z_background=0");
     file.println("animationDuration=2000");
 	file.println("animationSpins=2");
-	file.println("observedTime=2000");
+	file.println("observedTime=500");
     file.println("rssiLimit=-10");
-    file.println("tumbleConstant=45");
     file.println("deepSleepTimeout=300000");
     file.println("checksum=0");
 
